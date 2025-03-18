@@ -1,0 +1,12 @@
+.WrapIcon {
+    border-radius: 50%;
+    background-color: unset;
+    transition: all .2s linear;
+    aspect-ratio: 1/1;
+    cursor: pointer;
+    height: auto;
+}
+
+.WrapIcon:hover {
+    background-color: var(--hover);
+}
