@@ -4,7 +4,7 @@ const postArea = new Schema({
   name: {
     type: String
   },
-  room: {
+  room: { 
     type: Array
   },
   color: {

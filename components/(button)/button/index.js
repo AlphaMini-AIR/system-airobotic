@@ -4,7 +4,7 @@ import air from './index.module.css';
 export default function AnimatedButton({
   children,
   onClick,
-  padding = '12px 20px',
+  padding = '10px 20px',
   background = '#1677ff',
   hoverColor = '#4096ff',
   border = 'null',

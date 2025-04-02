@@ -3,26 +3,20 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 const Drawer = React.memo(function Drawer({
-  isOpen,                 // Trạng thái mở/đóng của Drawer
-  onClose,                // Hàm gọi khi cần đóng Drawer
-  children,               // Nội dung bên trong Drawer
-  direction = 'right',    // Hướng mở: 'left', 'right', 'top', 'bottom'
-  size = '300px',         // Kích thước Drawer (chiều rộng hoặc chiều cao)
-  animationDuration = 0.3, // Thời gian animation (giây)
-  className = ''          // Các lớp CSS bổ sung (có thể dùng Tailwind nếu muốn)
+  isOpen,
+  onClose,
+  children,
+  direction = 'right',
+  size = '300px',
+  animationDuration = 0.3,
+  className = ''
 }) {
-  // State để quyết định có render Drawer hay không
   const [shouldRender, setShouldRender] = useState(isOpen);
-  // State dùng để điều khiển hiệu ứng mở/đóng (để đảm bảo hiệu ứng mở cũng có chuyển động)
   const [renderOpen, setRenderOpen] = useState(false);
-
-  // Khi isOpen thay đổi, nếu mở thì render ngay và sau đó trigger open animation,
-  // nếu đóng thì delay unmount cho animation hoàn thành.
   useEffect(() => {
     let timer;
     if (isOpen) {
       setShouldRender(true);
-      // Dùng setTimeout nhỏ để đảm bảo component đã được render với trạng thái đóng
       timer = setTimeout(() => {
         setRenderOpen(true);
       }, 10);
@@ -37,7 +31,6 @@ const Drawer = React.memo(function Drawer({
     };
   }, [isOpen, animationDuration]);
 
-  // Đăng ký sự kiện bàn phím để đóng Drawer khi nhấn ESC
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event) => {
@@ -49,12 +42,10 @@ const Drawer = React.memo(function Drawer({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Xử lý đóng Drawer khi click vào overlay
   const handleOverlayClick = useCallback(() => {
     onClose();
   }, [onClose]);
 
-  // Tính toán giá trị transform dựa vào trạng thái renderOpen và hướng
   const transformStyle = useMemo(() => {
     if (renderOpen) {
       return 'translate(0, 0)';
@@ -67,7 +58,6 @@ const Drawer = React.memo(function Drawer({
     }
   }, [renderOpen, direction]);
 
-  // Tính toán style cho Drawer, bao gồm vị trí, kích thước và animation
   const drawerStyle = useMemo(() => {
     const baseStyle = {
       transition: `transform ${animationDuration}s ease`,
@@ -101,12 +91,10 @@ const Drawer = React.memo(function Drawer({
     return null;
   }
 
-  // Chỉ render Drawer khi shouldRender là true
   if (!shouldRender) return null;
 
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-      {/* Overlay */}
       <div
         style={{
           position: 'absolute',
@@ -115,7 +103,6 @@ const Drawer = React.memo(function Drawer({
         }}
         onClick={handleOverlayClick}
       ></div>
-      {/* Panel Drawer */}
       <div style={drawerStyle} className={className}>
         {children}
       </div>

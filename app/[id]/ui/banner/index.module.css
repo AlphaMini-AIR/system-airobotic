@@ -1,0 +1,38 @@
+.wrap {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    border: thin solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.position {
+    font-size: 14px;
+}
+
+.name {
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.nav {
+    padding: 12px;
+    cursor: pointer;
+    transition: all .2s linear;
+    border-bottom: 2px solid var(--bg-secondary);
+    color: var(--text-primary) !important;
+}
+
+.nav.ac {
+    border-bottom: 2px solid var(--main_b);
+    color: var(--main_b) !important;
+}
+
+.nav:hover {
+    background-color: var(--hover);
+}
+
+.nav.ac:hover {
+    background-color: unset;
+}

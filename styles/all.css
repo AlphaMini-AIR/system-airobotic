@@ -18,7 +18,7 @@ p {
 
 :root {
   --bg-primary: #ffffff;
-  --text-primary: #3b3b3b;
+  --text-primary: #656565;
   --border-color: #e0e0e0;
   --main_b: #1cb0f6;
   --main_d: #0374da;
@@ -91,6 +91,18 @@ p {
 .text_4 {
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary)
+}
+
+.text_6 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary)
+}
+
+.text_6_400 {
+  font-size: 14px;
+  font-weight: 400;
   color: var(--text-primary)
 }
 
