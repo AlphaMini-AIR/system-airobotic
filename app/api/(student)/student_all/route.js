@@ -1,4 +1,4 @@
-import connectDB from '@/data/connect';
+import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
 import authenticate from '@/utils/authenticate';
 import { NextResponse } from 'next/server';

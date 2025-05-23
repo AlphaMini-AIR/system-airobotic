@@ -1,14 +1,8 @@
 import { google } from 'googleapis';
 
-/* ------------ Cấu hình Google Sheet ------------ */
 const SPREADSHEET_ID = '1ZQsHUyVD3vmafcm6_egWup9ErXfxIg4U-TfVDgDztb8';
-const RANGE_DATA = 'Data!A:L';       // sheet “Data”, cột A → L
+const RANGE_DATA = 'Data!A:L';       
 
-/* ------------------------------------------------
- * Helper trả về instance sheets với scope phù hợp
- *   mode = 'read'  : chỉ đọc
- *   mode = 'write' : đọc + ghi
- * ------------------------------------------------ */
 async function getSheets(mode = 'read') {
   const scopes = mode === 'read'
     ? ['https://www.googleapis.com/auth/spreadsheets.readonly']
