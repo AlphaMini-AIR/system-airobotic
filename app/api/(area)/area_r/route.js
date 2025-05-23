@@ -1,4 +1,4 @@
-import connectDB from '@/data/connect';
+import connectDB from '@/config/connectDB';
 import PostArea from '@/models/area';
 import authenticate from '@/utils/authenticate';
 import { NextResponse } from 'next/server';
