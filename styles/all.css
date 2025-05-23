@@ -27,7 +27,8 @@ p {
   --red: #dc3545;
   --green: #28a745;
   --hover: #efefef;
-  --boxshaw: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px
+  --boxshaw: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  --boxshaw2: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
 }
 
 .dark {
@@ -41,7 +42,8 @@ p {
   --red: #dc3545;
   --green: #28a745;
   --hover: #6d6d6d;
-  --boxshaw: rgba(0, 0, 0, 0.2) 0px 2px 8px 0px
+  --boxshaw: rgba(0, 0, 0, 0.2) 0px 2px 8px 0px;
+  --boxshaw2: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
 }
 
 .flex_center {
@@ -156,12 +158,11 @@ p {
   display: inline-block;
   width: calc(100% - 40px);
   padding: 12px 20px;
-  border-radius: 16px;
+  border-radius: 8px;
   border: thin solid white;
   background-color: transparent;
   color: white;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 14px;
   text-align: center;
   cursor: pointer;
   overflow: hidden;
@@ -229,4 +230,20 @@ p {
 .button:not(:hover) span:nth-child(1) {
   transform: translateX(-100%);
   transition-delay: 0.12s;
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  border-color: #94a3b8;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
 }

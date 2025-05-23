@@ -18,9 +18,12 @@ const postUser = new Schema({
   },
   email: {
     type: String,
+  },
+  uid: {
+    type: String,
   }
 })
 
-const PostUser = models.user || model('user', postUser)
+const users = models.user || model('user', postUser)
 
-export default PostUser
+export default users

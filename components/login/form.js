@@ -88,7 +88,7 @@ const LoginPage = () => {
   const handleSubmit = async () => {
     setloading(true)
     try {
-      const data = { email: username, password, rememberMe };
+      const data = { email: username, password, re: rememberMe };
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -96,7 +96,7 @@ const LoginPage = () => {
         },
         body: JSON.stringify(data),
       });
-
+      
       if (!response.ok) {
         throw new Error('Đăng nhập thất bại');
       }

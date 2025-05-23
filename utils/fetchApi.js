@@ -10,7 +10,7 @@ export default async function fetchApi(endpoint, options = {}) {
     try {
       const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
-      token = cookieStore.get('s_air')?.value || null;
+      token = cookieStore.get(process.env.token)?.value || null;
     } catch (error) {
       console.warn('Không thể lấy cookies trên server:', error);
     }
@@ -29,20 +29,18 @@ export default async function fetchApi(endpoint, options = {}) {
 
   if (defaultOptions.body && typeof defaultOptions.body === 'object') {
     defaultOptions.body = JSON.stringify(defaultOptions.body);
-  }
+  }    try {
+      const response = await fetch(url, defaultOptions);
 
-  try {
-    const response = await fetch(url, defaultOptions);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error fetching ${endpoint}: ${response.status} ${response.statusText} - ${errorText}`);
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error fetching ${endpoint}: ${response.status} ${response.statusText} - ${errorText}`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log(`Fetch API error: ${error.message}`);
+      throw error;
     }
-
-    const data = await response.json();
-    return data.data;
-  } catch (error) {
-    console.log(`Fetch API error: ${error.message}`);
-    throw error;
-  }
 }

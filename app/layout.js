@@ -14,7 +14,7 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('s_air')?.value;
+  const token = cookieStore.get(process.env.token)?.value;
   const response = await fetch(`${process.env.URL}/api/check`, {
     method: 'POST',
     headers: {
@@ -24,18 +24,15 @@ export default async function RootLayout({ children }) {
     body: JSON.stringify({ source: 1 }),
     cache: 'no-store'
   });
-  
+
   let data = null;
 
-  if (response.ok) {
-    const result = await response.json();
-    if (result.air === 2) {
-      data = result.data;
-    }
+  const result = await response.json();
+  if (result.air === 2) {
+    data = result.data;
   }
 
-  console.log(data);
-  
+
   return (
     <html lang="en">
       <body>

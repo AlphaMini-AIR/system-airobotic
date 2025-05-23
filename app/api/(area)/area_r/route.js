@@ -1,5 +1,5 @@
 import connectDB from '@/data/connect';
-import PostArea from '@/data/models/area';
+import PostArea from '@/models/area';
 import authenticate from '@/utils/authenticate';
 import { NextResponse } from 'next/server';
 

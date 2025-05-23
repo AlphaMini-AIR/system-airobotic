@@ -1,85 +1,63 @@
-export const dynamic = 'force-dynamic';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import connectDB from '@/data/connect';
-import PostUser from '@/data/models/users';
+import connectDB from '@/config/connectDB';
+import users from '@/models/users';
 
-export async function POST(request) {
+export async function POST(req) {
   try {
     await connectDB();
-    const { email, password, rememberMe } = await request.json();
-    const response = await fetch('https://api-auth.s4h.edu.vn/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
 
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({ air: 0, data: null, mes: 'Tài khoản hoặc mật khẩu không chính xác' }),
-        {
-          status: response.status,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    const { email, password, re } = await req.json();
 
-    let user = await PostUser.findOne({ Email: { $regex: new RegExp(`^${email}$`, 'i') } });
-    const cookieStore = await cookies();
+    const user = await users.findOne({ email }).lean();
+    if (!user) return jsonRes(404, { error: 'Tài khoản không tồn tại!' });
+    console.log(user);
 
-    if (user) {
-      await Create_token(user, rememberMe, cookieStore);
-      return new Response(
-        JSON.stringify({ air: 2, data: user, mes: 'Đăng nhập thành công' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    } else {
-      let data = await response.json();
-      const checkuser3 = await fetch('https://api-auth.s4h.edu.vn/users/me', {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.accessToken}` },
-      });
+    const ok = await bcrypt.compare(password, user.uid);
+    if (!ok) return jsonRes(401, { error: 'Mật khẩu không chính xác!' });
 
-      if (!checkuser3.ok) {
-        let errorResponse = await checkuser3.json();
-        return new Response(JSON.stringify({
-          air: 0,
-          data: null,
-          error: errorResponse.error,
-        }), {
-          status: response.status,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      const userApiData = await checkuser3.json();
-      const newPost = new PostUser({
-        email: email,
-        name: userApiData.lastName + ' ' + userApiData.firstName,
-        phone: userApiData.phone || '',
-        address: userApiData.address || '',
-        avatar: userApiData.avatarUrl || '',
-        role: 5,
-      });
-      await newPost.save();
-      user = newPost;
-      await Create_token(user, rememberMe, cookieStore);
-      return new Response(
-        JSON.stringify({ air: 2, data: user, mes: 'Đăng nhập thành công' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ air: 0, data: null, mes: error.message || error }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    const jwtLife = re ? '30d' : '1h';
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: jwtLife }
     );
+
+    const origin = req.headers.get('origin') || '';
+    const domain = new URL(origin).hostname;
+    const opts = {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: domain === 'localhost' ? undefined : domain,
+    };
+    if (re) opts.maxAge = 60 * 60 * 24 * 30;
+
+    cookies().set(process.env.token, accessToken, opts);
+
+    return jsonRes(200, { message: 'Đăng nhập thành công' });
+  } catch (err) {
+    console.error(err);
+    return jsonRes(500, { error: 'Lỗi máy chủ' });
   }
 }
 
 
-async function Create_token(user, rememberMe, cookieStore) {
-  const accessToken = jwt.sign({ user }, process.env.JWT_SECRET);
-  const cookieOptions = { httpOnly: true, path: '/' };
-  if (rememberMe) cookieOptions.maxAge = 60 * 60 * 24 * 365 * 10
-  await cookieStore.set('s_air', accessToken, cookieOptions);
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+function jsonRes(status, body) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+  });
 }
