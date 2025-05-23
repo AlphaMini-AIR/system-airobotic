@@ -9,10 +9,10 @@ export async function Read_Student_All() {
     return data
 }
 
-export async function Read_Student_One(_id) {
-    let data;
-    try { data = await fetchApi('/student_id', { method: 'POST', next: { tags: [`student_${_id}`] }, cache: "force-cache", body: { source: 1, _id } }) }
-    catch (error) { data = [] }
-    if (!data) data = []
-    return data
-}
+// export async function Read_Student_One(_id) {
+//     let data;
+//     try { data = await fetchApi('/student_id', { method: 'POST', next: { tags: [`student_${_id}`] }, cache: "force-cache", body: { source: 1, _id } }) }
+//     catch (error) { data = [] }
+//     if (!data) data = []
+//     return data
+// }
