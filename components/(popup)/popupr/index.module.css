@@ -1,0 +1,68 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: flex-end;
+    z-index: 1000;
+}
+
+.popup {
+    position: relative;
+    background: #fff;
+    width: 400px;
+    max-width: 80%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: all .3s ease-in-out;
+}
+
+.open {
+    transform: translateX(0);
+}
+
+.close {
+    transform: translateX(100%);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.body {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+}
+
+/* Nested popup slide */
+.nested {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 100%;
+    height: 100%;
+    background: #f9f9f9;
+    transform: translateX(0);
+    transition: transform 300ms ease-in-out;
+}
+
+.nested.open {
+    transform: translateX(-100%);
+}

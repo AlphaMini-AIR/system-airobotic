@@ -1,0 +1,62 @@
+/* components/ui/HistoryPopup.module.css */
+
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 100;
+}
+
+.panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 360px;
+    height: 100%;
+    background: var(--bg-secondary);
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.26);
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel.open {
+    transform: translateX(0);
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    align-self: flex-end;
+}
+
+.title {
+    margin: 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.25rem;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.error {
+    color: var(--red);
+}

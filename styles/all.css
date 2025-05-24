@@ -17,6 +17,7 @@ p {
 }
 
 :root {
+  --popup-width: 320px;
   --bg-primary: #ffffff;
   --text-primary: #656565;
   --border-color: #e0e0e0;

@@ -1,43 +1,84 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import styles from './index.module.css';
-import Loading from '@/components/(loading)/loading';        
+import Loading from '@/components/(loading)/loading';
+import Noti from '@/components/noti';                // ⬅ thay đường dẫn nếu cần
+import { Re_Label } from '@/data/client';
 
 export default function AddLabelButton({ onCreated }) {
-    const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);  // ⬅️ trạng thái loading
-    const [form, setForm] = useState({ title: '', time: '', desc: '' });
+    /* -------- local state -------- */
+    const [open, setOpen] = useState(false);              // modal form
+    const [loading, setLoading] = useState(false);        // spinner form
+    const [form, setForm] = useState({                    // form fields
+        title: '',
+        content: '',
+        desc: '',
+    });
 
-    /* ---------------- handlers ---------------- */
-    const handleChange = (key) => (e) =>
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    /* -------- Noti state -------- */
+    const [showNoti, setShowNoti] = useState(false);
+    const [notiStatus, setNotiStatus] = useState(false);  // true = success
+    const [notiMes, setNotiMes] = useState('');
 
+    /* -------- handlers -------- */
+    const handleChange = useCallback(
+        (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value })),
+        [],
+    );
+
+    /** Đóng modal + reset form */
+    const closeForm = useCallback(() => {
+        setOpen(false);
+        setForm({ title: '', content: '', desc: '' });
+    }, []);
+
+    /** Đóng thông báo */
+    const closeNoti = useCallback(() => setShowNoti(false), []);
+
+    /** Lưu nhãn */
     const handleSave = async (e) => {
         e.preventDefault();
-        setLoading(true);                         
+        setLoading(true);
+
         try {
-            await fetch('/api/label', {
+            const res = await fetch('/api/label', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),     
+                body: JSON.stringify(form),
             });
 
-            alert('Đã thêm nhãn!');
-            setOpen(false);
-            setForm({ title: '', time: '', desc: '' });
-            onCreated?.();                        
+            const json = await res.json();                // { status, data, mes }
+            const isSuccess = json.status === 2;
+
+            /* ----- hiển thị thông báo ----- */
+            setNotiStatus(isSuccess);
+            setNotiMes(json.mes || (isSuccess ? 'Thành công!' : 'Thất bại!'));
+            setShowNoti(true);
+
+            /* ----- hành động khi thành công ----- */
+            if (isSuccess) {
+                Re_Label()
+                closeForm();
+                onCreated?.();                            // reload list
+            }
         } catch (err) {
-            console.error(err);
-            alert('Thêm nhãn thất bại!');
+            console.error('[LABEL_ADD]', err);
+
+            setNotiStatus(false);
+            setNotiMes('Không kết nối được máy chủ!');
+            setShowNoti(true);
         } finally {
-            setLoading(false);                    
+            setLoading(false);
         }
     };
 
+    /* ------------------------------------------------------------------ */
+    /* -----------------------------  RENDER ---------------------------- */
+    /* ------------------------------------------------------------------ */
     return (
         <>
-            {/* ===== Nút chip ===== */}
+            {/* ===== Chip mở form ===== */}
             <button
                 className={`${styles.chip} ${styles.addChip}`}
                 onClick={() => setOpen(true)}
@@ -46,13 +87,14 @@ export default function AddLabelButton({ onCreated }) {
                 + Nhãn
             </button>
 
-            {/* ===== Modal ===== */}
+            {/* ===== Form Modal ===== */}
             {open && (
-                <div className={styles.backdrop} onClick={() => setOpen(false)}>
+                <div className={styles.backdrop} onClick={closeForm}>
                     <div
                         className={styles.modal}
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* Header */}
                         <div
                             style={{
                                 padding: 16,
@@ -62,13 +104,14 @@ export default function AddLabelButton({ onCreated }) {
                             <p className="text_4">Thêm nhãn mới</p>
                         </div>
 
-                        {/* overlay spinner */}
+                        {/* Overlay spinner */}
                         {loading && (
                             <div className={styles.loadingOverlay}>
                                 <Loading />
                             </div>
                         )}
 
+                        {/* Form */}
                         <form className={styles.form} onSubmit={handleSave}>
                             <label className={styles.group}>
                                 Tiêu đề
@@ -77,18 +120,6 @@ export default function AddLabelButton({ onCreated }) {
                                     value={form.title}
                                     onChange={handleChange('title')}
                                     placeholder="Tiêu đề nhãn"
-                                    className={styles.input}
-                                    disabled={loading}
-                                />
-                            </label>
-
-                            <label className={styles.group}>
-                                Thời gian
-                                <input
-                                    type="datetime-local"
-                                    required
-                                    value={form.time}
-                                    onChange={handleChange('time')}
                                     className={styles.input}
                                     disabled={loading}
                                 />
@@ -106,11 +137,23 @@ export default function AddLabelButton({ onCreated }) {
                                 />
                             </label>
 
+                            <label className={styles.group}>
+                                Nội dung
+                                <textarea
+                                    rows={3}
+                                    value={form.content}
+                                    onChange={handleChange('content')}
+                                    placeholder="Nội dung…"
+                                    className={styles.input}
+                                    disabled={loading}
+                                />
+                            </label>
+
                             <div className={styles.actions}>
                                 <button
                                     type="button"
                                     className={styles.btnCancel}
-                                    onClick={() => setOpen(false)}
+                                    onClick={closeForm}
                                     disabled={loading}
                                 >
                                     Huỷ
@@ -127,6 +170,22 @@ export default function AddLabelButton({ onCreated }) {
                     </div>
                 </div>
             )}
+
+            {/* ===== Thông báo kết quả ===== */}
+            <Noti
+                open={showNoti}
+                onClose={closeNoti}
+                status={notiStatus}   /* true nếu status === 2 */
+                mes={notiMes}
+                button={
+                    <button
+                        className={styles.button}
+                        onClick={closeNoti}
+                    >
+                        Tắt thông báo
+                    </button>
+                }
+            />
         </>
     );
 }

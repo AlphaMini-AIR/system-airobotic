@@ -1,81 +1,131 @@
 'use client';
 
-import React, { useState, useCallback, useDeferredValue, memo } from 'react';
+import React, { memo, useState, useCallback, useDeferredValue, useEffect } from 'react';
 import styles from './index.module.css';
 import Loading from '@/components/(loading)/loading';
 import { Re_Client } from '@/data/client';
+import Noti from '@/components/noti';
+import Button from '@/components/(button)/button';
 
-/**
- * props:
- *   data         – danh sách khách hàng cần gửi
- *   labelOptions – mảng tất cả nhãn đã có (được memo ở cha)
- */
-function Senmes({ data = [], labelOptions = [] }) {
+function Senmes({ data = [], labelOptions = [], label }) {
     const [open, setOpen] = useState(false);
-    const [labels, setLabels] = useState([]);      // mảng nhãn đã chọn
+    const [selectedPhones, setSelectedPhones] = useState(new Set());
+    const [labels, setLabels] = useState([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
-    /* ---------- helpers ---------- */
-    const reset = () => {
+    // notification state
+    const [notiOpen, setNotiOpen] = useState(false);
+    const [notiStatus, setNotiStatus] = useState(false);
+    const [notiMes, setNotiMes] = useState('');
+
+    useEffect(() => {
+        if (open) {
+            setSelectedPhones(new Set(data.map(p => p.phone)));
+        }
+    }, [open, data]);
+
+    const reset = useCallback(() => {
         setLabels([]);
         setMessage('');
-    };
+    }, []);
 
     const close = useCallback(() => {
         if (loading) return;
         setOpen(false);
         reset();
-    }, [loading]);
+    }, [loading, reset]);
 
-    /** Thêm 1 nhãn mỗi lần chọn, không trùng lặp */
-    const handleAddLabel = useCallback((e) => {
+    const handleTogglePerson = useCallback(phone => {
+        setSelectedPhones(prev => {
+            const next = new Set(prev);
+            if (next.has(phone)) next.delete(phone);
+            else next.add(phone);
+            return next;
+        });
+    }, []);
+
+    const handleAddLabel = useCallback(e => {
         const val = e.target.value;
         if (!val) return;
-        setLabels((prev) =>
-            prev.includes(val) ? prev : [...prev, val]
-        );
-        e.target.value = '';    // reset select về placeholder
-    }, []);
+        setLabels(prev => {
+            if (prev.includes(val)) return prev;
+            const next = [...prev, val];
+            if (prev.length === 0) {
+                const found = label.find(opt => opt.title === val);
+                if (found?.content) setMessage(found.content);
+            }
+            return next;
+        });
+        e.target.value = '';
+    }, [label]);
 
     const deferredMessage = useDeferredValue(message);
 
     const handleSend = useCallback(async () => {
+        if (selectedPhones.size === 0) {
+            setNotiStatus(false);
+            setNotiMes('Vui lòng chọn ít nhất một người để gửi tin');
+            setNotiOpen(true);
+            return;
+        }
         if (!deferredMessage.trim()) return;
         setLoading(true);
+
+        const recipients = data.filter(p => selectedPhones.has(p.phone));
+
+        let okCount = 0;
+        let errCount = 0;
+        let apiResult;
+
         try {
             const res = await fetch('/api/sendmes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    data,
-                    mes: deferredMessage,
-                    labels,
-                }),
+                body: JSON.stringify({ data: recipients, mes: deferredMessage, labels }),
             });
-            const result = await res.json();
-            if (res.ok) {
-                Re_Client();
-                const ok = result.results.filter((r) => r.status === 'success').length;
-                const err = result.results.filter((r) => r.status === 'failed').length;
-                alert(`Đã gửi: ${ok} thành công, ${err} thất bại`);
+            apiResult = await res.json();
+
+            if (res.ok && Array.isArray(apiResult.data)) {
+                okCount = apiResult.data.filter(r => r.status === 'success').length;
+                errCount = apiResult.data.filter(r => r.status === 'failed').length;
+                setNotiStatus(apiResult.status === 2);
+                setNotiMes(`Đã gửi: ${okCount} thành công, ${errCount} thất bại`);
             } else {
-                console.error(result.error);
-                alert('Gửi thất bại.');
+                setNotiStatus(false);
+                setNotiMes('Gửi thất bại.');
             }
+
+            Re_Client();
         } catch (e) {
             console.error(e);
-            alert('Có lỗi khi gọi API.');
+            setNotiStatus(false);
+            setNotiMes('Có lỗi khi gọi API.');
         } finally {
             setLoading(false);
             close();
-        }
-    }, [data, labels, deferredMessage, close]);
+            setNotiOpen(true);
 
-    /* ---------- render ---------- */
+            // Lưu lịch sử ngầm, không đợi phản hồi
+            if (apiResult?.data) {
+                fetch('/api/hissmes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mes: deferredMessage,
+                        labels,
+                        results: apiResult.data,
+                        source: 0
+                    }),
+                }).catch(err => {
+                    console.error('Lưu lịch sử thất bại', err);
+                });
+            }
+        }
+    }, [data, selectedPhones, labels, deferredMessage, close]);
+
     return (
         <>
-            {/* nút mở modal */}
             <button
                 className="button"
                 onClick={() => setOpen(true)}
@@ -93,85 +143,152 @@ function Senmes({ data = [], labelOptions = [] }) {
                     cursor: 'pointer',
                 }}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={14} height={14} fill="white">
-                    <path d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480l0-83.6c0-4 1.5-7.8 4.2-10.8L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z" />
-                </svg>
-                <p style={{ color: '#fff' }}>Gửi tin nhắn</p>
+                <p style={{ color: '#fff' }}>Gửi tin nhắn ({data.length})</p>
             </button>
 
             {open && (
                 <div className={styles.overlay}>
-                    <div className={styles.background} onClick={close}></div>
-                    <div className={styles.modal}>
-                        {/* header */}
-                        <div className={styles.modalHeader}>
-                            <p className="text_4">Gửi tin nhắn</p>
-                            <button className={styles.iconBtn} onClick={close}>✕</button>
-                        </div>
+                    <div className={styles.background} onClick={close} />
 
-                        {/* body */}
-                        <div className={styles.modalBody}>
-                            <label className="text_6" style={{ marginBottom: 8 }}>
-                                Chọn nhãn (có thể chọn nhiều lần)
-                            </label>
-
-                            {/* select một nhãn/lần */}
-                            <select
-                                className={styles.selectSingle}
-                                onChange={handleAddLabel}
-                                defaultValue=""
-                                disabled={!labelOptions.length}
-                                title={labelOptions.length ? 'Chọn nhãn' : 'Không có nhãn'}
-                            >
-                                <option value="">
-                                    {labelOptions.length ? 'Chọn nhãn' : 'Không có nhãn'}
-                                </option>
-                                {labelOptions.map((lb) => (
-                                    <option key={lb} value={lb}>
-                                        {lb}
-                                    </option>
-                                ))}
-                            </select>
-
-                            {/* hiển thị nhãn đã chọn */}
-                            {labels.length > 0 && (
-                                <div className={styles.selectedWrap}>
-                                    {labels.map((lb) => (
-                                        <span key={lb} className={styles.chip}>
-                                            {lb}
+                    <div className={styles.wrap}>
+                        <div className={styles.person}>
+                            <div className={styles.modalHeader}>
+                                <p className="text_4">
+                                    Danh sách người gửi tin ({selectedPhones.size})
+                                </p>
+                            </div>
+                            <div className={styles.personListWrap}>
+                                {data.map(person => (
+                                    <div key={person.phone} className={styles.personItem}>
+                                        <div className={styles.wrapchecked}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPhones.has(person.phone)}
+                                                onChange={() => handleTogglePerson(person.phone)}
+                                                className={styles.checked}
+                                            />
+                                        </div>
+                                        <span className="text_6" style={{ flex: 1 }}>
+                                            {person.name}
                                         </span>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* nội dung */}
-                            <label className="text_6" style={{ margin: '8px 0' }}>
-                                Nội dung tin nhắn
-                            </label>
-                            <textarea
-                                className={styles.textArea}
-                                rows="4"
-                                placeholder="Nhập nội dung..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                            />
+                                        <span className="text_6" style={{ flex: 1 }}>
+                                            {person.phone}
+                                        </span>
+                                    </div>
+                                ))}
+                                {selectedPhones.size === 0 && (
+                                    <div
+                                        style={{
+                                            background: '#fff8ce',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            gap: 8,
+                                            padding: 12,
+                                            borderBottom: 'thin solid var(--border-color)',
+                                        }}
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 512 512"
+                                            width={16}
+                                            height={16}
+                                            fill="#e4b511"
+                                        >
+                                            <path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480L40 480c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24l0 112c0 13.3 10.7 24 24 24s24-10.7 24-24l0-112c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z" />
+                                        </svg>
+                                        <p className="text_6">
+                                            Bạn cần chọn ít nhất 1 người để gửi tin
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* footer */}
-                        <div className={styles.modalFooter}>
-                            <button className={styles.btnText} onClick={close}>Hủy</button>
-                            <button
-                                className={styles.btnPrimary}
-                                onClick={handleSend}
-                                disabled={!deferredMessage.trim() || loading}
-                            >
-                                {loading ? 'Đang gửi...' : 'Gửi'}
-                            </button>
+                        <div className={styles.modal}>
+                            <div className={styles.modalHeader}>
+                                <p className="text_4">Gửi tin nhắn</p>
+                                <button className={styles.iconBtn} onClick={close}>
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className={styles.modalBody}>
+                                <label className="text_6" style={{ marginBottom: 8 }}>
+                                    Chọn nhãn (có thể chọn nhiều)
+                                </label>
+                                <select
+                                    className={styles.selectSingle}
+                                    onChange={handleAddLabel}
+                                    defaultValue=""
+                                    disabled={!labelOptions.length}
+                                >
+                                    <option value="">
+                                        {labelOptions.length ? 'Chọn nhãn' : 'Không có nhãn'}
+                                    </option>
+                                    {labelOptions.map((opt, i) => (
+                                        <option key={i} value={opt}>
+                                            {opt}
+                                        </option>
+                                    ))}
+                                </select>
+                                {labels.length > 0 && (
+                                    <div className={styles.selectedWrap}>
+                                        {labels.map(lb => (
+                                            <span key={lb} className={styles.chip}>
+                                                {lb}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <label className="text_6" style={{ margin: '8px 0' }}>
+                                    Nội dung tin nhắn
+                                </label>
+                                <textarea
+                                    className={styles.textArea}
+                                    rows={4}
+                                    placeholder="Nhập nội dung..."
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                />
+                            </div>
+
+                            <div className={styles.modalFooter}>
+                                <button
+                                    className={styles.btnText}
+                                    onClick={close}
+                                    disabled={loading}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    className={styles.btnPrimary}
+                                    onClick={handleSend}
+                                    disabled={
+                                        !deferredMessage.trim() || loading || selectedPhones.size === 0
+                                    }
+                                >
+                                    {loading ? 'Đang gửi...' : 'Gửi'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
+
             {loading && <Loading />}
+
+            <Noti
+                open={notiOpen}
+                onClose={() => setNotiOpen(false)}
+                status={notiStatus}
+                mes={notiMes}
+                button={
+                    <button className={styles.button} onClick={() => setNotiOpen(false)} disabled={loading}>
+                        Đóng
+                    </button>
+                }
+            />
         </>
     );
 }

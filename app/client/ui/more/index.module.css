@@ -17,7 +17,6 @@
     flex-direction: column;
     overflow-y: auto;
     box-shadow: var(--boxshaw);
-
     transform: translateX(100%);
     animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -29,12 +28,12 @@
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* @media (prefers-reduced-motion: reduce) {
     .panel {
         animation: none;
         transform: translateX(0);
     }
-}
+} */
 
 /* ===== Header ===== */
 .header {
@@ -106,7 +105,7 @@
 
 .formGroup textarea {
     resize: vertical;
-    min-height: 72px;
+    min-height: 48px;
     padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 6px;

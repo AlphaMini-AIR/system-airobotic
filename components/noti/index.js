@@ -3,7 +3,7 @@
 import Button from '@/components/(button)/button';
 import air from './index.module.css'
 
-export default function Noti({ open, onClose, status, mes }) {
+export default function Noti({ open, onClose, status, mes, button }) {
   if (!open) return null;
 
   return (
@@ -32,7 +32,6 @@ export default function Noti({ open, onClose, status, mes }) {
           backgroundColor: 'rgba(0,0,0,0.5)',
           zIndex: 9,
         }}>
-
       </div>
       <div
         style={{
@@ -58,10 +57,12 @@ export default function Noti({ open, onClose, status, mes }) {
         <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
           {status ? <IconSuccess /> : <IconFailure />}
         </div>
-        <p style={{ padding: '8px 16px 32px 16px', textAlign: 'center' }}>
+        <p style={{ padding: '0 16px 8px 16px', textAlign: 'center' , marginTop: -12 }}>
           {mes}
         </p>
-        <Button onClick={onClose} fullWidth={true}>Tắt thông báo</Button>
+        <div>
+          {button}
+        </div>
       </div>
     </div>
   );
