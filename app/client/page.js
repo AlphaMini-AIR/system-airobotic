@@ -1,14 +1,6 @@
 'use client';
 
-import React, {
-    memo,
-    useCallback,
-    useDeferredValue,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
+import React, { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import HistoryPopup from './ui/his';
 import styles from './index.module.css';
@@ -19,9 +11,7 @@ import AddLabelButton from './ui/addlabel';
 import Loading from '@/components/(loading)/loading';
 const PAGE_SIZE = 10;
 const ACCOUNTS = [
-    { id: 1, name: 'Tài khoản chính' },
-    { id: 2, name: 'Tài khoản kinh doanh' },
-    { id: 3, name: 'Tài khoản hỗ trợ' },
+    { id: 1, name: 'Ai Robotic' }
 ];
 
 const toTitleCase = s =>
@@ -139,7 +129,7 @@ const Row = memo(function Row({ row, rowIndex, visibleKeys, onOpen, onToggle, ch
                         </div>
                     );
                 }
-                if (['source', 'care', 'studyTry', 'study'].includes(k)) return null;
+                if (['source', 'care', 'studyTry', 'study', 'remove'].includes(k)) return null;
                 return (
                     <div key={k} className={styles.gridCell} onClick={() => onOpen(row)}>
                         {k === 'type'
@@ -155,6 +145,7 @@ const Row = memo(function Row({ row, rowIndex, visibleKeys, onOpen, onToggle, ch
 });
 
 export default function Client() {
+
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -503,7 +494,7 @@ export default function Client() {
             {/* Data / Loading / Empty */}
             {
                 data.length === 0 ? (
-                    <Loading content='Đang tải dữ liệu...'/>
+                    <Loading content='Đang tải dữ liệu...' />
                 ) : filteredData.length === 0 ? (
                     <div className={styles.emptyState}>
                         <div className={styles.emptyStateIcon}>📋</div>
@@ -554,7 +545,7 @@ export default function Client() {
                                 >
                                     STT
                                 </div>
-                                {['Tên', 'SĐT', 'Tên học viên', 'Email', 'Tuổi', 'Khu vực', 'Sô nhãn'].map(
+                                {['Tên', 'SĐT', 'Tên học viên', 'Email', 'Tuổi', 'Khu vực', 'Số nhãn'].map(
                                     k => (
                                         <div
                                             key={k}
