@@ -99,12 +99,11 @@ export default function HistoryPopup({ open, onClose, datauser }) {
             <FlexiblePopup
                 open={open}
                 onClose={onClose}
-                fetchData={() => Data_History().then(res => res.data)}
+                data={historyList || []}
                 title="Lịch sử gửi tin nhắn"
                 renderItemList={renderItemList}
                 globalZIndex={1000}
             />
-
             <CenterPopup
                 open={centerOpen}
                 onClose={() => setCenterOpen(false)}
@@ -195,8 +194,8 @@ export default function HistoryPopup({ open, onClose, datauser }) {
                                         )
                                     })}
                                     {filteredRecipients.length === 0 && (
-                                        <li className={styles.noResults}>
-                                            Không tìm thấy
+                                        <li className={`${styles.noResults} text_6_400`}>
+                                            Không tìm thấy người phù hợp
                                         </li>
                                     )}
                                 </ul>

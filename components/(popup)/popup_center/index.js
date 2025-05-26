@@ -1,8 +1,9 @@
 // CenterPopup.jsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import styles from './index.module.css';  // đảm bảo đúng tên file
+import React, { useEffect, useState, useRef } from 'react';
+import styles from './index.module.css';  // nếu bạn dùng centerPopup.module.css thì đổi lại cho khớp
+import Loading from '@/components/(loading)/loading'; // nếu cần
 
 const ANIMATION_DURATION = 300;
 
@@ -11,26 +12,51 @@ export default function CenterPopup({
     onClose,
     title = '',
     children,
-    size = 'md',
+    size = 'md',            // 'sm' | 'md' | 'lg'
     globalZIndex = 1000
 }) {
-    const [mounted, setMounted] = useState(open);
+    const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
+    const popupRef = useRef(null);
 
+    // 1) Khi open=true → mount lên DOM
     useEffect(() => {
         if (open) {
             setMounted(true);
-            requestAnimationFrame(() => setVisible(true));
-        } else if (mounted) {
+        }
+    }, [open]);
+
+    // 2) Khi đã mounted → trong frame kế tiếp bật visible để chạy transition
+    useEffect(() => {
+        if (mounted) {
+            const raf = requestAnimationFrame(() => setVisible(true));
+            return () => cancelAnimationFrame(raf);
+        }
+    }, [mounted]);
+
+    // 3) Khi open chuyển về false → tắt visible, đợi transitionend rồi mới unmount
+    useEffect(() => {
+        if (!open && mounted) {
             setVisible(false);
-            const timer = setTimeout(() => setMounted(false), ANIMATION_DURATION);
-            return () => clearTimeout(timer);
+            const el = popupRef.current;
+            if (!el) return;
+
+            const onEnd = (e) => {
+                if (e.propertyName === 'transform') {
+                    setMounted(false);
+                    el.removeEventListener('transitionend', onEnd);
+                }
+            };
+
+            el.addEventListener('transitionend', onEnd);
+            // optional: guard in case unmount trước khi event fire
+            return () => el.removeEventListener('transitionend', onEnd);
         }
     }, [open, mounted]);
 
+    // nếu chưa mount thì không render gì
     if (!mounted) return null;
-    console.log(title);
-    
+
     return (
         <div
             className={`${styles.overlay} ${visible ? styles.show : ''}`}
@@ -38,7 +64,12 @@ export default function CenterPopup({
             style={{ zIndex: globalZIndex }}
         >
             <div
-                className={`${styles.popup} ${styles[size]} ${visible ? styles.open : ''}`}
+                ref={popupRef}
+                className={`
+          ${styles.popup}
+          ${styles[size]}
+          ${visible ? styles.open : ''}
+        `}
                 onMouseDown={e => e.stopPropagation()}
             >
                 {title && (

@@ -1,13 +1,14 @@
+// FlexiblePopup.js
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styles from './index.module.css';
 import Loading from '@/components/(loading)/loading';
 
 const ANIMATION_DURATION = 300;
 
 export default function FlexiblePopup({
-    // primary popup props
+    // primary
     open,
     onClose,
     fetchData = null,
@@ -15,7 +16,7 @@ export default function FlexiblePopup({
     renderItemList = () => null,
     title = 'Danh sách',
 
-    // secondary popup props
+    // secondary
     secondaryOpen = false,
     onCloseSecondary = () => { },
     fetchDataSecondary = null,
@@ -31,6 +32,7 @@ export default function FlexiblePopup({
     const [error, setError] = useState('');
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
+    const [showContent, setShowContent] = useState(false);
 
     // secondary state
     const [data2, setData2] = useState([]);
@@ -38,25 +40,17 @@ export default function FlexiblePopup({
     const [error2, setError2] = useState('');
     const [mounted2, setMounted2] = useState(false);
     const [visible2, setVisible2] = useState(false);
+    const [showContent2, setShowContent2] = useState(false);
 
+    // refs để lắng nghe transitionend
+    const popupRef = useRef(null);
+    const popup2Ref = useRef(null);
 
-
-    // animate in/out helpers
-    const animateIn = useCallback((setMount, setVisible) => {
-        setMount(true);
-        setTimeout(() => { }, 0); // allow mount
-        requestAnimationFrame(() => setVisible(true));
-    }, []);
-    const animateOut = useCallback((setMount, setVisible) => {
-        setVisible(false);
-        setTimeout(() => setMount(false), ANIMATION_DURATION);
-    }, []);
-
-    // primary effect
+    // 1) Khi open=true: mount popup1
     useEffect(() => {
         if (open) {
-
-            animateIn(setMounted, setVisible);
+            setMounted(true);
+            // load data ngay khi mount
             if (providedData) {
                 setData(providedData);
             } else if (fetchData) {
@@ -67,16 +61,50 @@ export default function FlexiblePopup({
                     .catch(err => setError(err.message || 'Lỗi tải dữ liệu'))
                     .finally(() => setLoading(false));
             }
-        } else if (mounted) {
-            animateOut(setMounted, setVisible);
         }
-    }, [open, providedData, fetchData, animateIn, animateOut, mounted]);
+    }, [open, providedData, fetchData]);
 
-    // secondary effect
+    // 2) Khi popup1 đã mounted, bật visible trong next frame để chạy CSS transition
+    useEffect(() => {
+        if (mounted) {
+            const raf = requestAnimationFrame(() => {
+                setVisible(true);
+            });
+            return () => cancelAnimationFrame(raf);
+        }
+    }, [mounted]);
+
+    // 3) Khi visible=true, delay ANIMATION_DURATION rồi cho render nội dung
+    useEffect(() => {
+        let t;
+        if (visible) {
+            t = setTimeout(() => setShowContent(true), ANIMATION_DURATION);
+        } else {
+            setShowContent(false);
+        }
+        return () => clearTimeout(t);
+    }, [visible]);
+
+    // 4) Khi open=false nhưng vẫn đang mounted: tắt visible rồi đợi transitionend mới unmount
+    useEffect(() => {
+        if (!open && mounted) {
+            setVisible(false);
+            const el = popupRef.current;
+            if (!el) return;
+            const onEnd = (e) => {
+                if (e.propertyName === 'transform') {
+                    setMounted(false);
+                    el.removeEventListener('transitionend', onEnd);
+                }
+            };
+            el.addEventListener('transitionend', onEnd);
+        }
+    }, [open, mounted]);
+
+    // --- Tương tự cho popup2 ---
     useEffect(() => {
         if (secondaryOpen) {
-
-            animateIn(setMounted2, setVisible2);
+            setMounted2(true);
             if (providedDataSecondary) {
                 setData2(providedDataSecondary);
             } else if (fetchDataSecondary) {
@@ -87,59 +115,100 @@ export default function FlexiblePopup({
                     .catch(err => setError2(err.message || 'Lỗi tải dữ liệu'))
                     .finally(() => setLoading2(false));
             }
-        } else if (mounted2) {
-            animateOut(setMounted2, setVisible2);
         }
-    }, [secondaryOpen, providedDataSecondary, fetchDataSecondary, animateIn, animateOut, mounted2]);
+    }, [secondaryOpen, providedDataSecondary, fetchDataSecondary]);
 
+    useEffect(() => {
+        if (mounted2) {
+            const raf2 = requestAnimationFrame(() => {
+                setVisible2(true);
+            });
+            return () => cancelAnimationFrame(raf2);
+        }
+    }, [mounted2]);
+
+    useEffect(() => {
+        let t2;
+        if (visible2) {
+            t2 = setTimeout(() => setShowContent2(true), ANIMATION_DURATION);
+        } else {
+            setShowContent2(false);
+        }
+        return () => clearTimeout(t2);
+    }, [visible2]);
+
+    useEffect(() => {
+        if (!secondaryOpen && mounted2) {
+            setVisible2(false);
+            const el2 = popup2Ref.current;
+            if (!el2) return;
+            const onEnd2 = (e) => {
+                if (e.propertyName === 'transform') {
+                    setMounted2(false);
+                    el2.removeEventListener('transitionend', onEnd2);
+                }
+            };
+            el2.addEventListener('transitionend', onEnd2);
+        }
+    }, [secondaryOpen, mounted2]);
+
+    // Nếu chưa mount popup1, không render gì
     if (!mounted) return null;
 
     return (
         <>
-            {/* Primary overlay */}
+            {/* Popup 1 */}
             <div
                 className={`${styles.overlay} ${visible ? styles.show : ''}`}
                 style={{ zIndex: globalZIndex }}
                 onMouseDown={onClose}
             >
                 <div
-                    className={`${styles.popup} ${visible ? styles.open : ''} ${mounted2 ? styles.shifted : ''
-                        }`}
+                    ref={popupRef}
+                    className={`
+            ${styles.popup}
+            ${visible ? styles.open : ''}
+            ${visible2 ? styles.shifted : ''}
+          `}
                     style={{ zIndex: globalZIndex }}
                     onMouseDown={e => e.stopPropagation()}
                 >
                     <div className={styles.header}>
                         <h3>{title}</h3>
-                        <button onClick={onClose}>&times;</button>
+                        <button className={styles.closeBtn} onClick={onClose}>&times;</button>
                     </div>
                     <div className={styles.body}>
                         {loading && <Loading content="Đang tải" />}
                         {error && <p className={styles.error}>{error}</p>}
-                        {!loading && !error && renderItemList(data)}
+                        {!loading && !error && showContent && renderItemList(data)}
                     </div>
                 </div>
             </div>
 
-            {/* Secondary overlay */}
+            {/* Popup 2 */}
             {mounted2 && (
                 <div
                     className={`${styles.overlay} ${visible2 ? styles.show : ''}`}
-                    style={{ zIndex: globalZIndex }}
+                    style={{ zIndex: globalZIndex + 1 }}
                     onMouseDown={onCloseSecondary}
                 >
                     <div
-                        className={`${styles.popup2} ${visible2 ? styles.open : ''}`}
-                        style={{ zIndex: globalZIndex }}
+                        ref={popup2Ref}
+                        className={`
+              ${styles.popup2}
+              ${visible2 ? styles.open : ''}
+            `}
+                        style={{ zIndex: globalZIndex + 2 }}
                         onMouseDown={e => e.stopPropagation()}
                     >
                         <div className={styles.header}>
                             <h3>{secondaryTitle}</h3>
-                            <button onClick={onCloseSecondary}>&times;</button>
+                            <button className={styles.closeBtn} onClick={onCloseSecondary}>&times;</button>
                         </div>
                         <div className={styles.body}>
                             {loading2 && <Loading content="Đang tải" />}
                             {error2 && <p className={styles.error}>{error2}</p>}
-                            {!loading2 && !error2 && renderSecondaryList(data2)}
+                            {!loading2 && !error2 && showContent2 && renderSecondaryList(data2)}
                         </div>
                     </div>
                 </div>

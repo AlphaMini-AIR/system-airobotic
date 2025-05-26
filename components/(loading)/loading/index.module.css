@@ -6,6 +6,8 @@
     padding: 60px 0;
     background: white;
     border-radius: 8px;
+    height: 100%;
+    width: 100%;
     box-shadow: var(--boxshaw2);
 }
 
@@ -17,4 +19,16 @@
     border-top-color: var(--main_d);
     animation: spin 1s ease-in-out infinite;
     margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingText {
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 500;
 }

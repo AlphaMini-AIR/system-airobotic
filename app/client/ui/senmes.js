@@ -3,7 +3,7 @@
 import React, { memo, useState, useCallback, useDeferredValue, useEffect } from 'react';
 import styles from './index.module.css';
 import Loading from '@/components/(loading)/loading';
-import { Re_Client } from '@/data/client';
+import { Re_Client, Re_History, Re_History_User } from '@/data/client';
 import Noti from '@/components/noti';
 import Button from '@/components/(button)/button';
 
@@ -97,16 +97,17 @@ function Senmes({ data = [], labelOptions = [], label }) {
             }
 
             Re_Client();
+            Re_History();
+            recipients.forEach(person => {
+                Re_History_User(person.phone);
+            })
         } catch (e) {
-            console.error(e);
             setNotiStatus(false);
             setNotiMes('Có lỗi khi gọi API.');
         } finally {
             setLoading(false);
             close();
             setNotiOpen(true);
-
-            // Lưu lịch sử ngầm, không đợi phản hồi
             if (apiResult?.data) {
                 fetch('/api/hissmes', {
                     method: 'POST',

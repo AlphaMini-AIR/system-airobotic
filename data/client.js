@@ -57,7 +57,24 @@ export async function Data_History() {
     }
 }
 
+export async function Data_History_User(params) {
+    try {
+        const res = await fetchApi(`/hissmes/${params}`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`get_hissmes${params}`] }
+        });
+
+        return res;
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
 export async function Re_History() {
     revalidateTag('get_hissmes');
+}
+export async function Re_History_User(params) {
+    revalidateTag(`get_hissmes${params}`);
 }
 

@@ -1,7 +1,7 @@
 import { Schema, model, models } from 'mongoose';
 
 const recipientStatusSchema = new Schema({
-    phone: { type: String, required: true, index: true },
+    phone: { type: String, required: true },
     status: { type: String, required: true, enum: ['success', 'failed', 'skipped'] },
     error: { type: String, default: '' },
 }, { _id: false });

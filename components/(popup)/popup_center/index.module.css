@@ -1,10 +1,11 @@
-/* centerPopup.module.css */
+/* index.module.css */
 .overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 300ms ease-in-out;
+    will-change: opacity;
 }
 
 .overlay.show {
@@ -17,6 +18,7 @@
     top: 50%;
     transform: translate(-50%, 100%);
     transition: transform 300ms ease-in-out;
+    will-change: transform;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
@@ -63,7 +65,7 @@
     cursor: pointer;
 }
 
-/* Khi không có title, nổi nút đóng lên góc */
+/* Khi không có title, nút đóng sẽ floating */
 .closeBtnFloating {
     position: absolute;
     top: 8px;
@@ -72,6 +74,7 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    z-index: 1;
 }
 
 .content {

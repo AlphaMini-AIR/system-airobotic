@@ -691,29 +691,8 @@ export default function Client() {
                 open={historyOpen}
                 onClose={() => setHistoryOpen(false)}
                 datauser={data}
+                type='all'
             />
         </div >
-    );
-}
-
-function Demo() {
-    const { openPopup } = usePopup();
-
-    return (
-        <>
-            <button onClick={() => openPopup({
-                title: 'Popup 1',
-                content:
-                    <button onClick={() => openPopup({
-                        title: 'Popup 2',
-                        content: <p>Nội dung popup thứ hai</p>
-                    })}>
-                        Mở Popup 2
-                    </button>
-            })}>
-                Mở Popup 1
-            </button>
-
-        </>
     );
 }
