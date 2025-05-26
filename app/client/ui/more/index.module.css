@@ -84,15 +84,6 @@
     margin-top: 10px;
 }
 
-.labelChip {
-    background: var(--bg-secondary);
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 13px;
-    line-height: 1.4;
-    white-space: nowrap;
-    color: var(--text-secondary);
-}
 
 /* ===== Form ===== */
 .formGroup {

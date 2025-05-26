@@ -21,6 +21,8 @@ export async function Re_Client() {
     revalidateTag('data_client');
 }
 
+
+
 export async function Data_Label() {
     try {
         const res = await fetchApi(`/label`, {
@@ -39,4 +41,23 @@ export async function Re_Label() {
     revalidateTag('get_label');
 }
 
+
+
+export async function Data_History() {
+    try {
+        const res = await fetchApi(`/hissmes`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: ['get_hissmes'] }
+        });
+
+        return res;
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
+export async function Re_History() {
+    revalidateTag('get_hissmes');
+}
 

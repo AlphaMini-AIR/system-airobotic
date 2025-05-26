@@ -80,16 +80,6 @@ export async function GET() {
   }
 }
 
-/* --------------------- POST handler -------------------- */
-/**
- * Body JSON:
- * {
- *   "phone"    : "0987654321",
- *   "care"     : "...",
- *   "studyTry" : "...",
- *   "study"    : "..."
- * }
- */
 export async function POST(req) {
   try {
     const { phone, care = '', studyTry = '', study = '' } = await req.json();

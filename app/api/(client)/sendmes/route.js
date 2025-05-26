@@ -94,14 +94,14 @@ export async function POST(req) {
     if (commonLabels.length) {
         const { data: sheetData } = await sheets.spreadsheets.values.get({
             spreadsheetId: SHEET_ID,
-            range: `${SHEET_NAME}!A:K`,
+            range: `${SHEET_NAME}!A:L`,
             fields: 'values',
         });
         const rows = sheetData.values || [];
         const phoneSheetMap = new Map();
         rows.forEach((row, idx) => {
             const phoneInSheet = row[1]?.toString().trim();
-            const currentRaw = row[10] || '';
+            const currentRaw = row[11] || '';
             if (phoneInSheet) {
                 phoneSheetMap.set(phoneInSheet, { row: idx + 1, currentRaw });
             }
@@ -122,7 +122,7 @@ export async function POST(req) {
             const merged = Array.from(mergedMap.values());
             const newRaw = JSON.stringify(merged);
             if (newRaw !== info.currentRaw) {
-                updates.push({ range: `${SHEET_NAME}!K${info.row}`, values: [[newRaw]] });
+                updates.push({ range: `${SHEET_NAME}!L${info.row}`, values: [[newRaw]] });
             }
         });
         if (updates.length) {

@@ -68,6 +68,7 @@
     border-radius: 8px;
     outline: none;
     font-family: 'Roboto', sans-serif;
+    min-height: 200px;
 }
 
 .textArea:focus {

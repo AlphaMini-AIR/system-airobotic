@@ -5,7 +5,7 @@ import { Svg_link } from '@/components/svg';
 import Link from 'next/link';
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import Dialog from '@/components/(popup)/popup';
+import Dialog from '@/components/(popup)/popup_center';
 import ImageSelector from './pic_avt';
 
 export default function Profile({ data }) {

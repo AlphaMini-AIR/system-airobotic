@@ -16,6 +16,7 @@ import SidePanel from './ui/more';
 import Senmes from './ui/senmes';
 import { Data_Client, Data_Label, Re_Client } from '@/data/client';
 import AddLabelButton from './ui/addlabel';
+import Loading from '@/components/(loading)/loading';
 const PAGE_SIZE = 10;
 const ACCOUNTS = [
     { id: 1, name: 'Tài khoản chính' },
@@ -316,7 +317,9 @@ export default function Client() {
 
     const closePanel = () => {
         setPanelOpen(false);
-        setSelectedRow(null);
+        setTimeout(() => {
+            setSelectedRow(null);
+        }, 310);
     };
 
     const saveNotes = async vals => {
@@ -500,10 +503,7 @@ export default function Client() {
             {/* Data / Loading / Empty */}
             {
                 data.length === 0 ? (
-                    <div className={styles.loadingContainer}>
-                        <div className={styles.spinner} />
-                        <p className={styles.loadingText}>Đang tải dữ liệu...</p>
-                    </div>
+                    <Loading content='Đang tải dữ liệu...'/>
                 ) : filteredData.length === 0 ? (
                     <div className={styles.emptyState}>
                         <div className={styles.emptyStateIcon}>📋</div>
@@ -690,6 +690,7 @@ export default function Client() {
             <HistoryPopup
                 open={historyOpen}
                 onClose={() => setHistoryOpen(false)}
+                datauser={data}
             />
         </div >
     );

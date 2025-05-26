@@ -248,3 +248,17 @@ p {
   background: white;
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
 }
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 100px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--text-medium);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  display: flex;
+  gap: 4px;
+}
