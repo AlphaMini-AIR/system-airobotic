@@ -7,7 +7,6 @@ import { Li_l } from './li';
 import { useState } from 'react';
 import { Svg_Add } from '@/components/svg';
 import Input from '@/components/(input)/input';
-import Drawer from '@/components/(popup)/draw';
 import Create from './create';
 
 export default function Main({ data_student, data_area }) {
@@ -64,9 +63,9 @@ export default function Main({ data_student, data_area }) {
           ))}
         </div>
       </div>
-      <Drawer isOpen={isDrawerOpen} onClose={() => setDrawerOpen(false)} direction="right" size="600px" animationDuration={0.3} >
+      {/* <Drawer isOpen={isDrawerOpen} onClose={() => setDrawerOpen(false)} direction="right" size="600px" animationDuration={0.3} >
         <Create />
-      </Drawer>
+      </Drawer> */}
     </div>
   );
 }
