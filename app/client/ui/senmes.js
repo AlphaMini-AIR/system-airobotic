@@ -277,7 +277,10 @@ function Senmes({ data = [], labelOptions = [], label }) {
                 </div>
             )}
 
-            {loading && <Loading />}
+            {loading &&
+                <div style={{width:'100%', height: '100%', position: 'fixed', top: 0, left: 0, zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+                    <Loading />
+                </div>}
 
             <Noti
                 open={notiOpen}
