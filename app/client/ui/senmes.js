@@ -121,6 +121,7 @@ function Senmes({ data = [], labelOptions = [], label }) {
                 }).catch(err => {
                     console.error('Lưu lịch sử thất bại', err);
                 });
+                Re_History()
             }
         }
     }, [data, selectedPhones, labels, deferredMessage, close]);
@@ -170,7 +171,7 @@ function Senmes({ data = [], labelOptions = [], label }) {
                                             />
                                         </div>
                                         <span className="text_6" style={{ flex: 1 }}>
-                                            {person.name}
+                                            {person.nameParent}
                                         </span>
                                         <span className="text_6" style={{ flex: 1 }}>
                                             {person.phone}
@@ -278,7 +279,7 @@ function Senmes({ data = [], labelOptions = [], label }) {
             )}
 
             {loading &&
-                <div style={{width:'100%', height: '100%', position: 'fixed', top: 0, left: 0, zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+                <div style={{ width: '100%', height: '100%', position: 'fixed', top: 0, left: 0, zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
                     <Loading />
                 </div>}
 

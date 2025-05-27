@@ -118,7 +118,7 @@ export default function SidePanel({ open, row, labels = [], onClose, onSave }) {
         <>
             <section className={styles.info}>
                 <p className="text_4" style={{ marginBottom: 8 }}>Thông tin khách hàng</p>
-                <InfoRow label="Họ và tên" value={row?.name} />
+                <InfoRow label="Họ và tên" value={row?.nameParent} />
                 <InfoRow label="Số điện thoại" value={row?.phone} />
                 <InfoRow label="Email" value={row?.email} />
                 <InfoRow label="Tên học sinh" value={row?.nameStudent} />
@@ -137,7 +137,7 @@ export default function SidePanel({ open, row, labels = [], onClose, onSave }) {
 
             <section className={styles.info}>
                 <p className="text_4" style={{ marginBottom: 8 }}>Lịch sử chăm sóc</p>
-                <InfoRow label="Số lần chăm sóc" value={12} />
+                {/* <InfoRow label="Số lần chăm sóc" value={12} /> */}
                 <InfoRow label="Giai đoạn chăm sóc" value={row?.source} />
                 <button
                     type="button"

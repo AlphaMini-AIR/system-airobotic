@@ -87,7 +87,7 @@ const applyFiltersToData = (data, { label, search, area, source, type }) =>
         }
         if (search) {
             const q = normalize(search);
-            const name = normalize(row.name || '');
+            const name = normalize(row.nameParent || '');
             const phone = normalize(row.phone || '');
             if (!name.includes(q) && !phone.includes(q)) return false;
         }
@@ -511,7 +511,7 @@ export default function Client() {
                     >
                         {ACCOUNTS.map(acc => (
                             <option key={acc.id} value={acc.id}>
-                                {acc.name}
+                                {acc.nameParent}
                             </option>
                         ))}
                     </select>
@@ -598,7 +598,7 @@ export default function Client() {
                         <div className={styles.gridBody}>
                             {currentRows.map((r, idx) => (
                                 <Row
-                                    key={r.phone}
+                                    key={idx}
                                     row={r}
                                     rowIndex={(page - 1) * PAGE_SIZE + idx}
                                     visibleKeys={visibleKeys}

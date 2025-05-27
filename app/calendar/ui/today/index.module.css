@@ -1,13 +1,13 @@
-.Title {
+.title {
     background: linear-gradient(to left, #485fed, rgba(255, 44, 118, .25)), #485fed;
     color: #FFF;
-    padding: 37px 40px;
+    padding: 27px 40px;
     position: relative;
     border-right: 1px solid #485fed;
     margin-bottom: 50px;
 }
 
-.Title::before {
+.title::before {
     content: "";
     background: linear-gradient(to left, #485fed, rgba(255, 44, 118, .25)), #485fed;
     opacity: 0.4;

@@ -1,0 +1,53 @@
+.calendarCourse {
+    display: flex;
+    justify-content: space-between;
+    margin: 16px;
+    position: relative;
+    cursor: pointer;
+}
+
+.dot {
+    height: 100%;
+    width: 3px;
+    background-color: #e67300;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 0.2s linear;
+}
+
+.content {
+    padding: 12px 16px;
+    padding-left: 24px;
+    z-index: 1;
+    transition: all 0.1s linear;
+    width: 100%;
+}
+
+.contentH {
+    display: flex;
+    align-items: start;
+    gap: 8px;
+    padding: 16px 0;
+    margin: 0;
+    z-index: 1;
+    transition: all 0.3s linear;
+}
+
+.calendarCourse:hover .dot {
+    width: 100%;
+    border-radius: 0 8px 8px 0;
+    z-index: 0;
+}
+.icon{
+    transition: all 0.3s linear;
+}
+.calendarCourse:hover svg {
+    fill: white;
+}
+
+.calendarCourse:hover .content,
+.calendarCourse:hover .contentH {
+    color: #fff;
+    margin-right: 16px;
+}

@@ -5,6 +5,7 @@ import Layout_Login from './(auth)/login';
 import Nav from '@/components/nav';
 
 import '@/styles/all.css'
+
 import air from './layout.module.css'
 
 export const metadata = {

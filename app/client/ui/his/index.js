@@ -1,4 +1,3 @@
-// HistoryPopup.jsx
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -86,7 +85,9 @@ export default function HistoryPopup({ open, onClose, datauser }) {
         return selectedHistory.recipients
             .map(r => {
                 const user = datauser.find(u => u.phone === r.phone) || {};
-                return { phone: r.phone, name: user.name, status: r.status || '—' };
+                console.log(user);
+                
+                return { phone: r.phone, name: user.nameParent, status: r.status || '—' };
             })
             .filter(({ name, phone }) =>
                 name.toLowerCase().includes(filterText.toLowerCase()) ||

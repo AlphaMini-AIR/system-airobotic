@@ -20,12 +20,6 @@ async function getSheets(mode = 'read') {
   return google.sheets({ version: 'v4', auth });
 }
 
-/* ========================================================
-   GET  /api/client      → lấy toàn bộ dữ liệu
-   POST /api/client      → cập nhật 3 ô H I J theo phone
-   ======================================================== */
-
-/* --------------------- GET handler --------------------- */
 export async function GET() {
   try {
     const sheets = await getSheets('read');
@@ -52,7 +46,6 @@ export async function GET() {
       headers.forEach((key, idx) => {
         let cell = row[idx] ?? '';
 
-        // bảo toàn số 0 đầu cho phone (cột B, idx===1)
         if (idx === 1) {
           const str = String(cell);
           cell = str && !str.startsWith('0') ? '0' + str : str;
