@@ -449,6 +449,10 @@
 }
 
 
+.typeCancelled {
+    background-color: var(--red);
+    color: white;
+}
 
 /* Label popup styles */
 .labelModalBackdrop {

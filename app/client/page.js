@@ -1,18 +1,31 @@
 'use client';
 
-import React, { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    memo,
+    useCallback,
+    useDeferredValue,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import HistoryPopup from './ui/his';
 import styles from './index.module.css';
 import SidePanel from './ui/more';
 import Senmes from './ui/senmes';
-import { Data_Client, Data_Label, Re_Client } from '@/data/client';
+import {
+    Data_Client,
+    Data_Label,
+    Re_Client,
+    Re_History,
+    Re_Label
+} from '@/data/client';
 import AddLabelButton from './ui/addlabel';
 import Loading from '@/components/(loading)/loading';
+
 const PAGE_SIZE = 10;
-const ACCOUNTS = [
-    { id: 1, name: 'Ai Robotic' }
-];
+const ACCOUNTS = [{ id: 1, name: 'Ai Robotic' }];
 
 const toTitleCase = s =>
     s
@@ -39,12 +52,31 @@ export const parseLabels = val => {
         .filter(Boolean);
 };
 
+// ===== CHỈNH SỬA TẠI ĐÂY =====
 const getCustomerType = row => {
+    // Ưu tiên loại Đã hủy nếu có
+    if (row.remove && row.remove.trim() !== '') return 'Đã hủy';
     if (row.study) return 'Nhập học';
     if (row.studyTry) return 'Học thử';
     if (row.care) return 'Có nhu cầu';
     return 'Mới';
 };
+
+const renderCustomerTypeBadge = type => {
+    const badgeBy = {
+        'Mới': styles.typeNew,
+        'Có nhu cầu': styles.typeInterested,
+        'Học thử': styles.typeTrial,
+        'Nhập học': styles.typeEnrolled,
+        'Đã hủy': styles.typeCancelled
+    };
+    return (
+        <span className={`${styles.typeBadge} ${badgeBy[type] || styles.typeNew}`}>
+            {type}
+        </span>
+    );
+};
+// ===============================
 
 const applyFiltersToData = (data, { label, search, area, source, type }) =>
     data.filter(row => {
@@ -59,9 +91,12 @@ const applyFiltersToData = (data, { label, search, area, source, type }) =>
             const phone = normalize(row.phone || '');
             if (!name.includes(q) && !phone.includes(q)) return false;
         }
-        if (!row.area.toString().toLowerCase().includes(area.toLowerCase())) return false;
-        if (!row.source.toString().toLowerCase().includes(source.toLowerCase())) return false;
-        if (!getCustomerType(row).toLowerCase().includes(type.toLowerCase())) return false;
+        if (!row.area.toString().toLowerCase().includes(area.toLowerCase()))
+            return false;
+        if (!row.source.toString().toLowerCase().includes(source.toLowerCase()))
+            return false;
+        if (!getCustomerType(row).toLowerCase().includes(type.toLowerCase()))
+            return false;
         return true;
     });
 
@@ -80,27 +115,20 @@ const useSelection = () => {
         toggleOne,
         clear,
         setSelectedIds,
-        size: selectedIds.size,
+        size: selectedIds.size
     };
 };
 
-const renderCustomerTypeBadge = type => {
-    const badgeBy = {
-        'Mới': styles.typeNew,
-        'Có nhu cầu': styles.typeInterested,
-        'Học thử': styles.typeTrial,
-        'Nhập học': styles.typeEnrolled,
-    };
+const Row = memo(function Row({
+    row,
+    rowIndex,
+    visibleKeys,
+    onOpen,
+    onToggle,
+    checked
+}) {
     return (
-        <span className={`${styles.typeBadge} ${badgeBy[type] || styles.typeNew}`}>
-            {type}
-        </span>
-    );
-};
-
-const Row = memo(function Row({ row, rowIndex, visibleKeys, onOpen, onToggle, checked }) {
-    return (
-        <div className={styles.gridRow}>
+        <div className={styles.gridRow} style={{ backgroundColor: row.remove != '' ? '#ffd9dd' : 'white' }}>
             <div
                 className={`${styles.gridCell} ${styles.colTiny}`}
                 style={{ textAlign: 'center', flex: 0.5 }}
@@ -129,7 +157,8 @@ const Row = memo(function Row({ row, rowIndex, visibleKeys, onOpen, onToggle, ch
                         </div>
                     );
                 }
-                if (['source', 'care', 'studyTry', 'study', 'remove'].includes(k)) return null;
+                if (['source', 'care', 'studyTry', 'study', 'remove'].includes(k))
+                    return null;
                 return (
                     <div key={k} className={styles.gridCell} onClick={() => onOpen(row)}>
                         {k === 'type'
@@ -149,6 +178,7 @@ export default function Client() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+
     const [historyOpen, setHistoryOpen] = useState(false);
     const [data, setData] = useState([]);
     const [filters, setFilters] = useState({
@@ -156,7 +186,7 @@ export default function Client() {
         search: searchParams.get('search') || '',
         area: searchParams.get('area') || '',
         source: searchParams.get('source') || '',
-        type: searchParams.get('type') || '',
+        type: searchParams.get('type') || ''
     });
     const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
     const [showLabelPopup, setShowLabelPopup] = useState(false);
@@ -168,7 +198,7 @@ export default function Client() {
         size: selectedCount,
         toggleOne: toggleSelectRow,
         clear: clearSelection,
-        setSelectedIds,
+        setSelectedIds
     } = useSelection();
 
     const [selectedRow, setSelectedRow] = useState(null);
@@ -183,7 +213,6 @@ export default function Client() {
             setData(res.data || []);
         } catch (e) {
             console.error(e);
-            alert('Không thể tải dữ liệu từ Google Sheets!');
         } finally {
             setIsReloading(false);
         }
@@ -196,9 +225,7 @@ export default function Client() {
         try {
             const res = await Data_Label();
             setLabelsDB(res.data || []);
-        } catch (e) {
-            alert('Không lấy được danh sách nhãn!');
-        }
+        } catch (e) { }
     }, []);
     useEffect(() => {
         loadLabels();
@@ -235,6 +262,7 @@ export default function Client() {
                 .sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' })),
         [labelsDB]
     );
+
     const inlineLabels = useMemo(() => uniqueLabels.slice(0, 6), [uniqueLabels]);
     const selectedLabelContent = useMemo(() => {
         if (!filters.label) return '';
@@ -264,7 +292,9 @@ export default function Client() {
     }, []);
     const toggleLabel = useCallback(
         txt => {
-            const labels = filters.label ? filters.label.split(',').map(l => l.trim()) : [];
+            const labels = filters.label
+                ? filters.label.split(',').map(l => l.trim())
+                : [];
             const idx = labels.indexOf(txt);
             if (idx >= 0) labels.splice(idx, 1);
             else labels.push(txt);
@@ -275,6 +305,8 @@ export default function Client() {
     );
     const reloadData = useCallback(async () => {
         await Re_Client();
+        await Re_History();
+        await Re_Label();
         window.location.reload();
     }, []);
 
@@ -284,10 +316,7 @@ export default function Client() {
     );
 
     const sendMessage = useCallback(async () => {
-        if (!selectedCustomers.length) {
-            alert('Không có khách hàng được chọn để gửi tin!');
-            return;
-        }
+        if (!selectedCustomers.length) return;
         try {
             const res = await fetch('/api/send', {
                 method: 'POST',
@@ -295,14 +324,12 @@ export default function Client() {
                 body: JSON.stringify({
                     clients: selectedCustomers,
                     accountId: selectedAccount,
-                    defaultContent: selectedLabelContent,
-                }),
+                    defaultContent: selectedLabelContent
+                })
             });
             if (!res.ok) throw new Error(await res.text());
-            alert(`Đã gửi tin nhắn cho ${selectedCustomers.length} khách hàng!`);
         } catch (err) {
             console.error(err);
-            alert('Có lỗi khi gửi tin nhắn.');
         }
     }, [selectedCustomers, selectedAccount, selectedLabelContent]);
 
@@ -313,28 +340,19 @@ export default function Client() {
         }, 310);
     };
 
-    const saveNotes = async vals => {
-        if (!selectedRow) return;
-        try {
-            await fetch('/api/client', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: selectedRow.phone, ...vals }),
-            });
-            setData(d =>
-                d.map(r => (r.phone === selectedRow.phone ? { ...r, ...vals } : r))
-            );
-            alert('Đã lưu!');
-            closePanel();
-        } catch (e) {
-            console.error(e);
-            alert('Lưu thất bại');
-        }
+    const saveNotes = async () => {
+        setPanelOpen(false);
+        await Re_Client();
+        const res = await Data_Client();
+        setData(res.data || []);
+        router.refresh()
+
     };
 
     const headerCheckboxRef = useRef(null);
     const allChecked =
-        filteredData.length > 0 && filteredData.every(r => selectedIds.has(r.phone));
+        filteredData.length > 0 &&
+        filteredData.every(r => selectedIds.has(r.phone));
     const partialChecked =
         !allChecked && filteredData.some(r => selectedIds.has(r.phone));
     useEffect(() => {
@@ -372,6 +390,7 @@ export default function Client() {
                         </button>
                     </div>
                 </div>
+
                 <div className={styles.filterChips}>
                     <span className="text_6">Nhãn phổ biến:</span>
                     {inlineLabels.map(lbl => {
@@ -394,7 +413,9 @@ export default function Client() {
                     )}
                     <AddLabelButton onCreated={loadLabels} />
                 </div>
+
                 <div className={styles.filterControls}>
+                    {/* Tìm kiếm */}
                     <div className={styles.filterGroup}>
                         <label htmlFor="nameFilter" className="text_6">
                             Tìm kiếm (tên/SĐT):
@@ -407,6 +428,8 @@ export default function Client() {
                             onChange={handleFilterChange('search')}
                         />
                     </div>
+
+                    {/* Khu vực */}
                     <div className={styles.filterGroup}>
                         <label htmlFor="areaFilter" className="text_6">
                             Khu vực:
@@ -425,6 +448,8 @@ export default function Client() {
                             ))}
                         </select>
                     </div>
+
+                    {/* Nguồn */}
                     <div className={styles.filterGroup}>
                         <label htmlFor="sourceFilter" className="text_6">
                             Nguồn:
@@ -443,6 +468,8 @@ export default function Client() {
                             ))}
                         </select>
                     </div>
+
+                    {/* Loại khách hàng */}
                     <div className={styles.filterGroup}>
                         <label htmlFor="typeFilter" className="text_6">
                             Loại khách hàng:
@@ -454,7 +481,13 @@ export default function Client() {
                             onChange={handleFilterChange('type')}
                         >
                             <option value="">-- Tất cả loại --</option>
-                            {['Mới', 'Có nhu cầu', 'Học thử', 'Nhập học'].map(t => (
+                            {[
+                                'Mới',
+                                'Có nhu cầu',
+                                'Học thử',
+                                'Nhập học',
+                                'Đã hủy'
+                            ].map(t => (
                                 <option key={t} value={t}>
                                     {t}
                                 </option>
@@ -492,183 +525,179 @@ export default function Client() {
             </div>
 
             {/* Data / Loading / Empty */}
-            {
-                data.length === 0 ? (
-                    <Loading content='Đang tải dữ liệu...' />
-                ) : filteredData.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <div className={styles.emptyStateIcon}>📋</div>
-                        <p className={styles.emptyStateText}>
-                            Không tìm thấy dữ liệu nào phù hợp với bộ lọc
-                        </p>
-                        <button className={styles.btnReset} onClick={resetFilters}>
-                            Xoá bộ lọc
-                        </button>
-                    </div>
-                ) : (
-                    <>
-                        {/* Grid */}
-                        <div className={styles.dataGrid}>
-                            <div className={styles.gridHeader}>
-                                <div
-                                    className={`${styles.gridCell} ${styles.colTiny}`}
-                                    style={{ textAlign: 'center', flex: 0.5 }}
-                                >
-                                    <input
-                                        ref={headerCheckboxRef}
-                                        type="checkbox"
-                                        className={styles.bigCheckbox}
-                                        checked={allChecked}
-                                        onChange={() =>
-                                            allChecked
-                                                ? clearSelection()
-                                                : setSelectedIds(
-                                                    new Set(filteredData.map(r => r.phone))
-                                                )
-                                        }
-                                    />
-                                    {selectedCount > 0 && (
-                                        <span
-                                            style={{
-                                                fontSize: 14,
-                                                marginLeft: 4,
-                                                color: 'white',
-                                            }}
-                                        >
-                                            {selectedCount} người
-                                        </span>
-                                    )}
-                                </div>
-                                <div
-                                    className={`text_6 ${styles.colSmall}`}
-                                    style={{ padding: 16, color: 'white', flex: 0.5 }}
-                                >
-                                    STT
-                                </div>
-                                {['Tên', 'SĐT', 'Tên học viên', 'Email', 'Tuổi', 'Khu vực', 'Số nhãn'].map(
-                                    k => (
-                                        <div
-                                            key={k}
-                                            className="text_6"
-                                            style={{ padding: 16, color: 'white' }}
-                                        >
-                                            {k}
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                            <div className={styles.gridBody}>
-                                {currentRows.map((r, idx) => (
-                                    <Row
-                                        key={r.phone}
-                                        row={r}
-                                        rowIndex={(page - 1) * PAGE_SIZE + idx}
-                                        visibleKeys={visibleKeys}
-                                        onOpen={row => {
-                                            setSelectedRow(row);
-                                            setPanelOpen(true);
+            {data.length === 0 ? (
+                <Loading content="Đang tải dữ liệu..." />
+            ) : filteredData.length === 0 ? (
+                <div className={styles.emptyState}>
+                    <div className={styles.emptyStateIcon}>📋</div>
+                    <p className={styles.emptyStateText}>
+                        Không tìm thấy dữ liệu nào phù hợp với bộ lọc
+                    </p>
+                    <button className={styles.btnReset} onClick={resetFilters}>
+                        Xoá bộ lọc
+                    </button>
+                </div>
+            ) : (
+                <>
+                    {/* Grid */}
+                    <div className={styles.dataGrid}>
+                        <div className={styles.gridHeader}>
+                            <div
+                                className={`${styles.gridCell} ${styles.colTiny}`}
+                                style={{ textAlign: 'center', flex: 0.5 }}
+                            >
+                                <input
+                                    ref={headerCheckboxRef}
+                                    type="checkbox"
+                                    className={styles.bigCheckbox}
+                                    checked={allChecked}
+                                    onChange={() =>
+                                        allChecked
+                                            ? clearSelection()
+                                            : setSelectedIds(
+                                                new Set(filteredData.map(r => r.phone))
+                                            )
+                                    }
+                                />
+                                {selectedCount > 0 && (
+                                    <span
+                                        style={{
+                                            fontSize: 14,
+                                            marginLeft: 4,
+                                            color: 'white'
                                         }}
-                                        onToggle={toggleSelectRow}
-                                        checked={selectedIds.has(r.phone)}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className={styles.pagination}>
-                                {page > 1 && (
-                                    <button
-                                        onClick={() => setPage(page - 1)}
-                                        className={styles.pageBtn}
                                     >
-                                        &laquo; Trang trước
-                                    </button>
+                                        {selectedCount} người
+                                    </span>
                                 )}
-                                <div className={styles.pageNumbers}>
-                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                        let pageNum;
-                                        if (totalPages <= 5) pageNum = i + 1;
-                                        else if (page <= 3) pageNum = i + 1;
-                                        else if (page >= totalPages - 2)
-                                            pageNum = totalPages - 4 + i;
-                                        else pageNum = page - 2 + i;
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                onClick={() => setPage(pageNum)}
-                                                className={`${styles.pageBtn}${pageNum === page
-                                                    ? ` ${styles.pageBtnActive}`
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
+                            </div>
+                            <div
+                                className={`text_6 ${styles.colSmall}`}
+                                style={{ padding: 16, color: 'white', flex: 0.5 }}
+                            >
+                                STT
+                            </div>
+                            {[
+                                'Tên',
+                                'SĐT',
+                                'Tên học viên',
+                                'Email',
+                                'Tuổi',
+                                'Khu vực',
+                                'Số nhãn'
+                            ].map(k => (
+                                <div
+                                    key={k}
+                                    className="text_6"
+                                    style={{ padding: 16, color: 'white' }}
+                                >
+                                    {k}
                                 </div>
-                                {page < totalPages && (
-                                    <button
-                                        onClick={() => setPage(page + 1)}
-                                        className={styles.pageBtn}
-                                    >
-                                        Trang sau &raquo;
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </>
-                )
-            }
+                            ))}
+                        </div>
+                        <div className={styles.gridBody}>
+                            {currentRows.map((r, idx) => (
+                                <Row
+                                    key={r.phone}
+                                    row={r}
+                                    rowIndex={(page - 1) * PAGE_SIZE + idx}
+                                    visibleKeys={visibleKeys}
+                                    onOpen={row => {
+                                        setSelectedRow(row);
+                                        setPanelOpen(true);
+                                    }}
+                                    onToggle={toggleSelectRow}
+                                    checked={selectedIds.has(r.phone)}
+                                />
+                            ))}
+                        </div>
+                    </div>
 
-            {/* Label Popup */}
-            {
-                showLabelPopup && (
-                    <div
-                        className={styles.labelModalBackdrop}
-                        onClick={() => setShowLabelPopup(false)}
-                    >
-                        <div
-                            className={styles.labelModal}
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <h3 className={styles.labelModalTitle}>
-                                Chọn nhãn để lọc
-                            </h3>
-                            <div className={styles.labelModalGrid}>
-                                {uniqueLabels.map(lbl => {
-                                    const active = filters.label.includes(lbl);
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className={styles.pagination}>
+                            {page > 1 && (
+                                <button
+                                    onClick={() => setPage(page - 1)}
+                                    className={styles.pageBtn}
+                                >
+                                    &laquo; Trang trước
+                                </button>
+                            )}
+                            <div className={styles.pageNumbers}>
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) pageNum = i + 1;
+                                    else if (page <= 3) pageNum = i + 1;
+                                    else if (page >= totalPages - 2)
+                                        pageNum = totalPages - 4 + i;
+                                    else pageNum = page - 2 + i;
                                     return (
                                         <button
-                                            key={lbl}
-                                            className={`${styles.chipLarge}${active ? ` ${styles.chipActive}` : ''
+                                            key={pageNum}
+                                            onClick={() => setPage(pageNum)}
+                                            className={`${styles.pageBtn}${pageNum === page ? ` ${styles.pageBtnActive}` : ''
                                                 }`}
-                                            onClick={() => {
-                                                toggleLabel(lbl);
-                                                setShowLabelPopup(false);
-                                            }}
                                         >
-                                            {lbl}
-                                            {active && (
-                                                <span className={styles.chipRemove}>
-                                                    ×
-                                                </span>
-                                            )}
+                                            {pageNum}
                                         </button>
                                     );
                                 })}
                             </div>
-                            <button
-                                className={styles.btnCloseModal}
-                                onClick={() => setShowLabelPopup(false)}
-                            >
-                                Đóng
-                            </button>
+                            {page < totalPages && (
+                                <button
+                                    onClick={() => setPage(page + 1)}
+                                    className={styles.pageBtn}
+                                >
+                                    Trang sau &raquo;
+                                </button>
+                            )}
                         </div>
+                    )}
+                </>
+            )}
+
+            {/* Label Popup */}
+            {showLabelPopup && (
+                <div
+                    className={styles.labelModalBackdrop}
+                    onClick={() => setShowLabelPopup(false)}
+                >
+                    <div
+                        className={styles.labelModal}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h3 className={styles.labelModalTitle}>Chọn nhãn để lọc</h3>
+                        <div className={styles.labelModalGrid}>
+                            {uniqueLabels.map(lbl => {
+                                const active = filters.label.includes(lbl);
+                                return (
+                                    <button
+                                        key={lbl}
+                                        className={`${styles.chipLarge}${active ? ` ${styles.chipActive}` : ''
+                                            }`}
+                                        onClick={() => {
+                                            toggleLabel(lbl);
+                                            setShowLabelPopup(false);
+                                        }}
+                                    >
+                                        {lbl}
+                                        {active && (
+                                            <span className={styles.chipRemove}>×</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button
+                            className={styles.btnCloseModal}
+                            onClick={() => setShowLabelPopup(false)}
+                        >
+                            Đóng
+                        </button>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Side Panel */}
             <SidePanel
@@ -678,12 +707,14 @@ export default function Client() {
                 onClose={closePanel}
                 onSave={saveNotes}
             />
+
+            {/* History Popup */}
             <HistoryPopup
                 open={historyOpen}
                 onClose={() => setHistoryOpen(false)}
                 datauser={data}
-                type='all'
+                type="all"
             />
-        </div >
+        </div>
     );
 }

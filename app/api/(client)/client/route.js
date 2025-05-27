@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 
 const SPREADSHEET_ID = '1ZQsHUyVD3vmafcm6_egWup9ErXfxIg4U-TfVDgDztb8';
-const RANGE_DATA = 'Data!A:L';       
+const RANGE_DATA = 'Data!A:L';
 
 async function getSheets(mode = 'read') {
   const scopes = mode === 'read'
@@ -82,18 +82,18 @@ export async function GET() {
 
 export async function POST(req) {
   try {
-    const { phone, care = '', studyTry = '', study = '' } = await req.json();
+    const { phone, care, studyTry, study, remove } = await req.json();
 
     if (!phone) {
       return new Response(
-        JSON.stringify({ error: 'Thiếu số điện thoại (phone)' }),
+        JSON.stringify({ status: 1, mes: 'Thiếu số điện thoại (phone)', data: [] }),
         { status: 400, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     const sheets = await getSheets('write');
 
-    /* 1. Đọc cột B để tìm row */
+    // 1. Lấy danh sách tất cả phone, tìm index
     const { data } = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Data!B:B',
@@ -101,35 +101,50 @@ export async function POST(req) {
       majorDimension: 'COLUMNS',
       fields: 'values',
     });
-
     const normalizePhone = (p) => {
       const s = String(p).trim();
       return s && s[0] !== '0' ? '0' + s : s;
     };
-
     const phones = (data.values?.[0] ?? []).map(normalizePhone);
     const target = normalizePhone(phone);
-    const idx = phones.findIndex((p) => p === target);
-
+    const idx = phones.findIndex(p => p === target);
     if (idx === -1) {
       return new Response(
-        JSON.stringify({ error: 'Không tìm thấy phone trong Sheet' }),
+        JSON.stringify({ status: 1, mes: 'Không tìm thấy phone trong Sheet', data: [] }),
         { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
+    const rowNum = idx + 1; // dòng thực tế trên Sheet
 
-    const rowNum = idx + 1;                         // dòng trong Sheet
+    // 2. Đọc giá trị cũ của 4 ô H, I, J, K tại dòng rowNum
+    const { data: oldData } = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `Data!H${rowNum}:K${rowNum}`,
+      valueRenderOption: 'UNFORMATTED_VALUE',
+      majorDimension: 'ROWS',
+      fields: 'values',
+    });
+    const oldValues = oldData.values?.[0] ?? [];
+    const [oldCare = '', oldStudyTry = '', oldStudy = '', oldRemove = ''] = oldValues;
 
-    /* 2. Ghi vào H I J */
+    // 3. Merge giá trị: nếu có trong body thì dùng value mới, không thì giữ lại value cũ
+    const newCare = care !== undefined ? care : oldCare;
+    const newStudyTry = studyTry !== undefined ? studyTry : oldStudyTry;
+    const newStudy = study !== undefined ? study : oldStudy;
+    const newRemove = remove !== undefined ? remove : oldRemove;
+
+    // 4. Cập nhật 4 cột H–K với mảng đã merge
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `Data!H${rowNum}:J${rowNum}`,
+      range: `Data!H${rowNum}:K${rowNum}`,
       valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[care, studyTry, study]] },
+      requestBody: {
+        values: [[newCare, newStudyTry, newStudy, newRemove]]
+      },
     });
 
     return new Response(
-      JSON.stringify({ message: 'Đã cập nhật', row: rowNum }),
+      JSON.stringify({ status: 2, mes: 'Đã cập nhật', data: rowNum }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   } catch (err) {
