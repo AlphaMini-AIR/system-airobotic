@@ -104,7 +104,7 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                             <p className='text_4'>Thông tin học sinh (sĩ số: {detail.course.Student.length} học sinh)</p>
                             <div className={styles.popup_box}>
                                 {detail.course.Student.length != 0 ?
-                                    <div style={{ height: 200 ,overflow:'hidden', overflowY:'auto'}}>
+                                    <div style={{ maxHeight: 180 ,overflow:'hidden', overflowY:'auto'}}>
                                         {detail.course.Student.map((student, index) => (
                                             <div key={index} className='text_6_400' style={{ padding: '6px 4px', display: 'flex', justifyContent: 'space-between' }}>
                                                 <p>{student.Name}</p>
