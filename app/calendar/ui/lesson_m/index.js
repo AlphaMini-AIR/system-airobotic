@@ -83,14 +83,16 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                 size="md"
                 globalZIndex={1000}
             >
-
-                {loading && <Loading />}
+                {loading && <div style={{ height: 400 }}>
+                    <Title content={'Lớp ...'} click={() => setOpen(false)} />
+                    <Loading content={'Đang tải dữ liệu'} />
+                </div>}
                 {!loading && error && (
                     <div style={{ padding: '1rem', color: 'red' }}>{error}</div>
                 )}
                 {!loading && detail && (
                     <>
-                        <Title content={detail.course.ID} />
+                        <Title content={detail.course.ID} click={() => setOpen(false)} />
                         <div className={`Lớp ${styles.popup_container}`}>
                             <p className='text_4'>Thông tin buổi học</p>
                             <div className={styles.popup_box}>
@@ -104,7 +106,7 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                             <p className='text_4'>Thông tin học sinh (sĩ số: {detail.course.Student.length} học sinh)</p>
                             <div className={styles.popup_box}>
                                 {detail.course.Student.length != 0 ?
-                                    <div style={{ maxHeight: 180 ,overflow:'hidden', overflowY:'auto'}}>
+                                    <div style={{ maxHeight: 180, overflow: 'hidden', overflowY: 'auto' }}>
                                         {detail.course.Student.map((student, index) => (
                                             <div key={index} className='text_6_400' style={{ padding: '6px 4px', display: 'flex', justifyContent: 'space-between' }}>
                                                 <p>{student.Name}</p>
