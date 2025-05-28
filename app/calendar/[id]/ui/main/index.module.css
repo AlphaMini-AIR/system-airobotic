@@ -131,8 +131,40 @@
     border-bottom: thin solid var(--border-color);
 }
 
+.headerRow.row:hover {
+    background-color: var(--main_d) !important;
+}
+
 .noData {
     padding: 16px;
     text-align: center;
     color: #777;
+}
+
+/* ===== RADIO BUTTONS ===== */
+.attendanceRadio {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.attendanceRadio label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.attendanceRadio label:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.attendanceRadio input[type="radio"] {
+    margin: 0;
+    transform: scale(1.1);
 }
