@@ -1,18 +1,23 @@
 'use client';
 
 import React, { memo, useState, useCallback, useDeferredValue, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './index.module.css';
 import Loading from '@/components/(loading)/loading';
 import { Re_Client, Re_History, Re_History_User } from '@/data/client';
 import Noti from '@/components/noti';
-import Button from '@/components/(button)/button';
 
-function Senmes({ data = [], labelOptions = [], label }) {
+function Senmes({ data = [], labelOptions = [], label, reload }) {
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [selectedPhones, setSelectedPhones] = useState(new Set());
     const [labels, setLabels] = useState([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Progress tracking state
+    const [progress, setProgress] = useState({ current: 0, total: 0, currentPhone: '' });
+    const [progressVisible, setProgressVisible] = useState(false);
 
     // notification state
     const [notiOpen, setNotiOpen] = useState(false);
@@ -60,9 +65,7 @@ function Senmes({ data = [], labelOptions = [], label }) {
         e.target.value = '';
     }, [label]);
 
-    const deferredMessage = useDeferredValue(message);
-
-    const handleSend = useCallback(async () => {
+    const deferredMessage = useDeferredValue(message); const handleSend = useCallback(async () => {
         if (selectedPhones.size === 0) {
             setNotiStatus(false);
             setNotiMes('Vui lòng chọn ít nhất một người để gửi tin');
@@ -70,59 +73,97 @@ function Senmes({ data = [], labelOptions = [], label }) {
             return;
         }
         if (!deferredMessage.trim()) return;
+
         setLoading(true);
+        setProgressVisible(true);
 
         const recipients = data.filter(p => selectedPhones.has(p.phone));
+        const total = recipients.length;
+        const results = [];
+
+        setProgress({ current: 0, total, currentPhone: '' });
 
         let okCount = 0;
         let errCount = 0;
-        let apiResult;
 
         try {
-            const res = await fetch('/api/sendmes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: recipients, mes: deferredMessage, labels }),
-            });
-            apiResult = await res.json();
+            // Process each phone number individually
+            for (let i = 0; i < recipients.length; i++) {
+                const recipient = recipients[i];
+                setProgress({ current: i + 1, total, currentPhone: recipient.phone });
 
-            if (res.ok && Array.isArray(apiResult.data)) {
-                okCount = apiResult.data.filter(r => r.status === 'success').length;
-                errCount = apiResult.data.filter(r => r.status === 'failed').length;
-                setNotiStatus(apiResult.status === 2);
-                setNotiMes(`Đã gửi: ${okCount} thành công, ${errCount} thất bại`);
-            } else {
-                setNotiStatus(false);
-                setNotiMes('Gửi thất bại.');
+                try {
+                    const res = await fetch('/api/sendmes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone: recipient.phone,
+                            mes: deferredMessage,
+                            labels
+                        }),
+                    });
+
+                    const apiResult = await res.json();
+
+                    if (res.ok && apiResult.status === 2) {
+                        results.push({ phone: recipient.phone, status: 'success' });
+                        okCount++;
+                    } else {
+                        results.push({
+                            phone: recipient.phone,
+                            status: 'failed',
+                            error: apiResult.mes || 'Unknown error'
+                        });
+                        errCount++;
+                    }
+                } catch (error) {
+                    results.push({
+                        phone: recipient.phone,
+                        status: 'failed',
+                        error: error.message
+                    });
+                    errCount++;
+                }
+
+                // Small delay to prevent overwhelming the API
+                if (i < recipients.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
             }
-
+            setNotiStatus(okCount > 0);
+            setNotiMes(`Đã gửi: ${okCount} thành công, ${errCount} thất bại`);
             Re_Client();
             Re_History();
             recipients.forEach(person => {
                 Re_History_User(person.phone);
-            })
+            });
+            if (results.length > 0) {
+                try {
+                    await fetch('/api/hissmes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            mes: deferredMessage,
+                            labels,
+                            results,
+                            source: 0
+                        }),
+                    });
+                    Re_History();
+                } catch (err) {
+                    console.error('Lưu lịch sử thất bại', err);
+                }
+            }
+
         } catch (e) {
             setNotiStatus(false);
             setNotiMes('Có lỗi khi gọi API.');
         } finally {
             setLoading(false);
+            setProgressVisible(false);
             close();
             setNotiOpen(true);
-            if (apiResult?.data) {
-                fetch('/api/hissmes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        mes: deferredMessage,
-                        labels,
-                        results: apiResult.data,
-                        source: 0
-                    }),
-                }).catch(err => {
-                    console.error('Lưu lịch sử thất bại', err);
-                });
-                Re_History()
-            }
+
         }
     }, [data, selectedPhones, labels, deferredMessage, close]);
 
@@ -276,11 +317,58 @@ function Senmes({ data = [], labelOptions = [], label }) {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {loading &&
-                <div style={{ width: '100%', height: '100%', position: 'fixed', top: 0, left: 0, zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-                    <Loading />
+            )}            {loading &&
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    zIndex: 9999,
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: 12,
+                        padding: 24,
+                        minWidth: 300,
+                        textAlign: 'center',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
+                    }}>
+                        <Loading />
+                        {progressVisible && (
+                            <div style={{ marginTop: 16 }}>
+                                <p className="text_6" style={{ marginBottom: 8 }}>
+                                    Đang gửi tin nhắn...
+                                </p>
+                                <div style={{
+                                    background: '#f0f0f0',
+                                    borderRadius: 8,
+                                    height: 8,
+                                    marginBottom: 8,
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        background: 'var(--main_d)',
+                                        height: '100%',
+                                        width: `${(progress.current / progress.total) * 100}%`,
+                                        transition: 'width 0.3s ease'
+                                    }} />
+                                </div>
+                                <p className="text_7" style={{ color: '#666' }}>
+                                    {progress.current} / {progress.total}
+                                </p>
+                                {progress.currentPhone && (
+                                    <p className="text_7" style={{ color: '#999', marginTop: 4 }}>
+                                        Đang gửi: {progress.currentPhone}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>}
 
             <Noti
@@ -289,7 +377,10 @@ function Senmes({ data = [], labelOptions = [], label }) {
                 status={notiStatus}
                 mes={notiMes}
                 button={
-                    <button className={styles.button} onClick={() => setNotiOpen(false)} disabled={loading}>
+                    <button className={styles.button} onClick={() => {
+                        setNotiOpen(false)
+                        reload
+                    }} disabled={loading}>
                         Đóng
                     </button>
                 }

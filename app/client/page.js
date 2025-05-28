@@ -307,6 +307,9 @@ export default function Client() {
         await Re_Label();
         window.location.reload();
     }, []);
+    const reload = () => {
+        router.refresh();
+    };
 
     const selectedCustomers = useMemo(
         () => data.filter(r => selectedIds.has(r.phone)),
@@ -519,6 +522,7 @@ export default function Client() {
                     labelOptions={uniqueLabels}
                     onSend={sendMessage}
                     label={labelsDB}
+                    reload={() => reload}
                 />
             </div>
 

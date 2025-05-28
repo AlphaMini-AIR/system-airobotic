@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 const SHEET_ID = '1ZQsHUyVD3vmafcm6_egWup9ErXfxIg4U-TfVDgDztb8';
 const SHEET_NAME = 'Data';
 
+/* ───────── Google Sheets client ───────── */
 function getSheetsClient() {
     const auth = new google.auth.GoogleAuth({
         credentials: {
@@ -16,121 +17,110 @@ function getSheetsClient() {
     return google.sheets({ version: 'v4', auth });
 }
 
+/* ───────── helpers ───────── */
 const normalize = s => s.toString().trim().toLowerCase();
+const stdPhone = p => {
+    p = p.toString().trim();
+    if (p[0] === '0') p = '84' + p.slice(1);
+    if (!p.startsWith('84')) p = '84' + p;
+    return p;
+};
+const parseArray = raw => {
+    try { const a = JSON.parse(raw); return Array.isArray(a) ? a.map(String) : []; }
+    catch { return []; }
+};
 
-function parseLabels(input) {
-    if (Array.isArray(input)) {
-        return input.map(String).map(s => s.trim()).filter(Boolean);
-    }
-    if (typeof input === 'string') {
-        try {
-            const arr = JSON.parse(input.replace(/'/g, '"'));
-            if (Array.isArray(arr)) {
-                return arr.map(String).map(s => s.trim()).filter(Boolean);
-            }
-        } catch { }
-        return input.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    return [];
-}
-
-function parseArrayCell(raw) {
-    if (typeof raw === 'string' && raw.trim().startsWith('[')) {
-        try {
-            const arr = JSON.parse(raw);
-            if (Array.isArray(arr)) {
-                return arr.map(String).map(s => s.trim()).filter(Boolean);
-            }
-        } catch { }
-    }
-    return parseLabels(raw);
-}
-
+/* ───────── main ───────── */
 export async function POST(req) {
+    /* body */
     let body;
-    try {
-        body = await req.json();
-    } catch {
-        return NextResponse.json({ status: 1, mes: '', data: [] });
-    }
-    const { data, mes, labels } = body;
-    if (!Array.isArray(data) || typeof mes !== 'string') {
-        return NextResponse.json({ status: 1, mes: typeof mes === 'string' ? mes : '', data: [] });
-    }
+    try { body = await req.json(); }
+    catch { return NextResponse.json({ status: 1, mes: '', data: [] }); }
+
+    const { phone, mes, labels } = body;
+    if (!phone || typeof mes !== 'string')
+        return NextResponse.json({ status: 1, mes, data: [] });
+
+    /* sheets client */
     let sheets;
-    try {
-        sheets = getSheetsClient();
-    } catch {
-        return NextResponse.json({ status: 0, mes, data: [] });
-    }
-    const phoneMap = new Map();
-    data.forEach(stu => {
-        const phone = stu.phone?.toString().trim();
-        if (phone && !phoneMap.has(phone)) phoneMap.set(phone, stu);
+    try { sheets = getSheetsClient(); }
+    catch { return NextResponse.json({ status: 0, mes, data: [] }); }
+
+    /* ── lấy trước dữ liệu A:M để biết UID, label, row ── */
+    const { data: { values = [] } } = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: `${SHEET_NAME}!A:M`,
+        fields: 'values',
     });
-    const uniqueStudents = Array.from(phoneMap.values());
-    const results = [];
-    for (const stu of uniqueStudents) {
-        const phone = stu.phone?.toString().trim();
-        if (!phone) {
-            results.push({ _id: stu._id, phone: null, status: 'skipped', error: 'No phone' });
-            continue;
+
+    const targetPhone = stdPhone(phone);
+    let rowIdx = null;           // 1-based, null nếu chưa có
+    let rawLabel = '';
+    let rawUid = '';
+
+    values.forEach((row, i) => {
+        const ph = row[1];
+        if (ph && stdPhone(ph) === targetPhone) {
+            rowIdx = i + 1;
+            rawLabel = row[11] || '';   // cột L
+            rawUid = row[12] || '';   // cột M
         }
-        const url = new URL('https://script.google.com/macros/s/AKfycbwXna0pdP99lPQfpoRufXvuvb_iYxdJ775LnTiAow1PtH9SodU_ET1BOqbXB0toaDX8nw/exec');
-        url.searchParams.set('phone', phone);
+    });
+
+    /* ── gửi tin dùng UID nếu có, ngược lại dùng phone ── */
+    const result = { phone, status: 'failed' };
+    try {
+        const url = new URL('https://script.google.com/macros/s/AKfycbzwdtew3wf7I8lGlaax7FjzkuClr3a1cY5swUPKWhvs3Apa9pBOEBUHa54k4YxtNjv-8g/exec');
+        if (rawUid) url.searchParams.set('uid', rawUid);
+        else url.searchParams.set('phone', phone);
         url.searchParams.set('mes', mes);
-        try {
-            const r = await fetch(url.toString(), { method: 'GET' });
-            if (r.ok) {
-                results.push({ _id: stu._id, phone, status: 'success' });
-            } else {
-                results.push({ _id: stu._id, phone, status: 'failed', error: `HTTP ${r.status}: ${await r.text()}` });
-            }
-        } catch (e) {
-            results.push({ _id: stu._id, phone, status: 'failed', error: e.message });
+        console.log(url);
+        
+        const r = await fetch(url.toString());
+        const json = await r.json();
+
+        if (json.status === 2) {
+            result.status = 'success';
+            if (json.data?.uid) result.uid = json.data.uid;  
+        } else {
+            result.error = json.mes;
+        }
+    } catch (e) { result.error = e.message; }
+    const updates = [];
+    const addLabels = Array.isArray(labels)
+        ? labels.map(String).map(s => s.trim()).filter(Boolean)
+        : [];
+
+    if (rowIdx && addLabels.length) {
+        const existed = parseArray(rawLabel);
+        const merged = [...new Map([...existed, ...addLabels]
+            .map(lb => [normalize(lb), lb])).values()];
+
+        if (JSON.stringify(existed) !== JSON.stringify(merged)) {
+            updates.push({
+                range: `${SHEET_NAME}!L${rowIdx}`,
+                values: [[JSON.stringify(merged)]]
+            });
         }
     }
-    const commonLabels = parseLabels(labels);
-    if (commonLabels.length) {
-        const { data: sheetData } = await sheets.spreadsheets.values.get({
+
+    if (rowIdx && !rawUid && result.uid) {
+        updates.push({
+            range: `${SHEET_NAME}!M${rowIdx}`,
+            values: [[result.uid]]
+        });
+    }
+
+    if (updates.length) {
+        await sheets.spreadsheets.values.batchUpdate({
             spreadsheetId: SHEET_ID,
-            range: `${SHEET_NAME}!A:L`,
-            fields: 'values',
+            requestBody: { valueInputOption: 'RAW', data: updates }
         });
-        const rows = sheetData.values || [];
-        const phoneSheetMap = new Map();
-        rows.forEach((row, idx) => {
-            const phoneInSheet = row[1]?.toString().trim();
-            const currentRaw = row[11] || '';
-            if (phoneInSheet) {
-                phoneSheetMap.set(phoneInSheet, { row: idx + 1, currentRaw });
-            }
-        });
-        const updates = [];
-        uniqueStudents.forEach(stu => {
-            const phone = stu.phone?.toString().trim();
-            if (!phone) return;
-            const info = phoneSheetMap.get(phone);
-            if (!info) return;
-            const oldList = parseArrayCell(info.currentRaw);
-            const mergedMap = new Map();
-            oldList.forEach(lb => mergedMap.set(normalize(lb), lb));
-            commonLabels.forEach(lb => {
-                const key = normalize(lb);
-                if (!mergedMap.has(key)) mergedMap.set(key, lb);
-            });
-            const merged = Array.from(mergedMap.values());
-            const newRaw = JSON.stringify(merged);
-            if (newRaw !== info.currentRaw) {
-                updates.push({ range: `${SHEET_NAME}!L${info.row}`, values: [[newRaw]] });
-            }
-        });
-        if (updates.length) {
-            await sheets.spreadsheets.values.batchUpdate({
-                spreadsheetId: SHEET_ID,
-                requestBody: { data: updates, valueInputOption: 'USER_ENTERED' },
-            });
-        }
     }
-    return NextResponse.json({ status: 2, mes, data: results });
+
+    return NextResponse.json({
+        status: result.status === 'success' ? 2 : 1,
+        mes,
+        data: [result]
+    });
 }
