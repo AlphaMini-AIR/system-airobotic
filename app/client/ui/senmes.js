@@ -7,7 +7,7 @@ import Loading from '@/components/(loading)/loading';
 import { Re_Client, Re_History, Re_History_User } from '@/data/client';
 import Noti from '@/components/noti';
 
-function Senmes({ data = [], labelOptions = [], label, reload }) {
+function Senmes({ data = [], labelOptions = [], label }) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [selectedPhones, setSelectedPhones] = useState(new Set());
@@ -379,7 +379,7 @@ function Senmes({ data = [], labelOptions = [], label, reload }) {
                 button={
                     <button className={styles.button} onClick={() => {
                         setNotiOpen(false)
-                        reload
+                        window.location.reload();
                     }} disabled={loading}>
                         Đóng
                     </button>

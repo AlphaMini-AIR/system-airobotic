@@ -522,7 +522,6 @@ export default function Client() {
                     labelOptions={uniqueLabels}
                     onSend={sendMessage}
                     label={labelsDB}
-                    reload={() => reload}
                 />
             </div>
 
