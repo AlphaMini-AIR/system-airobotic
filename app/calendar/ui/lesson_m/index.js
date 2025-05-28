@@ -47,7 +47,6 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
     const handleClose = () => {
         setOpen(false);
     };
-    console.log(detail);
 
     return (
         <>
@@ -120,10 +119,10 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                             <p className='text_4' style={{ padding: '8px 0' }}>Tài nguyên buổi học</p>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 <div style={{ height: 'max-content', width: 150, aspectRatio: '16/9' }}>
-                                    <BoxFile type={Image} name='Hình ảnh' href={detail.session.image} />
+                                    <BoxFile type={Image} name='Hình ảnh' href={'https://drive.google.com/drive/folders/' + detail.session.image} />
                                 </div>
                                 <div style={{ height: 'max-content', width: 150, aspectRatio: '16/9' }}>
-                                    <BoxFile type={'Ppt'} name='Slide' />
+                                    <BoxFile type={'Ppt'} name='Slide' href={detail.slide}/>
                                 </div>
                             </div>
                         </div>

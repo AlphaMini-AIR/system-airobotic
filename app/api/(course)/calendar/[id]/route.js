@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import PostCourse from '@/models/course';
 import connectDB from '@/config/connectDB';
+import PostBook from '@/models/book';
 
 export async function GET(request, { params }) {
     try {
 
-        const { id } = params;
+        const { id } = await params;
         if (!id) {
             return NextResponse.json(
                 { status: 1, mes: 'Missing id parameter', data: [] },
@@ -49,9 +50,12 @@ export async function GET(request, { params }) {
         };
 
         const { Detail, ...course } = doc;
-
+        const docx = await PostBook.findOne({
+            [`Topic.${session.id}`]: { $exists: true }
+        }).lean();
+        const slide = docx.Topic[`${session.id}`].Slide
         return NextResponse.json(
-            { status: 2, mes: 'Lấy dữ liệu thành công', data: { course, session } },
+            { status: 2, mes: 'Lấy dữ liệu thành công', data: { course, session, slide } },
             { status: 200 }
         );
     } catch (error) {

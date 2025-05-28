@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styles from './index.module.css';
+import LoadButton from '../button/load';
 
 export default function Title({ month, year }) {
     const prevMonth = month === 1 ? 12 : month - 1;
@@ -31,7 +32,7 @@ export default function Title({ month, year }) {
             <div className="text_3">
                 Tháng {month} năm {year}
             </div>
-            <div></div>
+            <LoadButton month={month} year={year} />
         </div>
     );
 }

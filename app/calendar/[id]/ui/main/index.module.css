@@ -1,0 +1,138 @@
+/* container chính */
+.root {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    height: calc(100% - 2px);
+    background: var(--bg-primary);
+    border: thin solid var(--border-color);
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #1976d2;
+    color: #fff;
+    padding: 12px 24px;
+}
+
+.statsContainer {
+    display: flex;
+    gap: 12px;
+}
+
+.present {
+    border: 2px solid #43a300;
+    background: #e6f4e6;
+    color: #1f4d1f;
+}
+
+.statBox {
+    padding: 8px 16px;
+    border-radius: 5px;
+}
+
+.absent {
+    border: 2px solid #cc1d1d;
+    background: #fdecea;
+    color: #5a1a1a;
+}
+
+.excused {
+    border: 2px solid #d6a800;
+    background: #fff8e1;
+    color: #665900;
+}
+
+/* ===== LAYOUT ===== */
+.content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* sidebar chứa links */
+.sidebar {
+    width: 240px;
+    padding: 24px;
+    background: #fff;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+}
+
+/* phần bảng */
+.main {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+/* ===== THÔNG TIN BUỔI HỌC ===== */
+.infoSection {
+    background: var(--bg-primary);
+    border-radius: 5px;
+    box-shadow: var(--boxshaw2);
+    padding: 16px;
+}
+
+.infoHeader {
+    display: flex;
+    gap: 16px;
+    background: var(--main_d);
+    color: #fff;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 12px 0;
+}
+
+
+/* ===== BẢNG ĐIỂM DANH ===== */
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.cell {
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.headerRow {
+    background-color: var(--main_d);
+    border-radius: 5px;
+    color: white;
+    margin-top: 8px;
+    border-bottom: thin solid var(--border-color);
+}
+
+.noData {
+    padding: 16px;
+    text-align: center;
+    color: #777;
+}

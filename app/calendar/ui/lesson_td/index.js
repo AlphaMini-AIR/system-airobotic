@@ -2,10 +2,12 @@
 
 import React from 'react';
 import styles from './index.module.css';
+import Link from 'next/link';
 
 const CalendarCourse = ({ data = {} }) => {
+
     return (
-        <div className={styles.calendarCourse} >
+        <Link href={`/calendar/${data.id}`} className={styles.calendarCourse} >
             <div className={styles.dot} />
             <div className={styles.content}>
                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -24,7 +26,7 @@ const CalendarCourse = ({ data = {} }) => {
                 </svg>
                 {data.room}
             </div>
-        </div >
+        </Link >
     );
 };
 
