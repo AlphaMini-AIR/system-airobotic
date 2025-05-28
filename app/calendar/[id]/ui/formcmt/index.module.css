@@ -1,0 +1,110 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+
+.name {
+    font-weight: 600;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.lbl {
+    font-size: 14px;
+}
+
+.inputBox {
+    min-height: 38px;
+    padding: 4px 36px 4px 8px;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.inputBox:hover {
+    border-bottom-color: var(--main_d);
+}
+
+.inputBox.focus {
+    border-bottom-color: var(--main_d);
+}
+
+.placeholder {
+    color: var(--text-disabled);
+}
+
+.arrow {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.chip {
+    background: var(--bg-secondary);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .12);
+    z-index: 20;
+    margin-top: 4px;
+    padding: 0 16px;
+}
+
+.dropdown li {
+    display: flex;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown li:hover {
+    background: var(--bg-hover);
+}
+
+.btnRow {
+    display: flex;
+    justify-content: flex-end;
+    gap: 18px;
+}
+
+.save,
+.cancel {
+    padding: 8px 22px;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.save {
+    background: var(--green);
+}
+
+.cancel {
+    background: var(--red);
+}

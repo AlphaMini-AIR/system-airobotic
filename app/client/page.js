@@ -52,9 +52,7 @@ export const parseLabels = val => {
         .filter(Boolean);
 };
 
-// ===== CHỈNH SỬA TẠI ĐÂY =====
 const getCustomerType = row => {
-    // Ưu tiên loại Đã hủy nếu có
     if (row.remove && row.remove.trim() !== '') return 'Đã hủy';
     if (row.study) return 'Nhập học';
     if (row.studyTry) return 'Học thử';

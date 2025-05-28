@@ -10,7 +10,6 @@ export async function Data_Client() {
             cache: "force-cache",
             next: { tags: ['data_client'] }
         });
-
         return res;
     } catch (err) {
         return { data: [] };

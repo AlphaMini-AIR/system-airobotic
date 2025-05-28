@@ -32,6 +32,10 @@ export async function Data_lesson(id){
     }
 }
 
+export async function Re_lesson(id) {
+    revalidateTag(`data_lesson${id}`);
+}
+
 export async function Re_calendar(month, year) {
     revalidateTag(`data_calendar${month}-${year}`);
 }

@@ -8,9 +8,6 @@ body {
   color: var(--text-primary);
 }
 
-a {
-  text-decoration: unset;
-}
 
 p {
   margin: 0;
@@ -45,6 +42,11 @@ p {
   --hover: #6d6d6d;
   --boxshaw: rgba(0, 0, 0, 0.2) 0px 2px 8px 0px;
   --boxshaw2: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
+}
+
+a {
+  text-decoration: unset;
+  color: var(--text-primary);
 }
 
 .flex_center {

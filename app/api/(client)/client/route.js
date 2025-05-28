@@ -56,7 +56,7 @@ export async function GET() {
     });
 
     /* 3. Trả về */
-    return new Response(JSON.stringify({ data: results }), {
+    return new Response(JSON.stringify({ data: results.reverse() }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +135,6 @@ export async function POST(req) {
         values: [[newCare, newStudyTry, newStudy, newRemove]]
       },
     });
-
     return new Response(
       JSON.stringify({ status: 2, mes: 'Đã cập nhật', data: rowNum }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
