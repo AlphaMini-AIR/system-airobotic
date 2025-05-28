@@ -511,7 +511,7 @@ export default function Client() {
                     >
                         {ACCOUNTS.map(acc => (
                             <option key={acc.id} value={acc.id}>
-                                {acc.nameParent}
+                                {acc.name}
                             </option>
                         ))}
                     </select>
