@@ -2,10 +2,9 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import Nav from '../../ui/nav-item';
-import CourseItem from '../../ui/course-item';
+// import CourseItem from '../../ui/course-item';
 import styles from './index.module.css';
 
-/* ---------- ICON SÁCH (nhỏ gọn) ---------- */
 function BookIcon({ active }) {
     return (
         <svg
@@ -21,7 +20,6 @@ function BookIcon({ active }) {
 }
 
 export default function Navbar({ data }) {
-    // 1. Đảm bảo `data` luôn là mảng. Nếu `data` từ props là undefined/null hoặc không phải mảng, biến `courses` sẽ là [].
     const courses = Array.isArray(data) ? data : [];
 
     const [tab, setTab] = useState(0);
@@ -167,10 +165,10 @@ export default function Navbar({ data }) {
             <div className={styles.tabContent}>
                 {Array.isArray(listForTab) && listForTab.length > 0 ? (
                     <div className={styles.listWrap}>
-                        {listForTab.map((c) => (
+                        {/* {listForTab.map((c) => (
                             // Nếu c có thể là undefined, bạn có thể kiểm tra trước khi render CourseItem
-                            c ? <CourseItem key={c.ID} data={c} /> : null
-                        ))}
+                            // c ? <CourseItem key={c.ID} data={c} /> : null
+                        ))} */}
                     </div>
                 ) : (
                     <p className={styles.empty}>Không tìm thấy khóa học phù hợp.</p>
