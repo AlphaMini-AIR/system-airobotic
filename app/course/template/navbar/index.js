@@ -21,11 +21,15 @@ function BookIcon({ active }) {
     );
 }
 
-export default function Navbar({ data = [] }) {
+export default function Navbar({ data }) {
+    // 1. Đảm bảo `data` luôn là mảng. Nếu `data` từ props là undefined/null hoặc không phải mảng, biến `courses` sẽ là [].
+    const courses = Array.isArray(data) ? data : [];
+
     const [tab, setTab] = useState(0);
     const [search, setSearch] = useState('');
     const [area, setArea] = useState('');
 
+    // 2. Dùng `courses` thay vì `data` để tính counts, groups, areaOptions
     const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
             counts: { inProgress: 0, completed: 0, trial: 0, review: 0 },
@@ -33,8 +37,16 @@ export default function Navbar({ data = [] }) {
             areaSet: new Set(),
         };
 
-        data.forEach((c) => {
-            result.areaSet.add(c.Area);
+        courses.forEach((c) => {
+            // Nếu c là null/undefined, bỏ qua
+            if (!c) return;
+
+            // Lấy khu vực (Area) nếu có
+            if (c.Area) {
+                result.areaSet.add(c.Area);
+            }
+
+            // Phân loại vào các nhóm
             if (!c.Status && c.Type !== 'Học thử') {
                 result.counts.inProgress += 1;
                 result.groups.inProgress.push(c);
@@ -53,38 +65,47 @@ export default function Navbar({ data = [] }) {
         return {
             counts: result.counts,
             groups: result.groups,
+            // Luôn có ít nhất một phần tử rỗng '' để hiển thị “Tất cả khu vực”
             areaOptions: [''].concat(Array.from(result.areaSet)),
         };
-    }, [data]);
+    }, [courses]);
 
+    // 3. Hàm lọc khóa học theo từ khoá (search) và khu vực (area)
     const courseFilter = useCallback(
         (c) => {
+            if (!c) return false; // tránh xem c là undefined/null
             if (area && c.Area !== area) return false;
+
             if (!search) return true;
             const q = search.trim().toLowerCase();
-            return (
-                c.ID.toLowerCase().includes(q) ||
-                (c.TeacherHR && c.TeacherHR.toLowerCase().includes(q))
-            );
+
+            // Kiểm tra ID (chuỗi) và TeacherHR (có thể undefined) một cách an toàn
+            const idMatches = typeof c.ID === 'string' && c.ID.toLowerCase().includes(q);
+            const teacherMatches =
+                typeof c.TeacherHR === 'string' && c.TeacherHR.toLowerCase().includes(q);
+
+            return idMatches || teacherMatches;
         },
         [search, area]
     );
 
-    /* --------- LẤY DANH SÁCH THEO TAB + FILTER TUỲ CHỌN --------- */
+    // 4. Lấy danh sách theo tab hiện tại, luôn kiểm tra an toàn để tránh listForTab = undefined
     const listForTab = useMemo(() => {
+        const getGroup = (groupArray) => Array.isArray(groupArray) ? groupArray : [];
+
         switch (tab) {
             case 0:
-                return groups.inProgress.filter(courseFilter);
+                return getGroup(groups.inProgress).filter(courseFilter);
             case 1:
-                return groups.completed.filter(courseFilter);
+                return getGroup(groups.completed).filter(courseFilter);
             case 2:
-                return groups.trial.filter(courseFilter);
+                return getGroup(groups.trial).filter(courseFilter);
             default:
-                return groups.review.filter(courseFilter);
+                return getGroup(groups.review).filter(courseFilter);
         }
     }, [tab, groups, courseFilter]);
 
-    /* --------------- KHAI BÁO MẢNG TAB (không có JSX thừa) --------------- */
+    // 5. Khai báo mảng TABS (dùng để hiển thị số lượng và nhãn)
     const TABS = [
         { label: 'Khóa học đang học', count: counts.inProgress },
         { label: 'Khóa học hoàn thành', count: counts.completed },
@@ -92,7 +113,6 @@ export default function Navbar({ data = [] }) {
         { label: 'Khóa ôn luyện', count: counts.review },
     ];
 
-    /* ---------------------------- JSX ---------------------------- */
     return (
         <div className={styles.sidebarContainer}>
             {/* ---------- NAVIGATION ---------- */}
@@ -129,27 +149,28 @@ export default function Navbar({ data = [] }) {
                         value={area}
                         onChange={(e) => setArea(e.target.value)}
                     >
-                        <option value="" className='text_6_400'>Tất cả khu vực</option>
-                        {areaOptions.map(
-                            (a) =>
-                                a && (
-                                    <option key={a} value={a} className='text_6_400'>
-                                        {a}
-                                    </option>
-                                )
+                        <option value="" className="text_6_400">
+                            Tất cả khu vực
+                        </option>
+                        {areaOptions.map((a) =>
+                            a ? (
+                                <option key={a} value={a} className="text_6_400">
+                                    {a}
+                                </option>
+                            ) : null
                         )}
                     </select>
                 </div>
-
                 {/* <Create /> */}
             </div>
 
             {/* ---------- NỘI DUNG TAB ---------- */}
             <div className={styles.tabContent}>
-                {listForTab.length ? (
+                {Array.isArray(listForTab) && listForTab.length > 0 ? (
                     <div className={styles.listWrap}>
                         {listForTab.map((c) => (
-                            <CourseItem key={c.ID} data={c} />
+                            // Nếu c có thể là undefined, bạn có thể kiểm tra trước khi render CourseItem
+                            c ? <CourseItem key={c.ID} data={c} /> : null
                         ))}
                     </div>
                 ) : (
