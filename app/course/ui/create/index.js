@@ -7,6 +7,7 @@ import FlexiblePopup from '@/components/(popup)/popup_right';
 import TextNoti from '@/components/(noti)/textnoti';
 import Loading from '@/components/(loading)/loading';
 import Menu from '@/components/(button)/menu';
+import Noti from '@/components/(noti)/noti';
 
 import { Data_book } from '@/data/book';
 import { Read_Area } from '@/data/area';
@@ -20,6 +21,8 @@ export default function Create() {
         setOpenPopup(false);
         setSecondaryOpen(false);
         setErrorMsg('');
+        // Reset thông báo
+        setNotiOpen(false);
     }, []);
 
     /* ---------------- form chính ---------------- */
@@ -42,7 +45,7 @@ export default function Create() {
         if (openPopup && programs.length === 0 && !loadingProg) {
             setLoadingProg(true);
             Data_book()
-                .then(res => setPrograms(res))
+                .then((res) => setPrograms(res))
                 .finally(() => setLoadingProg(false));
         }
     }, [openPopup, programs.length, loadingProg]);
@@ -54,7 +57,7 @@ export default function Create() {
         if (openPopup && areas.length === 0 && !loadingArea) {
             setLoadingArea(true);
             Read_Area()
-                .then(res => {
+                .then((res) => {
                     const list = Array.isArray(res) ? res : res.data;
                     setAreas(list);
                 })
@@ -69,7 +72,7 @@ export default function Create() {
         if (openPopup && teachersList.length === 0 && !loadingTeacher) {
             setLoadingTeacher(true);
             Data_user()
-                .then(res => {
+                .then((res) => {
                     const list = Array.isArray(res) ? res : res.data || [];
                     setTeachersList(list);
                 })
@@ -79,11 +82,12 @@ export default function Create() {
 
     /* ---------------- lịch học ---------------- */
     const [schedules, setSchedules] = useState([]);
-    const addSchedule = item => setSchedules(prev => [...prev, item]);
-    const addMany = arr => setSchedules(prev => [...prev, ...arr]);
+    const addSchedule = (item) => setSchedules((prev) => [...prev, item]);
+    const addMany = (arr) => setSchedules((prev) => [...prev, ...arr]);
     const updateScheduleAt = (idx, newItem) =>
-        setSchedules(prev => prev.map((s, i) => (i === idx ? newItem : s)));
-    const deleteSchedule = idx => setSchedules(prev => prev.filter((_, i) => i !== idx));
+        setSchedules((prev) => prev.map((s, i) => (i === idx ? newItem : s)));
+    const deleteSchedule = (idx) =>
+        setSchedules((prev) => prev.filter((_, i) => i !== idx));
 
     /* ---------------- popup con ---------------- */
     const [secondaryOpen, setSecondaryOpen] = useState(false);
@@ -91,8 +95,14 @@ export default function Create() {
     const [editingIndex, setEditingIndex] = useState(null);
 
     const openSingle = () => {
-        if (program.startsWith('Chọn') || area.startsWith('Chọn') || teacher.startsWith('Chọn')) {
-            setErrorMsg('Vui lòng chọn đầy đủ chương trình, khu vực và giáo viên trước khi thêm lịch.');
+        if (
+            program.startsWith('Chọn') ||
+            area.startsWith('Chọn') ||
+            teacher.startsWith('Chọn')
+        ) {
+            setErrorMsg(
+                'Vui lòng chọn đầy đủ chương trình, khu vực và giáo viên trước khi thêm lịch.'
+            );
             return;
         }
         setErrorMsg('');
@@ -100,15 +110,21 @@ export default function Create() {
         setSecondaryOpen(true);
     };
     const openBulk = () => {
-        if (program.startsWith('Chọn') || area.startsWith('Chọn') || teacher.startsWith('Chọn')) {
-            setErrorMsg('Vui lòng chọn đầy đủ chương trình, khu vực và giáo viên trước khi tạo lịch hàng loạt.');
+        if (
+            program.startsWith('Chọn') ||
+            area.startsWith('Chọn') ||
+            teacher.startsWith('Chọn')
+        ) {
+            setErrorMsg(
+                'Vui lòng chọn đầy đủ chương trình, khu vực và giáo viên trước khi tạo lịch hàng loạt.'
+            );
             return;
         }
         setErrorMsg('');
         setSecondaryType('bulk');
         setSecondaryOpen(true);
     };
-    const openEdit = idx => {
+    const openEdit = (idx) => {
         setEditingIndex(idx);
         setSecondaryType('edit');
         setSecondaryOpen(true);
@@ -123,7 +139,7 @@ export default function Create() {
         <div className={styles.list_menuwrap}>
             <div className="flex_col" style={{ gap: 3, padding: 8 }}>
                 {arr.map((opt, i) => {
-                    const val = typeof opt === 'string' ? opt : (opt.Name || opt.name);
+                    const val = typeof opt === 'string' ? opt : opt.name || opt.Name;
                     return (
                         <p
                             key={i}
@@ -155,8 +171,8 @@ export default function Create() {
     } else {
         programMenu = renderList(
             programs,
-            val => {
-                const obj = programs.find(p => p.Name === val);
+            (val) => {
+                const obj = programs.find((p) => p.Name === val);
                 setProgram(val);
                 setProgramObj(obj);
                 setOpenProgram(false);
@@ -181,8 +197,8 @@ export default function Create() {
     } else {
         areaMenu = renderList(
             areas,
-            val => {
-                const obj = areas.find(a => a.name === val);
+            (val) => {
+                const obj = areas.find((a) => a.name === val);
                 setArea(val);
                 setAreaObj(obj);
                 setOpenArea(false);
@@ -205,10 +221,10 @@ export default function Create() {
             </div>
         );
     } else {
-        const teacherNames = teachersList.map(u => u.name);
+        const teacherNames = teachersList.map((u) => u.name);
         teacherMenu = renderList(
             teacherNames,
-            val => {
+            (val) => {
                 setTeacher(val);
                 setOpenTeacher(false);
             },
@@ -218,36 +234,50 @@ export default function Create() {
 
     /* ---------------- form thêm/chỉnh sửa single (popup 2) ---------------- */
     const SingleForm = ({ initialData = null, onSave }) => {
-        // Nếu initialData != null thì đang edit, ngược lại thêm mới
-        const [day, setDay] = useState(initialData ? formatForDateInput(initialData.Day) : '');
-        const [topic, setTopic] = useState(initialData ? initialData.Topic : 'Chọn chủ đề');
-        const [room, setRoom] = useState(initialData ? initialData.Room : 'Chọn phòng');
-        const [localTeacher, setLocalTeacher] = useState(initialData ? initialData.Teacher : teacher);
+        const [day, setDay] = useState(
+            initialData ? formatForDateInput(initialData.Day) : ''
+        );
+        const [topicObj, setTopicObj] = useState(
+            initialData
+                ? { id: initialData.ID, name: initialData.Topic }
+                : { id: '', name: 'Chọn chủ đề' }
+        );
+        const [room, setRoom] = useState(
+            initialData ? initialData.Room : 'Chọn phòng'
+        );
+        const [localTeacher, setLocalTeacher] = useState(
+            initialData ? initialData.Teacher : teacher
+        );
 
         const [openTopic, setOpenTopic] = useState(false);
         const [openRoom, setOpenRoom] = useState(false);
         const [openSingleTeacher, setOpenSingleTeacher] = useState(false);
 
-        const [start, setStart] = useState(initialData ? initialData.Time.split('-')[0] : '08:00');
+        const [start, setStart] = useState(
+            initialData ? initialData.Time.split('-')[0] : '08:00'
+        );
         const [lesson, setLesson] = useState(initialData ? initialData.Lesson : 4);
 
-        // Hàm sinh ID nếu thêm mới
-        const genID = () => `FZ_${Date.now().toString(36).toUpperCase()}`;
-
-        // Lấy danh sách topic từ programObj
         const topicList = programObj
-            ? Object.values(programObj.Topic || {}).map(info => ({ Name: info.Name }))
+            ? Object.entries(programObj.Topic).map(([id, info]) => ({
+                id,
+                name: info.Name,
+                period: info.Period,
+            }))
             : [];
 
-        // Lấy danh sách room từ areaObj
         const roomList = areaObj ? areaObj.room : [];
+        const teacherNames = teachersList.map((u) => u.name);
 
-        // Lấy danh sách giáo viên để chọn lại
-        const teacherNames = teachersList.map(u => u.name);
-
-        const handleSave = e => {
+        const handleSave = (e) => {
             e.preventDefault();
-            if (!day || topic === 'Chọn chủ đề' || room === 'Chọn phòng' || localTeacher === 'Chọn giáo viên') {
+
+            if (
+                !day ||
+                topicObj.name === 'Chọn chủ đề' ||
+                room === 'Chọn phòng' ||
+                localTeacher === 'Chọn giáo viên'
+            ) {
                 return;
             }
 
@@ -259,63 +289,81 @@ export default function Create() {
 
             const payload = {
                 Day: day.split('-').reverse().join('/'),
-                Topic: topic,
+                Topic: topicObj.name,
                 Room: room,
                 Time: `${start}-${end}`,
                 Lesson: lesson,
-                ID: initialData ? initialData.ID : genID(),
+                ID: initialData ? initialData.ID : topicObj.id,
                 Image: '',
                 Teacher: localTeacher,
-                TeachingAs: ''
+                TeachingAs: '',
             };
 
             onSave(payload);
             closeSecondary();
         };
 
-        // Menu topic
-        const topicMenu = topicList.length === 0
-            ? (
+        const topicMenu =
+            topicList.length === 0 ? (
                 <div className={styles.list_menuwrap}>
                     <div style={{ padding: 12, color: '#555' }}>Chưa có chủ đề</div>
                 </div>
-            )
-            : renderList(topicList, val => {
-                setTopic(val);
-                setOpenTopic(false);
-            }, topic);
+            ) : (
+                <div className={styles.list_menuwrap}>
+                    <div className="flex_col" style={{ gap: 3, padding: 8 }}>
+                        {topicList.map((opt, i) => (
+                            <p
+                                key={i}
+                                onClick={() => {
+                                    setTopicObj(opt);
+                                    setOpenTopic(false);
+                                }}
+                                className={styles.list_li}
+                            >
+                                {opt.name}
+                            </p>
+                        ))}
+                    </div>
+                </div>
+            );
 
-        // Menu room
-        const roomMenu = roomList.length === 0
-            ? (
+        const roomMenu =
+            roomList.length === 0 ? (
                 <div className={styles.list_menuwrap}>
                     <div style={{ padding: 12, color: '#555' }}>Chưa có phòng</div>
                 </div>
-            )
-            : renderList(roomList, val => {
-                setRoom(val);
-                setOpenRoom(false);
-            }, room);
+            ) : (
+                renderList(roomList, (val) => {
+                    setRoom(val);
+                    setOpenRoom(false);
+                }, room)
+            );
 
-        // Menu giáo viên
-        const singleTeacherMenu = teacherNames.length === 0
-            ? (
+        const singleTeacherMenu =
+            teacherNames.length === 0 ? (
                 <div className={styles.list_menuwrap}>
                     <div style={{ padding: 12, color: '#555' }}>Chưa có giáo viên</div>
                 </div>
-            )
-            : renderList(teacherNames, val => {
-                setLocalTeacher(val);
-                setOpenSingleTeacher(false);
-            }, localTeacher);
+            ) : (
+                renderList(teacherNames, (val) => {
+                    setLocalTeacher(val);
+                    setOpenSingleTeacher(false);
+                }, localTeacher)
+            );
 
         return (
             <form className={styles.popupForm} onSubmit={handleSave}>
                 <div>
-                    <TextNoti title={initialData ? "Chỉnh sửa buổi học" : "Thông tin buổi học"} color="blue" mes="Thông tin buổi học là bắt buộc" />
+                    <TextNoti
+                        title={initialData ? 'Chỉnh sửa buổi học' : 'Thông tin buổi học'}
+                        color="blue"
+                        mes="Thông tin buổi học là bắt buộc"
+                    />
                 </div>
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Chủ đề</p>
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Chủ đề
+                </p>
                 <Menu
                     menuItems={topicMenu}
                     menuPosition="bottom"
@@ -324,17 +372,19 @@ export default function Create() {
                     customButton={
                         <div
                             className={styles.selectBtn}
-                            onClick={e => {
+                            onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenTopic(true);
                             }}
                         >
-                            {topic}
+                            {topicObj.name}
                         </div>
                     }
                 />
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Phòng học</p>
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Phòng học
+                </p>
                 <Menu
                     menuItems={roomMenu}
                     menuPosition="bottom"
@@ -343,7 +393,7 @@ export default function Create() {
                     customButton={
                         <div
                             className={styles.selectBtn}
-                            onClick={e => {
+                            onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenRoom(true);
                             }}
@@ -353,7 +403,9 @@ export default function Create() {
                     }
                 />
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Giáo viên</p>
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Giáo viên
+                </p>
                 <Menu
                     menuItems={singleTeacherMenu}
                     menuPosition="bottom"
@@ -362,7 +414,7 @@ export default function Create() {
                     customButton={
                         <div
                             className={styles.selectBtn}
-                            onClick={e => {
+                            onClick={(e) => {
                                 e.stopPropagation();
                                 setOpenSingleTeacher(true);
                             }}
@@ -372,27 +424,29 @@ export default function Create() {
                     }
                 />
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Ngày học</p>
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Ngày học
+                </p>
                 <input
                     type="date"
                     value={day}
-                    onChange={e => setDay(e.target.value)}
+                    onChange={(e) => setDay(e.target.value)}
                     required
                 />
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Thời gian bắt đầu</p>
-                <input
-                    type="time"
-                    value={start}
-                    onChange={e => setStart(e.target.value)}
-                />
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Thời gian bắt đầu
+                </p>
+                <input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
 
-                <p className="text_6_400" style={{ marginBottom: 4 }}>Số tiết</p>
+                <p className="text_6_400" style={{ marginBottom: 4 }}>
+                    Số tiết
+                </p>
                 <input
                     type="number"
                     min="1"
                     value={lesson}
-                    onChange={e => setLesson(+e.target.value)}
+                    onChange={(e) => setLesson(+e.target.value)}
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: 12 }}>
@@ -406,20 +460,15 @@ export default function Create() {
 
     /* ---------------- form Bulk (popup 2) ---------------- */
     const BulkForm = () => {
-        // 1. Lấy danh sách chủ đề gốc (id + name)
         const topicEntries = programObj ? Object.entries(programObj.Topic) : [];
-
-        // 2. Chuyển đổi thành mảng { id, name, lesson } để dễ thao tác
         const allTopics = topicEntries.map(([id, info]) => ({
             id,
             name: info.Name,
-            lesson: info.Period
+            lesson: info.Period,
         }));
 
-        // 3. Khởi tạo trạng thái `rows` từ allTopics, nhưng chỉ chứa các trường mặc định:
-        //    id, name, lesson, day, start, room, teacher, openRoom, openTeacher.
         const [rows, setRows] = useState(
-            allTopics.map(topic => ({
+            allTopics.map((topic) => ({
                 id: topic.id,
                 name: topic.name,
                 lesson: topic.lesson,
@@ -428,19 +477,17 @@ export default function Create() {
                 room: '',
                 teacher: teacher,
                 openRoom: false,
-                openTeacher: false
+                openTeacher: false,
             }))
         );
-
-        // 4. Trạng thái đánh dấu hàng bị lỗi và thông báo lỗi chung
         const [invalidRows, setInvalidRows] = useState(new Set());
         const [errorBulk, setErrorBulk] = useState('');
 
-        // 5. Hàm cập nhật một trường cụ thể trong hàng thứ idx
         const updateRow = (idx, field, value) => {
-            setRows(prev => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
-            // Nếu row này từng bị đánh dấu lỗi, xóa đánh dấu khi user sửa
-            setInvalidRows(prev => {
+            setRows((prev) =>
+                prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r))
+            );
+            setInvalidRows((prev) => {
                 if (prev.has(idx)) {
                     const copy = new Set(prev);
                     copy.delete(idx);
@@ -448,24 +495,19 @@ export default function Create() {
                 }
                 return prev;
             });
-            // Xóa thông báo lỗi chung nếu có
             if (errorBulk) setErrorBulk('');
         };
 
-        // 6. Danh sách phòng từ areaObj
         const roomList = areaObj ? areaObj.room : [];
+        const teacherNames = teachersList.map((u) => u.name);
 
-        // 7. Danh sách giáo viên (tên) từ teachersList
-        const teacherNames = teachersList.map(u => u.name);
-
-        // 8. Tạo menu phòng / giáo viên cho mỗi dòng
         const getRoomMenu = (idx, selected) =>
             roomList.length === 0 ? (
                 <div className={styles.list_menuwrap}>
                     <div style={{ padding: 12, color: '#555' }}>Chưa có phòng</div>
                 </div>
             ) : (
-                renderList(roomList, val => {
+                renderList(roomList, (val) => {
                     updateRow(idx, 'room', val);
                     updateRow(idx, 'openRoom', false);
                 }, selected)
@@ -477,19 +519,17 @@ export default function Create() {
                     <div style={{ padding: 12, color: '#555' }}>Chưa có giáo viên</div>
                 </div>
             ) : (
-                renderList(teacherNames, val => {
+                renderList(teacherNames, (val) => {
                     updateRow(idx, 'teacher', val);
                     updateRow(idx, 'openTeacher', false);
                 }, selected)
             );
 
-        // 9. Thêm một hàng mới:
-        //    - Chỉ thêm nếu còn chủ đề chưa có trong `rows`
         const addRow = () => {
-            const usedIds = new Set(rows.map(r => r.id));
-            const nextTopic = allTopics.find(t => !usedIds.has(t.id));
+            const usedIds = new Set(rows.map((r) => r.id));
+            const nextTopic = allTopics.find((t) => !usedIds.has(t.id));
             if (!nextTopic) return;
-            setRows(prev => [
+            setRows((prev) => [
                 ...prev,
                 {
                     id: nextTopic.id,
@@ -500,15 +540,14 @@ export default function Create() {
                     room: '',
                     teacher: teacher,
                     openRoom: false,
-                    openTeacher: false
-                }
+                    openTeacher: false,
+                },
             ]);
         };
 
-        // 10. Xóa một hàng
-        const removeRow = idx => {
-            setRows(prev => prev.filter((_, i) => i !== idx));
-            setInvalidRows(prev => {
+        const removeRow = (idx) => {
+            setRows((prev) => prev.filter((_, i) => i !== idx));
+            setInvalidRows((prev) => {
                 if (prev.has(idx)) {
                     const copy = new Set(prev);
                     copy.delete(idx);
@@ -518,7 +557,6 @@ export default function Create() {
             });
         };
 
-        // 11. Lưu tất cả: kiểm tra từng hàng, nếu thiếu trường nào thì đánh dấu lỗi
         const handleSave = () => {
             const missingIndices = new Set();
             rows.forEach((r, i) => {
@@ -529,12 +567,13 @@ export default function Create() {
 
             if (missingIndices.size > 0) {
                 setInvalidRows(missingIndices);
-                setErrorBulk('Có buổi học thiếu thông tin. Vui lòng điền đầy đủ và thử lại.');
+                setErrorBulk(
+                    'Có buổi học thiếu thông tin. Vui lòng điền đầy đủ và thử lại.'
+                );
                 return;
             }
 
-            // Nếu không có lỗi, thực hiện lưu
-            const newSessions = rows.map(r => {
+            const newSessions = rows.map((r) => {
                 const [h, m] = r.start.split(':').map(Number);
                 const end = new Date(2000, 0, 1, h, m + r.lesson * 45)
                     .toTimeString()
@@ -548,7 +587,7 @@ export default function Create() {
                     ID: r.id,
                     Image: '',
                     Teacher: r.teacher,
-                    TeachingAs: ''
+                    TeachingAs: '',
                 };
             });
 
@@ -556,9 +595,8 @@ export default function Create() {
             closeSecondary();
         };
 
-        // 12. Tính xem còn chủ đề nào chưa dùng để bật/tắt nút “Thêm buổi”
-        const usedIds = new Set(rows.map(r => r.id));
-        const hasMore = allTopics.some(t => !usedIds.has(t.id));
+        const usedIds = new Set(rows.map((r) => r.id));
+        const hasMore = allTopics.some((t) => !usedIds.has(t.id));
 
         return (
             <div className={styles.bulkContainer}>
@@ -571,9 +609,9 @@ export default function Create() {
                 {rows.map((r, i) => (
                     <div
                         key={i}
-                        className={`${styles.bulkItem} ${invalidRows.has(i) ? styles.errorBorder : ''}`}
+                        className={`${styles.bulkItem} ${invalidRows.has(i) ? styles.errorBorder : ''
+                            }`}
                     >
-                        {/* Dòng 1: ID + Chủ đề + nút × xóa */}
                         <div className={styles.bulkLine}>
                             <span className={styles.bulkId}>{i + 1}.</span>
                             <span className={styles.bulkTopic}>{r.name}</span>
@@ -586,40 +624,41 @@ export default function Create() {
                             </button>
                         </div>
 
-                        {/* Dòng 2: Ngày + Giờ + Số tiết */}
                         <div className={styles.bulkLine}>
                             <input
                                 type="date"
                                 value={r.day}
-                                onChange={e => updateRow(i, 'day', e.target.value)}
+                                onChange={(e) => updateRow(i, 'day', e.target.value)}
                                 className={styles.bulkInput}
                             />
                             <input
                                 type="time"
                                 value={r.start}
-                                onChange={e => updateRow(i, 'start', e.target.value)}
+                                onChange={(e) => updateRow(i, 'start', e.target.value)}
                                 className={styles.bulkInput}
                             />
                             <input
                                 type="number"
                                 min="1"
                                 value={r.lesson}
-                                onChange={e => updateRow(i, 'lesson', +e.target.value)}
+                                onChange={(e) =>
+                                    updateRow(i, 'lesson', +e.target.value)
+                                }
                                 className={styles.bulkInputSmall}
                             />
                         </div>
 
-                        {/* Dòng 3: Phòng + Giáo viên */}
                         <div className={styles.bulkLine}>
                             <Menu
                                 menuItems={getRoomMenu(i, r.room)}
                                 menuPosition="bottom"
                                 isOpen={r.openRoom}
-                                onOpenChange={val => updateRow(i, 'openRoom', val)}
+                                onOpenChange={(val) => updateRow(i, 'openRoom', val)}
                                 customButton={
                                     <div
-                                        className={`${styles.selectBtn} ${!r.room ? styles.selectBtnWarning : ''}`}
-                                        onClick={e => {
+                                        className={`${styles.selectBtn} ${!r.room ? styles.selectBtnWarning : ''
+                                            }`}
+                                        onClick={(e) => {
                                             e.stopPropagation();
                                             updateRow(i, 'openRoom', true);
                                         }}
@@ -633,11 +672,12 @@ export default function Create() {
                                 menuItems={getTeacherMenu(i, r.teacher)}
                                 menuPosition="bottom"
                                 isOpen={r.openTeacher}
-                                onOpenChange={val => updateRow(i, 'openTeacher', val)}
+                                onOpenChange={(val) => updateRow(i, 'openTeacher', val)}
                                 customButton={
                                     <div
-                                        className={`${styles.selectBtn} ${!r.teacher ? styles.selectBtnWarning : ''}`}
-                                        onClick={e => {
+                                        className={`${styles.selectBtn} ${!r.teacher ? styles.selectBtnWarning : ''
+                                            }`}
+                                        onClick={(e) => {
                                             e.stopPropagation();
                                             updateRow(i, 'openTeacher', true);
                                         }}
@@ -655,7 +695,8 @@ export default function Create() {
                     </button>
                     <button
                         type="button"
-                        className={`${styles.addBtn} ${!hasMore ? styles.disabledBtn : ''}`}
+                        className={`${styles.addBtn} ${!hasMore ? styles.disabledBtn : ''
+                            }`}
                         onClick={addRow}
                         disabled={!hasMore}
                         style={{ background: 'var(--green)' }}
@@ -667,21 +708,25 @@ export default function Create() {
         );
     };
 
-    /* ---------------- helper định dạng ngày ---------------- */
-    const formatForDateInput = dayString => {
+    const formatForDateInput = (dayString) => {
         const [dd, mm, yyyy] = dayString.split('/');
         return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
     };
 
-    const formatForDisplay = dateInput => {
-        const [yyyy, mm, dd] = dateInput.split('-');
-        return `${dd}/${mm}/${yyyy}`;
-    };
+    /* ---------------- trạng thái API và thông báo ---------------- */
+    const [isLoading, setIsLoading] = useState(false);
+    const [notiOpen, setNotiOpen] = useState(false);
+    const [notiStatus, setNotiStatus] = useState(false);
+    const [notiMessage, setNotiMessage] = useState('');
 
-    /* ---------------- render nội dung popup chính ---------------- */
+    /* ---------------- render Course Form (popup chính) ---------------- */
     const renderCourseForm = () => (
         <form className={styles.form} onSubmit={handleSaveCourse}>
-            <TextNoti title="Thông tin khóa học" color="blue" mes="Thông tin khóa học là bắt buộc" />
+            <TextNoti
+                title="Thông tin khóa học"
+                color="blue"
+                mes="Thông tin khóa học là bắt buộc"
+            />
 
             {/* CHƯƠNG TRÌNH */}
             <Menu
@@ -690,7 +735,12 @@ export default function Create() {
                 isOpen={openProgram}
                 onOpenChange={setOpenProgram}
                 customButton={
-                    <div className={`${styles.selectBtn} ${program.startsWith('Chọn') ? styles.selectBtnWarning : ''}`}>
+                    <div
+                        className={`${styles.selectBtn} ${program.startsWith('Chọn')
+                            ? styles.selectBtnWarning
+                            : ''
+                            }`}
+                    >
                         {program}
                     </div>
                 }
@@ -703,7 +753,12 @@ export default function Create() {
                 isOpen={openArea}
                 onOpenChange={setOpenArea}
                 customButton={
-                    <div className={`${styles.selectBtn} ${area.startsWith('Chọn') ? styles.selectBtnWarning : ''}`}>
+                    <div
+                        className={`${styles.selectBtn} ${area.startsWith('Chọn')
+                            ? styles.selectBtnWarning
+                            : ''
+                            }`}
+                    >
                         {area}
                     </div>
                 }
@@ -716,16 +771,29 @@ export default function Create() {
                 isOpen={openTeacher}
                 onOpenChange={setOpenTeacher}
                 customButton={
-                    <div className={`${styles.selectBtn} ${teacher.startsWith('Chọn') ? styles.selectBtnWarning : ''}`}>
+                    <div
+                        className={`${styles.selectBtn} ${teacher.startsWith('Chọn')
+                            ? styles.selectBtnWarning
+                            : ''
+                            }`}
+                    >
                         {teacher}
                     </div>
                 }
             />
 
-            {errorMsg && <p className={styles.error} style={{ marginTop: 8 }}>{errorMsg}</p>}
+            {errorMsg && (
+                <p className={styles.error} style={{ marginTop: 8 }}>
+                    {errorMsg}
+                </p>
+            )}
 
             {/* LỊCH HỌC */}
-            <TextNoti title="Lịch học" color="blue" mes="Bạn có thể thêm từng buổi hoặc tạo hàng loạt." />
+            <TextNoti
+                title="Lịch học"
+                color="blue"
+                mes="Bạn có thể thêm từng buổi hoặc tạo hàng loạt."
+            />
             <div className={styles.scheduleAction}>
                 <button type="button" className={styles.addBtn} onClick={openSingle}>
                     + Thêm buổi
@@ -744,9 +812,13 @@ export default function Create() {
     );
 
     /* ---------------- xử lý lưu khóa học ---------------- */
-    const handleSaveCourse = e => {
+    const handleSaveCourse = (e) => {
         e.preventDefault();
-        if (program.startsWith('Chọn') || area.startsWith('Chọn') || teacher.startsWith('Chọn')) {
+        if (
+            program.startsWith('Chọn') ||
+            area.startsWith('Chọn') ||
+            teacher.startsWith('Chọn')
+        ) {
             alert('Vui lòng chọn đủ chương trình, khu vực và giáo viên.');
             return;
         }
@@ -755,6 +827,8 @@ export default function Create() {
             return;
         }
 
+        const code = programObj ? programObj.ID : '';
+
         const payload = {
             Name: program,
             Area: area,
@@ -762,24 +836,40 @@ export default function Create() {
             Status: 'planning',
             TimeStart: schedules[0].Day.split('/').reverse().join('-'),
             TimeEnd: schedules.at(-1)?.Day.split('/').reverse().join('-'),
-            Detail: schedules
+            Detail: schedules,
+            code: code,
         };
 
-        fetch('/api/courses', {
+        setIsLoading(true);
+        fetch('/api/course', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         })
-            .then(r => r.json().then(j => ({ ok: r.ok, data: j })))
+            .then((r) =>
+                r.json().then((j) => ({
+                    ok: r.ok,
+                    data: j,
+                }))
+            )
             .then(({ ok, data }) => {
+                setIsLoading(false);
                 if (ok) {
-                    alert('Đã lưu khóa học!');
-                    closePopupHandler();
+                    setNotiStatus(true);
+                    setNotiMessage('Đã lưu khóa học thành công!');
+                    setNotiOpen(true);
                 } else {
-                    alert(data.mes);
+                    setNotiStatus(false);
+                    setNotiMessage(data.mes || 'Lỗi từ server');
+                    setNotiOpen(true);
                 }
             })
-            .catch(err => alert(err.message));
+            .catch((err) => {
+                setIsLoading(false);
+                setNotiStatus(false);
+                setNotiMessage(err.message || 'Không thể kết nối đến server');
+                setNotiOpen(true);
+            });
     };
 
     /* ---------------- hiển thị danh sách lịch ---------------- */
@@ -790,7 +880,7 @@ export default function Create() {
         return (
             <div className={styles.scheduleList}>
                 <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--border-color)' }}>
-                    <p className='text_4'>Danh sách buổi học</p>
+                    <p className="text_4">Danh sách buổi học</p>
                 </div>
                 {schedules.map((s, i) => {
                     const [startTime] = s.Time.split('-');
@@ -798,19 +888,53 @@ export default function Create() {
                     return (
                         <div key={i} className={styles.scheduleItem}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <span className={styles.scheduleIndex}>{i + 1}. {s.Topic}</span>
+                                <span className={styles.scheduleIndex}>
+                                    {i + 1}. {s.Topic}
+                                </span>
                                 <span className={styles.scheduleText}>
                                     {`${s.Day} – ${startTime} (${s.Lesson} tiết) – ${s.Room} – ${s.Teacher}`}
                                 </span>
                             </div>
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <div style={{ width: 16, height: 16, padding: 8, borderRadius: 5, background: '#f8e7b2', cursor: 'pointer' }} onClick={() => openEdit(i)}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={16} height={16} fill='#d89025'>
+                                <div
+                                    style={{
+                                        width: 16,
+                                        height: 16,
+                                        padding: 8,
+                                        borderRadius: 5,
+                                        background: '#f8e7b2',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => openEdit(i)}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 512 512"
+                                        width={16}
+                                        height={16}
+                                        fill="#d89025"
+                                    >
                                         <path d="M471.6 21.7c-21.9-21.9-57.3-21.9-79.2 0L362.3 51.7l97.9 97.9 30.1-30.1c21.9-21.9 21.9-57.3 0-79.2L471.6 21.7zm-299.2 220c-6.1 6.1-10.8 13.6-13.5 21.9l-29.6 88.8c-2.9 8.6-.6 18.1 5.8 24.6s15.9 8.7 24.6 5.8l88.8-29.6c8.2-2.7 15.7-7.4 21.9-13.5L437.7 172.3 339.7 74.3 172.4 241.7zM96 64C43 64 0 107 0 160L0 416c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-96c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 64z" />
                                     </svg>
                                 </div>
-                                <div style={{ width: 16, height: 16, padding: 8, borderRadius: 5, background: '#ffdbcc', cursor: 'pointer' }} onClick={() => deleteSchedule(i)}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width={16} height={16} fill='var(--red)'>
+                                <div
+                                    style={{
+                                        width: 16,
+                                        height: 16,
+                                        padding: 8,
+                                        borderRadius: 5,
+                                        background: '#ffdbcc',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => deleteSchedule(i)}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 448 512"
+                                        width={16}
+                                        height={16}
+                                        fill="var(--red)"
+                                    >
                                         <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z" />
                                     </svg>
                                 </div>
@@ -822,7 +946,6 @@ export default function Create() {
         );
     };
 
-    /* ---------------- render FlexiblePopup ---------------- */
     return (
         <>
             <div className={styles.button} onClick={openPopupHandler}>
@@ -853,7 +976,7 @@ export default function Create() {
                         return (
                             <SingleForm
                                 initialData={schedules[editingIndex]}
-                                onSave={updated => updateScheduleAt(editingIndex, updated)}
+                                onSave={(updated) => updateScheduleAt(editingIndex, updated)}
                             />
                         );
                     }
@@ -865,6 +988,46 @@ export default function Create() {
                         : secondaryType === 'edit'
                             ? 'Chỉnh sửa buổi học'
                             : 'Tạo lịch hàng loạt'
+                }
+            />
+
+            {/* Loading toàn màn hình khi gọi API */}
+            {isLoading && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2000,
+                    }}
+                >
+                    <Loading content="Đang xử lý..." />
+                </div>
+            )}
+
+            {/* Thông báo kết quả API */}
+            <Noti
+                open={notiOpen}
+                onClose={() => setNotiOpen(false)}
+                status={notiStatus}
+                mes={notiMessage}
+                button={
+                    <div
+                        onClick={() => {
+                            setNotiOpen(false);
+                            if (notiStatus) {
+                                closePopupHandler();
+                            }
+                        }}
+                    >
+                        Đóng
+                    </div>
                 }
             />
         </>

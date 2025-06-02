@@ -62,17 +62,17 @@ export async function POST(req) {
         const ph = row[1];
         if (ph && stdPhone(ph) === targetPhone) {
             rowIdx = i + 1;
-            rawLabel = row[11] || '';   // cột L
-            rawUid = row[12] || '';   // cột M
+            rawLabel = row[11] || '';   
+            rawUid = row[12] || '';   
         }
     });
 
-    /* ── gửi tin dùng UID nếu có, ngược lại dùng phone ── */
     const result = { phone, status: 'failed' };
     try {
-        const url = new URL('https://script.google.com/macros/s/AKfycbzwdtew3wf7I8lGlaax7FjzkuClr3a1cY5swUPKWhvs3Apa9pBOEBUHa54k4YxtNjv-8g/exec');
+        const url = new URL('https://script.google.com/macros/s/AKfycbx17JMuK_X-OhUAjin3IlDTAvhBgOOocoWMrTqT7q7_lWNq0eES-GHLwD4MKMIQ43p9eg/exec');
         if (rawUid) url.searchParams.set('uid', rawUid);
         else url.searchParams.set('phone', phone);
+        console.log(rawUid);
         url.searchParams.set('mes', mes);
        
         
@@ -81,7 +81,10 @@ export async function POST(req) {
 
         if (json.status === 2) {
             result.status = 'success';
-            if (json.data?.uid) result.uid = json.data.uid;  
+            console.log(json.data);
+            if (json.data?.uid) result.uid = json.data.uid;
+            if (json.data?.name) result.name = json.data.name;
+            else result.mes = mes;
         } else {
             result.error = json.mes;
         }
@@ -107,7 +110,7 @@ export async function POST(req) {
     if (rowIdx && !rawUid && result.uid) {
         updates.push({
             range: `${SHEET_NAME}!M${rowIdx}`,
-            values: [[result.uid]]
+            values: [[`[${result.uid},${result.name}]`]]
         });
     }
 
@@ -117,7 +120,6 @@ export async function POST(req) {
             requestBody: { valueInputOption: 'RAW', data: updates }
         });
     }
-    console.log(result);
     
     return NextResponse.json({
         status: result.status === 'success' ? 2 : 1,
