@@ -22,6 +22,8 @@ function BookIcon({ active }) {
 }
 
 export default function Navbar({ data = [] }) {
+    console.log(data);
+    
     /* ------------------- STATE ------------------- */
     const [tab, setTab] = useState(0);                 // 0-3
     const [search, setSearch] = useState('');          // ô tìm kiếm
