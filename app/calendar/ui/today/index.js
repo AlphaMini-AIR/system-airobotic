@@ -4,7 +4,7 @@ import CalendarCourse from '../lesson_td';
 import styles from './index.module.css'
 
 export default function Today({ data, today, month, year }) {
-    
+
     return (
         <div style={{ borderRight: '1px solid var(--border-color)', width: '100%', height: '100%', overflow: 'auto' }}>
             <div className={styles.title} >
@@ -15,7 +15,7 @@ export default function Today({ data, today, month, year }) {
                 <div className='text_4' style={{ color: 'var(--main_d)' }}>Lịch dạy hôm nay</div>
                 <div style={{ height: '2px', backgroundColor: 'var(--main_d)', flex: 1, marginTop: '2px' }}></div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {data.length === 0 ?
                     <p style={{
                         padding: 32,

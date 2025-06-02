@@ -7,7 +7,7 @@ import CenterPopup from '@/components/(popup)/popup_center';
 import CommentForm from '../formcmt';
 import BoxFile from '@/components/(box)/file';
 import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/noti';
+import Noti from '@/components/(noti)/noti';
 
 import styles from './index.module.css';
 

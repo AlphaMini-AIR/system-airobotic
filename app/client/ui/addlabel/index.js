@@ -3,7 +3,7 @@
 import React, { useCallback, useState } from 'react';
 import styles from './index.module.css';
 import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/noti';                // ⬅ thay đường dẫn nếu cần
+import Noti from '@/components/(noti)/noti';                // ⬅ thay đường dẫn nếu cần
 import { Re_Label } from '@/data/client';
 
 export default function AddLabelButton({ onCreated }) {

@@ -74,7 +74,7 @@ export async function POST(req) {
         if (rawUid) url.searchParams.set('uid', rawUid);
         else url.searchParams.set('phone', phone);
         url.searchParams.set('mes', mes);
-        console.log(url);
+       
         
         const r = await fetch(url.toString());
         const json = await r.json();
@@ -117,7 +117,8 @@ export async function POST(req) {
             requestBody: { valueInputOption: 'RAW', data: updates }
         });
     }
-
+    console.log(result);
+    
     return NextResponse.json({
         status: result.status === 'success' ? 2 : 1,
         mes,

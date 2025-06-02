@@ -1,14 +1,10 @@
-'use client'
-import React, { useState } from "react";
-import CustomButton from "@/components/(button)/button";
-import Noti from "@/components/noti";
+import { Data_Course_all } from "@/data/course"
+import Navbar from "./template/navbar"
 
-export default function Home() {
-  const [count, setCount] = useState(false);
+export default async function Home() {
+  const data = await Data_Course_all()
+  
   return (
-    <>
-      <CustomButton onClick={() => setCount(true)} >Hãy bấm vào 1</CustomButton>
-      <Noti open={count} onClose={() => setCount(false)} status={false} mes='bi' />
-    </>
+    <Navbar data={data} />
   )
 }

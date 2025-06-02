@@ -23,7 +23,7 @@ export default function FlexiblePopup({
     dataSecondary: providedDataSecondary = null,
     renderSecondaryList = () => null,
     secondaryTitle = 'Chi tiết',
-
+    width = 500,
     globalZIndex = 1000
 }) {
     // primary state
@@ -170,7 +170,7 @@ export default function FlexiblePopup({
             ${visible ? styles.open : ''}
             ${visible2 ? styles.shifted : ''}
           `}
-                    style={{ zIndex: globalZIndex }}
+                    style={{ zIndex: globalZIndex, width: width }}
                     onMouseDown={e => e.stopPropagation()}
                 >
                     <div className={styles.header}>
@@ -198,7 +198,7 @@ export default function FlexiblePopup({
               ${styles.popup2}
               ${visible2 ? styles.open : ''}
             `}
-                        style={{ zIndex: globalZIndex + 2 }}
+                        style={{ zIndex: globalZIndex + 2, width: width }}
                         onMouseDown={e => e.stopPropagation()}
                     >
                         <div className={styles.header}>

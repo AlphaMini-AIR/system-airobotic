@@ -8,11 +8,12 @@ export default async function Page() {
     Read_Student_All()
   ]);
 
-  const data_student = await Promise.all(
-    studentList.map(student => Read_Student_One(student._id))
-  );
+  // const data_student = await Promise.all(
+  //   studentList.map(student => Read_Student_One(student._id))
+  // );
 
   return (
-    <Main data_area={area_all} data_student={data_student} />
+    // <Main data_area={area_all} data_student={data_student} />
+    <p>hi</p>
   );
 }

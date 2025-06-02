@@ -5,7 +5,7 @@ import FlexiblePopup from '@/components/(popup)/popup_right';
 import CenterPopup from '@/components/(popup)/popup_center';
 import Loading from '@/components/(loading)/loading';
 import { Data_History_User, Re_Client } from '@/data/client';
-import Noti from '@/components/noti';
+import Noti from '@/components/(noti)/noti';
 import styles from './index.module.css';
 import Title from '@/components/(popup)/title';
 

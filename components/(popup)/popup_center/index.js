@@ -1,9 +1,7 @@
-// CenterPopup.jsx
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import styles from './index.module.css';  // nếu bạn dùng centerPopup.module.css thì đổi lại cho khớp
-import Loading from '@/components/(loading)/loading'; // nếu cần
+import styles from './index.module.css';  
 
 const ANIMATION_DURATION = 300;
 

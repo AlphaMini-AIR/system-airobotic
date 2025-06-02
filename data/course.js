@@ -32,6 +32,24 @@ export async function Data_lesson(id){
     }
 }
 
+export async function Data_Course_all (){
+    try {
+        const res = await fetchApi(`/course`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`data_course_all`] }
+        });
+
+        return res.data || [];
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
+export async function Re_course_all() {
+    revalidateTag(`data_course_all`);
+}
+
 export async function Re_lesson(id) {
     revalidateTag(`data_lesson${id}`);
 }

@@ -1,0 +1,74 @@
+/* Khung ngoài của từng mục Nav */
+.navContainer {
+    display: flex;
+    justify-content: space-between;
+    border-right: 1px solid var(--border-color);
+    padding: 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.active {
+    background-color: var(--main_d);
+    border-radius: 6px;
+}
+
+/* Khi tab không active (chưa chọn) */
+.inactive {
+    cursor: pointer;
+}
+
+/* Khung chứa số lượng (sl) và tiêu đề (title) */
+.leftContent {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Số lượng (sl) */
+.textNumber {
+    font-weight: bold;
+    font-size: 32px;
+}
+
+/* Tiêu đề (title) */
+.textTitle {
+    margin-top: 4px;
+    /* khoảng cách nhẹ giữa số và tiêu đề */
+}
+
+/* Màu chữ khi active: trắng */
+.active .textNumber,
+.active .textTitle {
+    color: white;
+}
+
+/* Màu chữ khi inactive: dùng CSS variable */
+.inactive .textNumber {
+    color: var(--vamColor-text-Title);
+}
+
+.inactive .textTitle {
+    color: var(--text-secondary);
+}
+
+/* Khung chứa icon (box vuông 25x25) */
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    padding: 8px;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+/* Nền icon khi active */
+.active .iconWrapper {
+    background-color: var(--background);
+}
+
+/* Nền icon khi inactive */
+.inactive .iconWrapper {
+    background-color: var(--vamColor-background);
+}
