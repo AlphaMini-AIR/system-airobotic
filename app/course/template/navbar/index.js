@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import Nav from '../../ui/nav-item';
-// import CourseItem from '../../ui/course-item';
+import CourseItem from '../../ui/course-item';
 import styles from './index.module.css';
 
 function BookIcon({ active }) {
@@ -165,10 +165,10 @@ export default function Navbar({ data }) {
             <div className={styles.tabContent}>
                 {Array.isArray(listForTab) && listForTab.length > 0 ? (
                     <div className={styles.listWrap}>
-                        {/* {listForTab.map((c) => (
+                        {listForTab.map((c) => (
                             // Nếu c có thể là undefined, bạn có thể kiểm tra trước khi render CourseItem
-                            // c ? <CourseItem key={c.ID} data={c} /> : null
-                        ))} */}
+                            c ? <CourseItem key={c.ID} data={c} /> : null
+                        ))}
                     </div>
                 ) : (
                     <p className={styles.empty}>Không tìm thấy khóa học phù hợp.</p>
