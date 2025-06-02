@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import Nav from '../../ui/nav-item';
 import CourseItem from '../../ui/course-item';
-import Create from '../../ui/create';
+// import Create from '../../ui/create';
 import styles from './index.module.css';
 
 /* ---------- ICON SÁCH (nhỏ gọn) ---------- */
@@ -22,19 +22,11 @@ function BookIcon({ active }) {
 }
 
 export default function Navbar({ data = [] }) {
-    console.log(data);
-    
-    /* ------------------- STATE ------------------- */
-    const [tab, setTab] = useState(0);                 // 0-3
-    const [search, setSearch] = useState('');          // ô tìm kiếm
-    const [area, setArea] = useState('');              // '' = tất cả
+    const [tab, setTab] = useState(0);
+    const [search, setSearch] = useState('');
+    const [area, setArea] = useState('');
 
-    /* ------------------- MẸO: gom logic đếm & nhóm ------------------- */
-    const {
-        counts,
-        groups,         // { inProgress, completed, trial, review }
-        areaOptions,    // ['','HCM','Biên Hòa',...]
-    } = useMemo(() => {
+    const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
             counts: { inProgress: 0, completed: 0, trial: 0, review: 0 },
             groups: { inProgress: [], completed: [], trial: [], review: [] },
@@ -43,7 +35,6 @@ export default function Navbar({ data = [] }) {
 
         data.forEach((c) => {
             result.areaSet.add(c.Area);
-
             if (!c.Status && c.Type !== 'Học thử') {
                 result.counts.inProgress += 1;
                 result.groups.inProgress.push(c);
@@ -66,13 +57,9 @@ export default function Navbar({ data = [] }) {
         };
     }, [data]);
 
-    /* ------------ HÀM PHỤ: thoả điều kiện filter search/area ---------- */
     const courseFilter = useCallback(
         (c) => {
-            /* Area */
             if (area && c.Area !== area) return false;
-
-            /* Search theo ID hoặc TeacherHR (không phân biệt hoa-thường) */
             if (!search) return true;
             const q = search.trim().toLowerCase();
             return (
@@ -154,7 +141,7 @@ export default function Navbar({ data = [] }) {
                     </select>
                 </div>
 
-                <Create />
+                {/* <Create /> */}
             </div>
 
             {/* ---------- NỘI DUNG TAB ---------- */}
