@@ -34,10 +34,14 @@ export async function GET(request) {
     }
 }
 
+const APPSCRIPT =
+    'https://script.google.com/macros/s/AKfycbzntIe1JjogbToY-teezPACCgffLJDyBhJbTSK_WMqutBkaqctocqSZoORASIQS-w4hjw/exec';
+
 export async function POST(req) {
     try {
         await connectDB();
 
+        /* ----------- Đọc & kiểm tra request ----------- */
         const {
             code,
             Name,
@@ -53,10 +57,8 @@ export async function POST(req) {
             Student = [],
         } = await req.json();
 
-        // Validate đầu vào
         if (
             !code ||
-            typeof code !== 'string' ||
             !Name ||
             !Area ||
             !TeacherHR ||
@@ -65,87 +67,86 @@ export async function POST(req) {
             !Array.isArray(Detail)
         ) {
             return NextResponse.json(
-                {
-                    x: 1,
-                    mes: 'Thiếu một hoặc nhiều trường bắt buộc: code, Name, Area, TeacherHR, TimeStart, TimeEnd hoặc Detail không phải mảng.',
-                    data: []
-                },
+                { x: 1, mes: 'Thiếu một hoặc nhiều trường bắt buộc', data: [] },
                 { status: 200 }
             );
         }
 
-        // Sinh ID mới
-        const now = new Date();
-        const yy = now.getFullYear().toString().slice(-2); // "25"
-        const cleanCode = code.trim().toUpperCase();
-        const prefix = `${yy}${cleanCode}`;
-        const existingCount = await PostCourse.countDocuments({
-            ID: { $regex: `^${prefix}` }
-        });
-        const seqNum = existingCount + 1;               // tăng 1 để tránh trùng với "000"
-        const seqStr = seqNum.toString().padStart(3, '0');
-        const newCourseID = `${prefix}${seqStr}`;
+        /* ----------- Sinh ID mới ----------- */
+        const yy = new Date().getFullYear().toString().slice(-2);
+        const prefix = `${yy}${code.trim().toUpperCase()}`;
+        const seq =
+            (await PostCourse.countDocuments({ ID: { $regex: `^${prefix}` } })) + 1;
+        const newCourseID = `${prefix}${seq.toString().padStart(3, '0')}`;
 
-        // Chuyển Status sang boolean
-        let statusBoolean = false;
-        if (typeof Status === 'boolean') {
-            statusBoolean = Status;
-        } else {
-            const s = String(Status).toLowerCase().trim();
-            statusBoolean = s === 'true' || s === 'active';
+        /* ----------- Gọi Apps Script để lấy ảnh ----------- */
+        const TopicStr = Detail.map((d) => d.Day).join('|'); // dd/MM/yyyy|dd/MM/yyyy
+        let urls = '';
+
+        try {
+            const scriptRes = await fetch(
+                `${APPSCRIPT}?ID=${encodeURIComponent(
+                    newCourseID
+                )}&Topic=${encodeURIComponent(TopicStr)}`
+            );
+            if (scriptRes.ok) {
+                const json = await scriptRes.json();
+                if (json.status === 'success') urls = json.urls;
+            }
+        } catch (err) {
+            console.error('[APPSCRIPT_ERROR]', err);
+            // tiếp tục, Image sẽ rỗng nếu có lỗi
         }
 
-        // Chuẩn hoá Detail
-        const detailArray = Detail.map((e) => ({
-            Day: e.Day || '',
-            Topic: e.Topic || '',
-            Room: e.Room || '',
-            Time: e.Time || '',
-            Lesson: typeof e.Lesson === 'number' ? e.Lesson : 0,
-            ID: e.ID || '',
-            Image: e.Image || '',
-            Teacher: e.Teacher || '',
-            TeachingAs: e.TeachingAs || '',
+        const urlArr = urls.split('|');
+
+        /* ----------- Chuẩn hoá Detail ----------- */
+        const detailArray = Detail.map((d, i) => ({
+            Day: d.Day || '',
+            Topic: d.Topic || '',
+            Room: d.Room || '',
+            Time: d.Time || '',
+            Lesson: typeof d.Lesson === 'number' ? d.Lesson : 0,
+            ID: d.ID || '',
+            Image: urlArr[i] || '',
+            Teacher: d.Teacher || '',
+            TeachingAs: d.TeachingAs || '',
         }));
 
-        // Chuẩn hoá Student
-        const studentArray = Array.isArray(Student) ? Student : [];
-
-        // Tạo record mới
+        /* ----------- Lưu MongoDB ----------- */
         await PostCourse.create({
             ID: newCourseID,
             Name: Name.trim(),
             Area: Area.trim(),
             TeacherHR: TeacherHR.trim(),
-            Status: statusBoolean,
+            Status:
+                typeof Status === 'boolean'
+                    ? Status
+                    : String(Status).toLowerCase().trim() === 'true' ||
+                    String(Status).toLowerCase().trim() === 'active',
             Type: Type.trim(),
             Address: Address.trim(),
             Price: typeof Price === 'number' ? Price : 0,
             TimeStart: TimeStart.trim(),
             TimeEnd: TimeEnd.trim(),
             Detail: detailArray,
-            Student: studentArray,
+            Student: Array.isArray(Student) ? Student : [],
             CreatedAt: new Date(),
             UpdatedAt: new Date(),
         });
 
-        // Không cần trả về đối tượng đã tạo, chỉ trả trạng thái và thông báo
         return NextResponse.json(
             {
                 x: 2,
                 mes: `Tạo khóa học thành công! ID: ${newCourseID}`,
-                data: []
+                data: [],
             },
             { status: 201 }
         );
     } catch (err) {
         console.error('[COURSE_CREATE]', err);
         return NextResponse.json(
-            {
-                x: 1,
-                mes: 'Server error',
-                data: []
-            },
+            { x: 1, mes: 'Server error', data: [] },
             { status: 500 }
         );
     }

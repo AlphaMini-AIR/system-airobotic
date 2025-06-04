@@ -13,6 +13,21 @@
     cursor: pointer;
 }
 
+.bnt {
+    width: calc(100% - 24px);
+    justify-content: center;
+    padding: 10px 12px;
+    background: var(--main_d);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
 /* ---------- FORM trong popup ---------- */
 .form {
     display: flex;

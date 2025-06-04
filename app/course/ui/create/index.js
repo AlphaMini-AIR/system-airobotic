@@ -819,7 +819,7 @@ export default function Create() {
             area.startsWith('Chọn') ||
             teacher.startsWith('Chọn')
         ) {
-            alert('Vui lòng chọn đủ chương trình, khu vực và giáo viên.');
+            alert('Vui lòng chọn đủ chương trình, khu vực và giáo viên chủ nhiệm.');
             return;
         }
         if (schedules.length === 0) {
@@ -1019,6 +1019,7 @@ export default function Create() {
                 mes={notiMessage}
                 button={
                     <div
+                        className={styles.bnt}
                         onClick={() => {
                             setNotiOpen(false);
                             if (notiStatus) {
