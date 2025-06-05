@@ -1,0 +1,76 @@
+.btn {
+    background: var(--main);
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+.btn:hover {
+    opacity: .9
+}
+
+.cell {
+    display: flex;
+    padding: 8px 8px;
+}
+
+.naText {
+    color: #777
+}
+
+.detailContainer {
+    margin: 16px;
+    border: thin solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.topic {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 8px;
+    border-radius: 5px;
+}
+
+.chip {
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: white;
+    font-weight: 400;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border-radius: 5px;
+    border: thin solid var(--border-color);
+    margin: 16px;
+    margin-bottom: 8px;
+}
+
+.boxx {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+}
+
+.button {
+    padding: 10px 12px;
+    background: var(--main_d);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    border-radius: 8px;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}

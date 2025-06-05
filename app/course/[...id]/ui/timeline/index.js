@@ -7,7 +7,7 @@ export default function Timeline({ data, props }) {
 
             <div style={{
                 borderRadius: '8px', padding: 16, background: 'linear-gradient(90deg, rgba(32,97,165,1) 0%, rgba(18,57,98,1) 100%)',
-                boxShadow: 'var(--box)', position: 'sticky', top: 0, zIndex: 9, overflow: 'hidden',
+                boxShadow: 'var(--box)', overflow: 'hidden',
             }}><Link href={`/course/${data.ID}`}>
                     <div className="text_4_m" style={{ color: 'white', fontWeight: '500' }}>{data.Type}</div>
                     <div className="text_2" style={{ margin: '4px 0', color: 'white' }}>Lớp: {data.ID}</div>
