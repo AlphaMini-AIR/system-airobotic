@@ -8,6 +8,7 @@ export default function Menu({
   isOpen: controlledIsOpen,
   onOpenChange,
   customButton,
+  style = ''
 }) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isControlled = controlledIsOpen !== undefined;

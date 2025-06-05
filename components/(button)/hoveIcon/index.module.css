@@ -8,5 +8,5 @@
 }
 
 .WrapIcon:hover {
-    background-color: var(--hover);
+    background-color: var(--border-color);
 }

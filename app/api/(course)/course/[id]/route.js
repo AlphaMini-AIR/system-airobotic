@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
         await connectDB();
 
         // Tìm document theo _id (mặc định Mongoose dùng _id)
-        const course = await PostCourse.findById(id).lean().exec();
+        const course = await PostCourse.findOne({ ID: id }).lean().exec();
 
         if (!course) {
             // Nếu không tìm thấy, trả về 404

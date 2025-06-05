@@ -46,6 +46,20 @@ export async function Data_Course_all (){
     }
 }
 
+export async function Data_Course_One (id){
+    try {
+        const res = await fetchApi(`/course/${id}`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`data_course_${id}`] }
+        });
+
+        return res.data || [];
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
 export async function Re_course_all() {
     revalidateTag(`data_course_all`);
 }

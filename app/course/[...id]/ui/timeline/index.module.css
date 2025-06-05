@@ -1,0 +1,11 @@
+.dotnumber {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #1f5fa2;
+    color: white;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

@@ -192,6 +192,7 @@ export default function Nav() {
             <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
           </div>
         }
+        style={`display: 'flex'`}
         onOpenChange={(isOpen) => {
           setIsMenuOpen(isOpen);
           if (!isOpen) setActiveMenu(1);

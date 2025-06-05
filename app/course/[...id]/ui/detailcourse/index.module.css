@@ -1,0 +1,20 @@
+.box {
+    background: white;
+    position: relative;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    border: thin solid var(--border-color);
+    z-index: 1;
+}
+
+.container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: auto;
+    border-radius: 8px;
+    box-shadow: var(--boxshaw2);
+    height: calc(100% - 32px);
+}
