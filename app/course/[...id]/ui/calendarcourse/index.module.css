@@ -1,0 +1,164 @@
+.trigger {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    background: #eaf9ff;
+    transition: all .1s linear;
+}
+
+.detailContainer {
+    margin: 16px;
+    border: thin solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.cell {
+    display: flex;
+    padding: 8px 8px;
+}
+
+.btnRow {
+    padding: 8px 16px;
+    border-top: thin solid var(--border-color);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.rowHead {
+    display: flex;
+    padding: 8px 0;
+    border-bottom: thin solid var(--border-color);
+    background-color: var(--border-color);
+}
+
+.cancelBox {
+    padding: 16px;
+}
+
+.textarea {
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 4px;
+    resize: vertical;
+    border-radius: 8px;
+    outline: none;
+    font-family: 'Roboto', sans-serif;
+    min-height: 200px;
+    width: calc(100% - 24px);
+    margin-top: 16px;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 5px;
+    border: thin solid var(--border-color);
+    margin: 16px;
+    margin-bottom: 8px;
+}
+
+.trigger:hover {
+    background: #e1f7ff;
+    transform: translateY(-2px);
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+}
+
+.head {
+    background: var(--border-color);
+    font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    width: 90px;
+}
+
+.list_menuwrap {
+    margin-top: 8px;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: var(--boxshaw2);
+}
+
+.selectBtn {
+    flex: 1 1;
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+    cursor: pointer;
+}
+
+.list_menuwrap>p {
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 10px 12px;
+    transition: all 0.2s linear;
+}
+
+.list_menuwrap>p:hover {
+    background: var(--hover);
+}
+
+.editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+}
+
+.editForm label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    gap: 4px;
+}
+
+.editForm input {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.btnSave {
+    align-self: flex-end;
+    padding: 6px 16px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

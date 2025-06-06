@@ -5,8 +5,9 @@ import Nav from '../../ui/nav-item';
 import CourseItem from '../../ui/course-item';
 import Create from '../../ui/create';
 import styles from './index.module.css';
+import { useRouter } from 'next/navigation';
+import { Re_course_all } from '@/data/course';
 
-/* ---------- ICON SÁCH (nhỏ gọn) ---------- */
 function BookIcon({ active }) {
     return (
         <svg
@@ -22,9 +23,18 @@ function BookIcon({ active }) {
 }
 
 export default function Navbar({ data = [] }) {
+    const router = useRouter()
+    const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);
     const [search, setSearch] = useState('');
     const [area, setArea] = useState('');
+
+    const reloadData = useCallback(async () => {
+        setIsReloading(true)
+        await Re_course_all()
+        router.refresh()
+        setIsReloading(false)
+    }, []);
 
     const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
@@ -140,8 +150,16 @@ export default function Navbar({ data = [] }) {
                         )}
                     </select>
                 </div>
-
-                <Create />
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                        className={`btn-ac btn-re`}
+                        onClick={reloadData}
+                        disabled={isReloading}
+                    >
+                        {isReloading ? 'Đang tải...' : 'Làm mới dữ liệu'}
+                    </button>
+                    <Create />
+                </div>
             </div>
 
             {/* ---------- NỘI DUNG TAB ---------- */}

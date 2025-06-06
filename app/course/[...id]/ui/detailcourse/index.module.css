@@ -1,11 +1,9 @@
 .box {
     background: white;
-    position: relative;
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
     border: thin solid var(--border-color);
-    z-index: 1;
 }
 
 .container {
@@ -17,4 +15,9 @@
     border-radius: 8px;
     box-shadow: var(--boxshaw2);
     height: calc(100% - 32px);
+}
+
+.Boxk{
+    width: calc(50% - 4px);
+    aspect-ratio: 1;
 }

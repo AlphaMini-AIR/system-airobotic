@@ -18,7 +18,7 @@ export async function Data_calendar(month, year) {
     }
 }
 
-export async function Data_lesson(id){
+export async function Data_lesson(id) {
     try {
         const res = await fetchApi(`/calendar/${id}`, {
             method: 'GET',
@@ -32,7 +32,7 @@ export async function Data_lesson(id){
     }
 }
 
-export async function Data_Course_all (){
+export async function Data_Course_all() {
     try {
         const res = await fetchApi(`/course`, {
             method: 'GET',
@@ -46,7 +46,7 @@ export async function Data_Course_all (){
     }
 }
 
-export async function Data_Course_One (id){
+export async function Data_Course_One(id) {
     try {
         const res = await fetchApi(`/course/${id}`, {
             method: 'GET',
@@ -59,6 +59,11 @@ export async function Data_Course_One (id){
         return { data: [] };
     }
 }
+
+export async function Re_course_one(id) {
+    revalidateTag(`data_course_${id}`);
+}
+
 
 export async function Re_course_all() {
     revalidateTag(`data_course_all`);

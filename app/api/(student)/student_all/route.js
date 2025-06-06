@@ -10,7 +10,7 @@ export async function POST(request) {
         let message = 'Lấy dữ liệu thành công';
         let status = 200;
         await connectDB();
-        data = await PostStudent.find({}, { _id: 1 })
+        data = await PostStudent.find({})
         return NextResponse.json(
             { air: status === 200 ? 2 : 1, mes: message, data },
             { status }

@@ -10,7 +10,7 @@ export default function CenterPopup({
     onClose,
     title = '',
     children,
-    size = 'md',            // 'sm' | 'md' | 'lg'
+    size = 'md',            
     globalZIndex = 1000
 }) {
     const [mounted, setMounted] = useState(false);

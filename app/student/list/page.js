@@ -1,5 +1,5 @@
 import { Read_Area_All } from '@/data/data';
-import { Read_Student_All, Read_Student_One } from '@/data/data_student';
+import { Read_Student_All, Read_Student_One } from '@/data/student';
 import Main from './ui/main';
 
 export default async function Page() {

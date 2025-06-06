@@ -143,6 +143,18 @@ a {
   color: var(--text-primary)
 }
 
+.text_7 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.text_7_400 {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
 .scroll {
   overflow: hidden;
   overflow-y: auto;
@@ -279,4 +291,41 @@ a {
 
 .wrapicon:hover {
   transform: translateY(-2px);
+}
+
+.btn-ac {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-re {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-re:hover:not(:disabled) {
+  background-color: #f1f5f9;
+}
+
+.btn {
+  padding: 8px 12px;
+  background: var(--main_d);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
 }

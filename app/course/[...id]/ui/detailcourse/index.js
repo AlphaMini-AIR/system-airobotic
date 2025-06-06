@@ -1,5 +1,7 @@
 import DetailStudent from '../detatilstudent';
 import styles from './index.module.css';
+import Student from '../student';
+import Calendar from '../calendarcourse';
 
 export default function Detail({ data, params }) {
     const students = enrichStudents(data);
@@ -13,7 +15,7 @@ export default function Detail({ data, params }) {
                                 <span className="wrapicon" style={{ background: 'var(--main_d)' }}>
                                     <svg viewBox="0 0 448 512" width="14" height="14" fill="white">   <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
                                 </span>
-                                <DetailStudent data={stu} course={data.Detail} c={data}/>
+                                <DetailStudent data={stu} course={data.Detail} c={data} />
                             </div>
                         </Cell>
                     ) : (<Cell key={col.data} flex={col.flex} align={col.align}>  {stu[col.data]} </Cell>)
@@ -57,10 +59,23 @@ export default function Detail({ data, params }) {
                         <p className="text_6_400">Chương trình học: <span className="text_4_m">{data.ID}</span></p>
                         <p className="text_6_400">Số học sinh: <span className="text_4_m">{data.Student.length} học sinh</span></p>
                         <p className="text_6_400">Thời gian: <span className="text_4_m">{data.TimeStart} - {data.TimeEnd}</span></p>
+                        <p className="text_6_400">Chủ nhiệm: <span className="text_4_m">{data.TeacherHR}</span></p>
+                        <p className="text_6_400">Địa điểm: <span className="text_4_m">{data.Area}</span></p>
                     </div>
                 </div>
-                <div>
+                <div style={{ display: 'flex', width: 150, gap: 8, flexWrap: 'wrap' }}>
+                    <div className={styles.Boxk}>
+                        <Student course={data} student={students} />
+                    </div>
+                    <div className={styles.Boxk}>
+                        <Calendar course={data} student={students} />
+                    </div>
+                    <div className={styles.Boxk}>
 
+                    </div>
+                    <div className={styles.Boxk}>
+
+                    </div>
                 </div>
             </div>
             <div className={styles.box}>

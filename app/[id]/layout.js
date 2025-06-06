@@ -1,4 +1,4 @@
-import { Read_Student_One } from "@/data/data_student";
+import { Read_Student_One } from "@/data/student";
 import Banner from "./ui/banner";
 
 export default async function UserLayout({ children, params }) {

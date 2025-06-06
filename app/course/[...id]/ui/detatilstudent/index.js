@@ -7,6 +7,7 @@ import Title from '@/components/(popup)/title';
 import Loading from '@/components/(loading)/loading';
 import Noti from '@/components/(noti)/noti';
 import styles from './index.module.css';
+import WrapIcon from '@/components/(button)/hoveIcon';
 
 export default function DetailStudent({ data: student, course, c }) {
     if (!student || !course || !Array.isArray(course) || !course.length) {
@@ -232,10 +233,13 @@ export default function DetailStudent({ data: student, course, c }) {
     /* ───────── RENDER ───────── */
     return (
         <>
-            {/* Icon mở popup */}
-            <div className="wrapicon" style={{ background: 'var(--main_d)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setOpenMain(true)}>
-                <svg viewBox="0 0 512 512" width="16" height="16" fill="white"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336l24 0 0-64h-24c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-80c-13.3 0-24-10.7-24-24s10.7-24 24-24Zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64Z" /></svg>
-            </div>
+            <WrapIcon
+                icon={<svg viewBox="0 0 512 512" width="16" height="16" fill="white"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336l24 0 0-64h-24c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24h-80c-13.3 0-24-10.7-24-24s10.7-24 24-24Zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64Z" /></svg>}
+                content={'Chi tiết'}
+                placement={'bottom'}
+                style={{ background: 'var(--main_d)', color: 'white', cursor: 'pointer' }}
+                click={() => setOpenMain(true)}
+            />
 
             {/* Popup chi tiết */}
             <FlexiblePopup

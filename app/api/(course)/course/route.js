@@ -15,7 +15,8 @@ export async function GET(request) {
                 Area: 1,
                 TeacherHR: 1,
                 Address: 1,
-                Detail: 1
+                Detail: 1,
+                Type: 1,
             })
             .lean()
             .exec();
