@@ -1,0 +1,133 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    background-color: #f7f9fc;
+}
+
+.card {
+    display: flex;
+    flex-direction: row;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: var(--boxshaw2);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: calc(25% - (16px * 3 / 4));
+    cursor: pointer;
+    aspect-ratio: 6/3;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--boxshaw);
+}
+
+.imageWrapper {
+    width: 33.333%;
+    display: flex;
+}
+
+/* Ảnh/placeholder bên trong */
+.imagePlaceholder {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    width: 100%;
+    background: linear-gradient(135deg, var(--main_l), var(--main_d));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.imagePlaceholder img {
+    object-fit: cover;
+}
+
+/* Phần nội dung, chiếm 2/3 không gian */
+.content {
+    flex: 2;
+    /* Chiếm 2 phần */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    /* Sắp xếp nội dung bên trong theo chiều dọc */
+}
+
+/* Các style bên dưới hầu như giữ nguyên */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a202c);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.badge {
+    background-color: var(--blue-light, #e0e7ff);
+    color: var(--blue, #3730a3);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.id {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #718096);
+    margin-top: -4px;
+    margin-bottom: 16px;
+}
+
+.stats {
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #4a5568);
+    margin-bottom: 16px;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--green, #38a169);
+    margin-top: auto;
+    /* Đẩy giá tiền và nút xuống dưới cùng */
+    padding-top: 16px;
+}
+
+.actions {
+    margin-top: 16px;
+}
+
+.actionButton {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--main, #4f46e5);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.actionButton:hover {
+    background-color: var(--main_d, #4338ca);
+}

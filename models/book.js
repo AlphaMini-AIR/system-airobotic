@@ -39,6 +39,9 @@ const postBook = new Schema({
     },
     Detail: {
         type: Object
+    },
+    Image: {
+        type: String
     }
 })
 

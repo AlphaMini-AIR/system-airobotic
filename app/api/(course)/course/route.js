@@ -26,7 +26,6 @@ export async function GET(request) {
             { status: 200 }
         );
     } catch (error) {
-        // Trả về x = 0 nếu lỗi xác thực (nếu có), ngược lại x = 1
         const code = error.message === 'Authentication failed' ? 0 : 1;
         return NextResponse.json(
             { x: code, mes: error.message, data: [] },
@@ -41,8 +40,6 @@ const APPSCRIPT =
 export async function POST(req) {
     try {
         await connectDB();
-
-        /* ----------- Đọc & kiểm tra request ----------- */
         const {
             code,
             Name,
@@ -69,16 +66,34 @@ export async function POST(req) {
         ) {
             return NextResponse.json(
                 { x: 1, mes: 'Thiếu một hoặc nhiều trường bắt buộc', data: [] },
-                { status: 200 }
+                { status: 400 } // Nên dùng status 400 cho bad request
             );
         }
 
-        /* ----------- Sinh ID mới ----------- */
+        /* ----------- Sinh ID mới (Đảm bảo độc nhất) ----------- */
         const yy = new Date().getFullYear().toString().slice(-2);
         const prefix = `${yy}${code.trim().toUpperCase()}`;
-        const seq =
-            (await PostCourse.countDocuments({ ID: { $regex: `^${prefix}` } })) + 1;
-        const newCourseID = `${prefix}${seq.toString().padStart(3, '0')}`;
+
+        // Bắt đầu với một con số dự đoán
+        let seq = (await PostCourse.countDocuments({ ID: { $regex: `^${prefix}` } })) + 1;
+        let newCourseID;
+        let isUnique = false;
+
+        // Vòng lặp để kiểm tra và tìm ID duy nhất
+        do {
+            newCourseID = `${prefix}${seq.toString().padStart(3, '0')}`;
+            // Kiểm tra xem ID đã tồn tại chưa
+            const existingCourse = await PostCourse.findOne({ ID: newCourseID }).lean();
+            if (existingCourse) {
+                // Nếu tồn tại, tăng seq và thử lại ở vòng lặp tiếp theo
+                seq++;
+            } else {
+                // Nếu không tồn tại, ID này là duy nhất, thoát khỏi vòng lặp
+                isUnique = true;
+            }
+        } while (!isUnique);
+
+        console.log(`[COURSE_CREATE] Found unique ID: ${newCourseID}`);
 
         /* ----------- Gọi Apps Script để lấy ảnh ----------- */
         const TopicStr = Detail.map((d) => d.Day).join('|'); // dd/MM/yyyy|dd/MM/yyyy
@@ -96,7 +111,6 @@ export async function POST(req) {
             }
         } catch (err) {
             console.error('[APPSCRIPT_ERROR]', err);
-            // tiếp tục, Image sẽ rỗng nếu có lỗi
         }
 
         const urlArr = urls.split('|');
@@ -114,9 +128,8 @@ export async function POST(req) {
             TeachingAs: d.TeachingAs || '',
         }));
 
-        /* ----------- Lưu MongoDB ----------- */
         await PostCourse.create({
-            ID: newCourseID,
+            ID: newCourseID, 
             Name: Name.trim(),
             Area: Area.trim(),
             TeacherHR: TeacherHR.trim(),
@@ -132,20 +145,24 @@ export async function POST(req) {
             TimeEnd: TimeEnd.trim(),
             Detail: detailArray,
             Student: Array.isArray(Student) ? Student : [],
-            CreatedAt: new Date(),
-            UpdatedAt: new Date(),
         });
 
         return NextResponse.json(
             {
                 x: 2,
-                mes: `Tạo khóa học thành công! ID: ${newCourseID}`,
+                mes: `Tạo khóa học thành công!`,
                 data: [],
             },
             { status: 201 }
         );
     } catch (err) {
         console.error('[COURSE_CREATE]', err);
+        if (err.code === 11000) {
+            return NextResponse.json(
+                { x: 1, mes: 'Lỗi tạo ID, vui lòng thử lại.', data: [] },
+                { status: 409 } 
+            );
+        }
         return NextResponse.json(
             { x: 1, mes: 'Server error', data: [] },
             { status: 500 }

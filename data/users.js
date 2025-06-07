@@ -17,3 +17,8 @@ export async function Data_user() {
         return { data: [] };
     }
 }
+
+export async function Re_user() {
+    revalidateTag(`data_user`);
+}
+

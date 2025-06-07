@@ -1,12 +1,44 @@
-import { Schema, model, models } from 'mongoose'
+import { Schema, isValidObjectId, model, models } from 'mongoose';
 
-const postCourse = new Schema({
+const DetailSchema = new Schema({
+    ID: { type: String, required: true },
+    Day: { type: String, required: true },
+    Topic: { type: String, required: true },
+    Room: { type: String },
+    Time: { type: String },
+    Lesson: { type: Number },
+    Teacher: { type: String },
+    TeachingAs: { type: String },
+    Image: { type: String },
+    Type: { type: String },
+    Note: { type: String },
+});
+
+const LearnDetailSchema = new Schema({
+    Checkin: { type: Number, default: 0 },
+    Cmt: { type: String, default: '' },
+    Note: { type: String, default: '' },
+    Lesson: { type: Schema.Types.ObjectId, required: true }
+}, { _id: false });
+
+const StudentSchema = new Schema({
+    ID: { type: String, required: true },
+    Learn: {
+        type: Map,
+        of: LearnDetailSchema
+    }
+});
+
+
+const postCourseSchema = new Schema({
     ID: {
         type: String,
         required: true,
+        unique: true // ID khóa học nên là duy nhất
     },
     Name: {
-        type: String
+        type: String,
+        required: true
     },
     Room: {
         type: String
@@ -15,13 +47,15 @@ const postCourse = new Schema({
         type: String
     },
     Price: {
-        type: Number
+        type: Number,
+        default: 0
     },
     Progress: {
         type: String
     },
     Status: {
-        type: Boolean
+        type: Boolean,
+        default: false
     },
     TimeEnd: {
         type: String
@@ -32,23 +66,23 @@ const postCourse = new Schema({
     Type: {
         type: String
     },
-    Name: {
-        type: String
-    },
+    // Sửa lỗi: Đã xóa trường "Name" bị trùng lặp
     Detail: {
-        type: Object
+        type: [DetailSchema], // Quan trọng: Detail là một MẢNG các đối tượng theo DetailSchema
+        default: []
     },
     Area: {
         type: String
     },
     Student: {
-        type: Object
+        type: [StudentSchema], // Quan trọng: Student là một MẢNG các đối tượng theo StudentSchema
+        default: []
     },
     TeacherHR: {
         type: String
     }
-}, { versionKey: false })
+}, { versionKey: false });
 
-const PostCourse = models.course || model('course', postCourse)
+const PostCourse = models.course || model('course', postCourseSchema);
 
-export default PostCourse
+export default PostCourse;

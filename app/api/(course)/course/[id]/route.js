@@ -5,15 +5,11 @@ import PostCourse from '@/models/course';
 import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
-    const { id } = params; // id của khóa học được truyền qua URL
+    const { id } = params; 
 
     try {
-        // Kết nối đến database
         await connectDB();
-
-        // Tìm document theo _id (mặc định Mongoose dùng _id)
         const course = await PostCourse.findOne({ ID: id }).lean().exec();
-
         if (!course) {
             // Nếu không tìm thấy, trả về 404
             return NextResponse.json(

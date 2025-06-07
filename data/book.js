@@ -17,3 +17,7 @@ export async function Data_book() {
         return { data: [] };
     }
 }
+
+export async function Re_book() {
+    revalidateTag(`data_book`);
+}

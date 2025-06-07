@@ -1,0 +1,136 @@
+.trigger {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    background: #f5ffe5;
+    transition: all .1s linear;
+}
+
+.trigger:hover {
+    transform: translateY(-2px);
+    background: #f6ffde;
+}
+
+.trigger span {
+    font-weight: 500;
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+}
+
+.messageTextarea {
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 4px;
+    resize: vertical;
+    border-radius: 8px;
+    outline: none;
+    font-family: 'Roboto', sans-serif;
+    min-height: 100px;
+    max-height: 200px;
+    width: calc(100% - 24px);
+}
+
+.recipientHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.selectionActions {
+    display: flex;
+    gap: 8px;
+}
+
+.selectionActions button {
+    background: none;
+    border: none;
+    color: var(--main);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.recipientList {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.studentItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color-light);
+    transition: background-color 0.2s;
+}
+
+.studentItem:last-child {
+    border-bottom: none;
+}
+
+.studentItem:hover {
+    background-color: var(--background-secondary);
+}
+
+.studentItemSelected {
+    background-color: var(--blue-light);
+}
+
+.checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color-strong);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.studentItemSelected .checkbox {
+    background-color: var(--main);
+    border-color: var(--main);
+}
+
+.checkMark {
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    clip-path: polygon(14% 44%, 0 65%, 100% 0, 80% 0, 43% 78%, 20% 50%);
+}
+
+.studentInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.noStudents {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.actionRow {
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}

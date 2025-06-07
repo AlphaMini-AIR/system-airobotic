@@ -7,6 +7,7 @@ import Create from '../../ui/create';
 import styles from './index.module.css';
 import { useRouter } from 'next/navigation';
 import { Re_course_all } from '@/data/course';
+import ProgramList from '../../ui/book-item';
 
 function BookIcon({ active }) {
     return (
@@ -22,7 +23,7 @@ function BookIcon({ active }) {
     );
 }
 
-export default function Navbar({ data = [] }) {
+export default function Navbar({ data = [], book = [] }) {
     const router = useRouter()
     const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);
@@ -38,8 +39,8 @@ export default function Navbar({ data = [] }) {
 
     const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
-            counts: { inProgress: 0, completed: 0, trial: 0, review: 0 },
-            groups: { inProgress: [], completed: [], trial: [], review: [] },
+            counts: { inProgress: 0, completed: 0, trial: 0, book: 0 },
+            groups: { inProgress: [], completed: [], trial: [], book: [] },
             areaSet: new Set(),
         };
 
@@ -54,9 +55,6 @@ export default function Navbar({ data = [] }) {
             } else if (c.Type === 'Học thử') {
                 result.counts.trial += 1;
                 result.groups.trial.push(c);
-            } else {
-                result.counts.review += 1;
-                result.groups.review.push(c);
             }
         });
 
@@ -65,7 +63,8 @@ export default function Navbar({ data = [] }) {
             groups: result.groups,
             areaOptions: [''].concat(Array.from(result.areaSet)),
         };
-    }, [data]);
+    }, [data, book]);
+    counts.book = book.length;
 
     const courseFilter = useCallback(
         (c) => {
@@ -90,7 +89,7 @@ export default function Navbar({ data = [] }) {
             case 2:
                 return groups.trial.filter(courseFilter);
             default:
-                return groups.review.filter(courseFilter);
+                return groups.book.filter(courseFilter);
         }
     }, [tab, groups, courseFilter]);
 
@@ -99,7 +98,7 @@ export default function Navbar({ data = [] }) {
         { label: 'Khóa học đang học', count: counts.inProgress },
         { label: 'Khóa học hoàn thành', count: counts.completed },
         { label: 'Buổi học thử', count: counts.trial },
-        { label: 'Khóa ôn luyện', count: counts.review },
+        { label: 'Chương trình học', count: counts.book },
     ];
 
     /* ---------------------------- JSX ---------------------------- */
@@ -126,29 +125,31 @@ export default function Navbar({ data = [] }) {
             {/* ---------- THANH TÌM & LỌC ---------- */}
             <div className={styles.searchBar}>
                 <div style={{ display: 'flex', gap: 16, flex: 1 }}>
-                    <input
-                        className={`${styles.searchInput} text_6_400`}
-                        placeholder="Nhập ID khóa học hoặc tên GVCN"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                    {tab !== 3 ? <>
+                        <input
+                            className={`${styles.searchInput} text_6_400`}
+                            placeholder="Nhập ID khóa học hoặc tên GVCN"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
 
-                    <select
-                        className={styles.areaSelect}
-                        style={{ color: 'var(--text-primary)' }}
-                        value={area}
-                        onChange={(e) => setArea(e.target.value)}
-                    >
-                        <option value="" className='text_6_400'>Tất cả khu vực</option>
-                        {areaOptions.map(
-                            (a) =>
-                                a && (
-                                    <option key={a} value={a} className='text_6_400'>
-                                        {a}
-                                    </option>
-                                )
-                        )}
-                    </select>
+                        <select
+                            className={styles.areaSelect}
+                            style={{ color: 'var(--text-primary)' }}
+                            value={area}
+                            onChange={(e) => setArea(e.target.value)}
+                        >
+                            <option value="" className='text_6_400'>Tất cả khu vực</option>
+                            {areaOptions.map(
+                                (a) =>
+                                    a && (
+                                        <option key={a} value={a} className='text_6_400'>
+                                            {a}
+                                        </option>
+                                    )
+                            )}
+                        </select>
+                    </> : null}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button
@@ -158,20 +159,26 @@ export default function Navbar({ data = [] }) {
                     >
                         {isReloading ? 'Đang tải...' : 'Làm mới dữ liệu'}
                     </button>
-                    <Create />
+                    {tab !== 3 ? <Create /> : null}
                 </div>
             </div>
 
             {/* ---------- NỘI DUNG TAB ---------- */}
             <div className={styles.tabContent}>
-                {listForTab.length ? (
-                    <div className={styles.listWrap}>
-                        {listForTab.map((c) => (
-                            <CourseItem key={c.ID} data={c} />
-                        ))}
-                    </div>
+                {tab === 3 ? (
+                    <ProgramList programs={book} />
                 ) : (
-                    <p className={styles.empty}>Không tìm thấy khóa học phù hợp.</p>
+                    <>
+                        {listForTab.length ? (
+                            <div className={styles.listWrap}>
+                                {listForTab.map((c) => (
+                                    <CourseItem key={c.ID} data={c} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className={styles.empty}>Không tìm thấy khóa học phù hợp.</p>
+                        )}
+                    </>
                 )}
             </div>
         </div>

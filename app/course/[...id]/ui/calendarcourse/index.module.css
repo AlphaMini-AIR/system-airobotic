@@ -12,6 +12,11 @@
     transition: all .1s linear;
 }
 
+.trigger:hover {
+    background: #e1fff6;
+    transform: translateY(-2px);
+}
+
 .detailContainer {
     margin: 16px;
     border: thin solid var(--border-color);
@@ -111,7 +116,7 @@
 
 .selectBtn {
     flex: 1 1;
-    width: calc(100% - 24px);
+    width: calc(100%);
     padding: 10px 12px;
     font-size: 14px;
     background: #f8fafc;
