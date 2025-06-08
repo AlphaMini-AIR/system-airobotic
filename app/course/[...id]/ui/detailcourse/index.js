@@ -1,3 +1,6 @@
+// THÊM MỚI: Chuyển đổi thành Client Component và import hooks cần thiết
+"use client";
+import { useState, useMemo } from 'react';
 
 import DetailStudent from '../detatilstudent';
 import styles from './index.module.css';
@@ -7,9 +10,21 @@ import Image from 'next/image';
 import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
 import AnnounceStudent from '../bell';
 
+// THÊM MỚI: Component Icon sắp xếp đơn giản
+const SortIcon = ({ direction }) => {
+    if (!direction) {
+        return <span style={{ width: 16, display: 'inline-block' }}>↕️</span>;
+    }
+    return direction === 'ascending' ? <span style={{ width: 16, display: 'inline-block' }}>🔼</span> : <span style={{ width: 16, display: 'inline-block' }}>🔽</span>;
+};
+
+
 export default function Detail({ data, params, book, users, studentsx }) {
     const today = new Date();
     const currentHour = today.getHours();
+
+    // THÊM MỚI: State để quản lý trạng thái sắp xếp
+    const [sortConfig, setSortConfig] = useState({ key: 'Name', direction: 'ascending' });
 
     const calculateCourseProgress = (data, today, currentHour) => {
         let done = 0;
@@ -28,33 +43,26 @@ export default function Detail({ data, params, book, users, studentsx }) {
             total += lesson.Lesson;
 
             let lessonDate;
-            // Xử lý định dạng ngày "dd/mm/yyyy"
             if (lesson.Day.includes('/')) {
                 const parts = lesson.Day.split('/');
                 if (parts.length !== 3) return;
                 const [dd, mm, yyyy] = parts;
                 lessonDate = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
             }
-            // Xử lý định dạng ngày "yyyy-mm-dd"
             else if (lesson.Day.includes('-')) {
                 lessonDate = new Date(`${lesson.Day}T00:00:00`);
             }
-            // Nếu định dạng không được hỗ trợ, bỏ qua
             else {
                 return;
             }
 
-            // Bỏ qua nếu ngày tháng không hợp lệ sau khi parse
             if (isNaN(lessonDate.getTime())) {
                 return;
             }
 
-            // So sánh ngày
             if (todayStart > lessonDate) {
-                // Nếu ngày hôm nay đã qua ngày học -> đã học
                 done += lesson.Lesson;
             } else if (todayStart.getTime() === lessonDate.getTime()) {
-                // Nếu học trong ngày hôm nay, kiểm tra thêm giờ
                 if (typeof lesson.Time === 'string' && lesson.Time.includes(':')) {
                     const hourStart = parseInt(lesson.Time.split(':')[0], 10);
                     if (!isNaN(hourStart) && hourStart < currentHour) {
@@ -72,25 +80,54 @@ export default function Detail({ data, params, book, users, studentsx }) {
     };
     let td = calculateCourseProgress(data, today, currentHour)
 
-    const students = enrichStudents(data);
+    // CHỈNH SỬA: Sử dụng useMemo để sắp xếp danh sách học sinh
+    const sortedStudents = useMemo(() => {
+        const enrichedStudents = enrichStudents(data);
+
+        if (sortConfig.key !== null) {
+            const sorted = [...enrichedStudents].sort((a, b) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+            return sorted;
+        }
+        return enrichedStudents;
+    }, [data, sortConfig]); // Phụ thuộc vào dữ liệu gốc và cấu hình sắp xếp
+
+    // THÊM MỚI: Hàm xử lý khi click vào header để sắp xếp
+    const handleSort = (key) => {
+        let direction = 'descending'; // Mặc định sắp xếp giảm dần cho các cột số lượng
+        if (sortConfig.key === key && sortConfig.direction === 'descending') {
+            direction = 'ascending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    // CHỈNH SỬA: Map qua danh sách đã sắp xếp `sortedStudents`
     const detailcourse = (
-        <> {students.map(stu => (
+        <> {sortedStudents.map(stu => (
             <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
                 {title.map(col =>
                     col.data === 'More' ? (
                         <Cell key="more" flex={col.flex} align={col.align}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} >
                                 <span className="wrapicon" style={{ background: 'var(--main_d)' }}>
-                                    <svg viewBox="0 0 448 512" width="14" height="14" fill="white">   <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
+                                    <svg viewBox="0 0 448 512" width="14" height="14" fill="white">  <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
                                 </span>
                                 <DetailStudent data={stu} course={data.Detail} c={data} users={users} studentsx={studentsx} />
                             </div>
                         </Cell>
-                    ) : (<Cell key={col.data} flex={col.flex} align={col.align}>  {stu[col.data]} </Cell>)
+                    ) : (<Cell key={col.data} flex={col.flex} align={col.align}> {stu[col.data]} </Cell>)
                 )}
             </div>
         ))} </>
     )
+
     const detaillesson = (
         <> {data.Student.map(stu => (
             <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
@@ -107,7 +144,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                             <Cell key="more" flex={col.flex} align={col.align}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} >
                                     <span className="wrapicon" style={{ background: 'var(--main_d)' }}>
-                                        <svg viewBox="0 0 448 512" width="14" height="14" fill="white">   <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
+                                        <svg viewBox="0 0 448 512" width="14" height="14" fill="white">  <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
                                     </span>
                                 </div>
                             </Cell>
@@ -174,10 +211,10 @@ export default function Detail({ data, params, book, users, studentsx }) {
                 </div>
                 <div style={{ display: 'flex', width: 180, gap: 8, flexWrap: 'wrap', height: 150 }}>
                     <div className={styles.Boxk}>
-                        <Student course={data} student={students} />
+                        <Student course={data} student={sortedStudents} />
                     </div>
                     <div className={styles.Boxk}>
-                        <Calendar course={data} student={students} />
+                        <Calendar course={data} student={sortedStudents} />
                     </div>
                     <div className={styles.Boxk}>
                         <AnnounceStudent course={data} />
@@ -194,10 +231,19 @@ export default function Detail({ data, params, book, users, studentsx }) {
                     </div>
                     <div style={{ display: 'flex', background: 'var(--border-color)' }}>
                         {title.map((e, i) => {
-                            if (params.length > 1 && e.content === 'Buổi bù') return;
+                            if (params.length > 1 && e.content === 'Buổi bù') return null;
+                            const isSortable = ['m', 'k', 'c', 'b'].includes(e.data); // Các cột có thể sắp xếp
+
                             return (
-                                <div key={i} className="text_6_400" style={{ flex: e.flex, padding: '8px 16px', fontWeight: '500', display: 'flex', justifyContent: e.align }}>
-                                    {e.content}
+                                <div key={i} className="text_6_400" style={{ flex: e.flex, padding: '12px 8px', fontWeight: '500', display: 'flex', justifyContent: e.align, alignItems: 'center' }}>
+                                    {isSortable ? (
+                                        <button onClick={() => handleSort(e.data)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)' }}>
+                                            {e.content}
+                                            <SortIcon direction={sortConfig.key === e.data ? sortConfig.direction : null} />
+                                        </button>
+                                    ) : (
+                                        e.content
+                                    )}
                                 </div>
                             )
                         })}
@@ -220,21 +266,32 @@ const title = [
 ]
 
 function enrichStudents(course, now = new Date()) {
+    if (!course || !course.Detail) return []; // Guard clause
     const pastLessonIds = new Set(
         course.Detail
-            .filter(({ Day }) => parseDMY(Day) <= now)
+            .filter(({ Day }) => {
+                if (!Day) return false;
+                // Hỗ trợ cả 2 định dạng ngày
+                if (Day.includes('/')) return parseDMY(Day) <= now;
+                if (Day.includes('-')) return new Date(Day) <= now;
+                return false;
+            })
             .map(({ ID }) => ID)
     );
     const totalPastLessons = pastLessonIds.size;
+
+    if (!course.Student) return []; // Guard clause
     return course.Student.map(stu => {
-        const counts = [0, 0, 0, 0];
-        for (const [lessonId, { Checkin }] of Object.entries(stu.Learn)) {
-            if (!pastLessonIds.has(lessonId)) continue;
-            const idx = Number(Checkin);
-            if (idx >= 0 && idx <= 3) counts[idx] += 1;
+        const counts = [0, 0, 0, 0]; // 0: chua hoc, 1: co mat, 2: vang ko phep, 3: vang co phep
+        if (stu.Learn) {
+            for (const [lessonId, { Checkin }] of Object.entries(stu.Learn)) {
+                if (!pastLessonIds.has(lessonId)) continue;
+                const idx = Number(Checkin);
+                if (idx >= 0 && idx <= 3) counts[idx] += 1;
+            }
         }
         const [f, m, k, c] = counts;
-        let b = (totalPastLessons - m) - k;
+        let b = (totalPastLessons - m) - k; // Buổi bù có thể tính khác, ở đây là ví dụ
         if (b > 2) b = 2;
         else if (b < 0) b = 0;
         return { ...stu, m, k, c, b };
@@ -242,10 +299,11 @@ function enrichStudents(course, now = new Date()) {
 }
 
 function parseDMY(dmy) {
+    if (typeof dmy !== 'string') return new Date('invalid');
     const [d, m, y] = dmy.split('/').map(Number);
     return new Date(y, m - 1, d);
 }
 
 const Cell = ({ flex, align, children }) => (
-    <div style={{ flex, padding: '8px 16px', display: 'flex', justifyContent: align }} className="text_6_400" > {children} </div>
+    <div style={{ flex, padding: '8px 8px', display: 'flex', justifyContent: align }} className="text_6_400" > {children} </div>
 );

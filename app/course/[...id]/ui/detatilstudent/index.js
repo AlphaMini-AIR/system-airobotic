@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import FlexiblePopup from '@/components/(popup)/popup_right';
 import CenterPopup from '@/components/(popup)/popup_center';
 import Title from '@/components/(popup)/title';
@@ -9,7 +9,7 @@ import Noti from '@/components/(noti)/noti';
 import styles from './index.module.css';
 import WrapIcon from '@/components/(button)/hoveIcon';
 import { Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
-import { Data_user } from '@/data/users';
+import { Re_user } from '@/data/users';
 
 const toArr = (v) =>
     Array.isArray(v) ? v : v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
@@ -29,11 +29,12 @@ const SummaryBox = ({ title, data }) => (
 );
 
 export default function DetailStudent({ data: student, course, c, users, studentsx }) {
-    if (!student || !course || !Array.isArray(course) || !course.length) {
-        return <p className="text_6_400">Không có dữ liệu</p>;
+    Object.assign(student, studentsx.find(i => i.ID === student.ID) || {})
+    let TeacherHR = users.find(t => t.name === c.TeacherHR);
+    if (!TeacherHR) {
+        TeacherHR = users.find(t => t._id === c.TeacherHR);
     }
 
-    /* ───────── STATE ───────── */
     const [openMain, setOpenMain] = useState(false);
     const [commentPop, setCommentPop] = useState({ open: false, lessonId: '', comments: [] });
     const [imagePop, setImagePop] = useState({ open: false, lessonId: '', imageId: '' });
@@ -158,11 +159,10 @@ export default function DetailStudent({ data: student, course, c, users, student
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: `Báo cáo ${student.Name}`,
+                    teacherHR: TeacherHR,
                     lessons: lessonsPayload,
-                    courseId: c?.ID,
-                    program: c?.Name,
-                    teacher: c?.TeacherHR,
+                    course: c,
+                    student
                 }),
             });
 
@@ -245,7 +245,7 @@ export default function DetailStudent({ data: student, course, c, users, student
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Svg_Profile w={14} h={14} c='var(--text-primary)' />
                         <span className='text_6'>Số điện thoại :</span>
-                        <span className="text_6_400">{users.filter(t => t.Name == c.TeacherHR)[0]?.Phone}</span>
+                        <span className="text_6_400">{users.filter(t => t.name == c.TeacherHR)[0]?.phone}</span>
                     </div>
                 </div>
                 <div className={styles.summaryContainer}>

@@ -21,28 +21,21 @@ function jsonRes(obj, status = 200) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const {
-            lessons = [],
-            title = 'Bao_cao',
-            courseId = '',        // Mã khóa
-            program = '',        // Tên chương trình
-            teacher = '',        // GV chủ nhiệm
-        } = body;
+        const { lessons = [], teacherHR, course = '', student } = body;
 
         if (!lessons.length)
             return jsonRes({ status: 0, mes: 'Thiếu lessons' }, 400);
 
-        /* 1. Workbook & sheet */
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet('Report');
+        let title = `Báo cáo học tập - ${student.Name} - ${course.ID}`;
+        ws.addRow(['Mã khóa học:', course.ID, 'Mã học sinh:', student.ID, "", 'Lịch học', '', 'Lịch học bù', '', 'Trạng thái học bù']);
+        ws.addRow(['Tên chương trình:', course.Name, 'Tên học sinh:', student.Name, '', 'Tổng buổi:', lessons.length, 'Số chủ đề bù:', 1, 'Số buổi bù:', 1]);
+        ws.addRow(['Thời gian học', `${course.TimeStart} - ${course.TimeEnd}`, 'Phụ huynh:', student.ParentName, '', 'Đã học:', 1, '', '', 'Đã học bù:', 1]);
+        ws.addRow(['Giáo viên chủ nhiệm:', teacherHR.name, 'Liên Hệ', student.Phone, '', 'Vắng có phép:', 1, '', '', 'Vắng học bù:', 1]);
+        ws.addRow(['Số điện thoại giáo viên chủ nhiệm', teacherHR.phone, '', '', '', 'Vắng không phép:', 0]);
+        ws.addRow([''])
 
-        /* 2. Ghi 3 dòng đầu: cột A (nhãn) + B (giá trị) */
-        ws.addRow(['Mã khóa học', courseId]);
-        ws.addRow(['Tên chương trình', program]);
-        ws.addRow(['Giáo viên chủ nhiệm', teacher]);
-        ws.addRow([]);                                   // dòng trống
-
-        /* 3. Header + dữ liệu từ dòng 5 trở đi */
         const header = [
             'Buổi học',
             'Tên bài học',

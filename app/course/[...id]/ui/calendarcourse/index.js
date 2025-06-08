@@ -110,9 +110,9 @@ const ScheduleTable = React.memo(({ course, onEdit, onDelete, onShowStudents, on
                 <Cell key={i} {...rest} header>{rest.label}</Cell>
             ))}
         </div>
-        {toArr(course.Detail).map((row) => (
+        {toArr(course.Detail).map((row, index) => (
             <div
-                key={row._id}
+                key={index}
                 className={styles.row}
                 style={{ background: row.Type === 'Học bù' ? '#fffadd' : row.Type === 'Báo nghỉ' ? '#ffe6e6' : 'transparent' }}
             >
