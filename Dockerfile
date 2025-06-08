@@ -56,7 +56,5 @@ EXPOSE 4000
 # Đặt HOSTNAME và PORT
 # ENV HOSTNAME="0.0.0.0"
 ENV PORT=4000
-
-# CMD ["npm", "run", "start"]
-
-CMD HOSTNAME="0.0.0.0" node server.js
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]

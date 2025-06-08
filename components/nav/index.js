@@ -182,22 +182,24 @@ export default function Nav() {
           </div>
         ))}
       </div>
-      <Menu
-        isOpen={isMenuOpen}
-        menuItems={activeMenu === 1 ? menuItems : menuMode}
-        menuPosition="top"
-        customButton={
-          <div className={air.navItem} style={{ marginBottom: 8 }}>
-            <Svg_Menu w={22} h={22} c={'var(--text-primary)'} />
-            <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
-          </div>
-        }
-        style={`display: 'flex'`}
-        onOpenChange={(isOpen) => {
-          setIsMenuOpen(isOpen);
-          if (!isOpen) setActiveMenu(1);
-        }}
-      />
+      <div>
+        <Menu
+          isOpen={isMenuOpen}
+          menuItems={activeMenu === 1 ? menuItems : menuMode}
+          menuPosition="top"
+          customButton={
+            <div className={air.navItem} style={{ marginBottom: 8 }}>
+              <Svg_Menu w={22} h={22} c={'var(--text-primary)'} />
+              <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
+            </div>
+          }
+          style={`display: 'flex'`}
+          onOpenChange={(isOpen) => {
+            setIsMenuOpen(isOpen);
+            if (!isOpen) setActiveMenu(1);
+          }}
+        />
+      </div>
     </div>
   );
 }
