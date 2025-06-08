@@ -9,6 +9,7 @@ import Calendar from '../calendarcourse';
 import Image from 'next/image';
 import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
 import AnnounceStudent from '../bell';
+import Report from '../Report';
 
 // THÊM MỚI: Component Icon sắp xếp đơn giản
 const SortIcon = ({ direction }) => {
@@ -220,7 +221,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <AnnounceStudent course={data} />
                     </div>
                     <div className={styles.Boxk}>
-
+                        <Report course={data} student={sortedStudents}/>
                     </div>
                 </div>
             </div>

@@ -8,6 +8,5 @@ module.exports = {
               pathname: '/**',
           },
       ],
-  },
-  output: 'standalone'
+  }
 }
