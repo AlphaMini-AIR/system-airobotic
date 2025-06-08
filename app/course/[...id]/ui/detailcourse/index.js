@@ -10,6 +10,9 @@ import Image from 'next/image';
 import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
 import AnnounceStudent from '../bell';
 import Report from '../Report';
+import { Re_course_one } from '@/data/course';
+import { useRouter } from 'next/navigation';
+import Loading from '@/components/(loading)/loading';
 
 // THÊM MỚI: Component Icon sắp xếp đơn giản
 const SortIcon = ({ direction }) => {
@@ -21,6 +24,8 @@ const SortIcon = ({ direction }) => {
 
 
 export default function Detail({ data, params, book, users, studentsx }) {
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
     const today = new Date();
     const currentHour = today.getHours();
 
@@ -155,7 +160,12 @@ export default function Detail({ data, params, book, users, studentsx }) {
             </div>
         ))} </>
     )
-
+    const reload = async () => {
+        setLoading(true);
+        await Re_course_one(data.ID)
+        router.refresh();
+        setLoading(false);
+    }
     return (
         <div className={styles.container}>
             <div className={styles.box} style={{ padding: 16, gap: 16 }}>
@@ -202,11 +212,18 @@ export default function Detail({ data, params, book, users, studentsx }) {
                             <span className='text_6'>Tiến độ :</span>
                             <span className="text_6_400">{td.lessonsDone}/{td.totalLessons} Tiết</span>
                         </div>
-                        <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: td.percent == 100 ? 'var(--main_d)' : 'var(--border-color)' }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
-                                <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
-                            </svg>
-                            <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }} onClick={reload}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={16} height={16} fill='white'>
+                                    <path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z" /></svg>
+                                <p className='text_6_400' style={{ color: 'white' }}>Tải lại dữ liệu</p>
+                            </div>
+                            <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: td.percent == 100 ? 'var(--main_d)' : 'var(--border-color)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
+                                    <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
+                                </svg>
+                                <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -221,7 +238,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <AnnounceStudent course={data} />
                     </div>
                     <div className={styles.Boxk}>
-                        <Report course={data} student={sortedStudents}/>
+                        <Report course={data} student={sortedStudents} />
                     </div>
                 </div>
             </div>
@@ -252,6 +269,9 @@ export default function Detail({ data, params, book, users, studentsx }) {
                     {params.length > 1 ? detaillesson : detailcourse}
                 </div>
             </div>
+            {loading && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                <Loading />
+            </div>}
         </div>
     )
 }
