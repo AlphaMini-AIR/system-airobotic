@@ -16,7 +16,7 @@ export default async function OverviewTab({ params }) {
 
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
-            <Timeline data={data} />
+            <Timeline data={data} props={id} />
             <div style={{ flex: 4 }}>
                 <Detail book={book} data={data} params={id} studentsx={students} users={users} />
             </div>
