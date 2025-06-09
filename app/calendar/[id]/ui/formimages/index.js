@@ -153,14 +153,15 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
             </div>
 
             {selectedImageObjects.length > 0 ?
-                <div className={`${styles.imageGrid} ${styles.studentGrid}`}>{
-                    selectedImageObjects.map(image => (
-                        <button key={image.id} className={styles.imageItem} onClick={() => handleRemoveFromPrimary(image.id)}>
-                            <img src={getDriveImageUrl(image.id)} alt={`Ảnh của ${studentInfo.ID}`} />
-                            <div className={styles.removeOverlay}>×</div>
-                        </button>
-                    ))
-                }
+                <div style={{ overflow: 'auto', flex: 1 }}>
+                    <div className={`${styles.imageGrid} ${styles.studentGrid}`}>{
+                        selectedImageObjects.map(image => (
+                            <button key={image.id} className={styles.imageItem}>
+                                <img src={getDriveImageUrl(image.id)} alt={`Ảnh của ${studentInfo.ID}`} />
+                            </button>
+                        ))
+                    }
+                    </div>
                 </div> : (
                     <div className={styles.emptyPlaceholder}>
                         <p>Chưa có ảnh nào được chọn.</p>
