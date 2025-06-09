@@ -29,7 +29,7 @@ export async function POST(req) {
         /* ---------- build Learn template từ Detail ---------- */
         const learnTemplate = {};
         course.Detail.forEach((d) => {
-            learnTemplate[d.ID] = { Checkin: 0, Cmt: '', Note: '' };
+            learnTemplate[d.ID] = { Checkin: 0, Cmt: '', Note: '' , Lesson: d._id.toString() };
         });
 
         /* ---------- id học sinh đã có trong khóa để tránh trùng ---------- */

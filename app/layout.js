@@ -5,7 +5,6 @@ import Layout_Login from './(auth)/login';
 import Nav from '@/components/nav';
 
 import '@/styles/all.css'
-
 import air from './layout.module.css'
 
 export const metadata = {
@@ -38,14 +37,14 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body>
         {data ?
-          <div className={air.layout}>
-            <div className={air.nav}>
-              <Nav data={data} />
-            </div>
-            <div className={air.main}>
-              {children}
-            </div>
-          </div> :
+            <div className={air.layout}>
+              <div className={air.nav}>
+                <Nav data={data} />
+              </div>
+              <div className={air.main}>
+                {children}
+              </div>
+            </div> :
           <Layout_Login />}
       </body>
     </html>

@@ -46,6 +46,7 @@ export async function GET(request, { params }) {
             teacher: detail.Teacher,
             teachingAs: detail.TeachingAs,
             image: detail.Image,
+            imagedetail: detail.DetailImage,
             id: detail.ID
         };
 

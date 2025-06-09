@@ -10,15 +10,18 @@ const DetailSchema = new Schema({
     Teacher: { type: String },
     TeachingAs: { type: String },
     Image: { type: String },
+    DetailImage: { type: Array, default: [] },
     Type: { type: String },
     Note: { type: String },
 });
 
 const LearnDetailSchema = new Schema({
     Checkin: { type: Number, default: 0 },
-    Cmt: { type: String, default: '' },
+    Cmt: { type: Array, default: [] },
+    CmtFn: { type: String, default: '' },
     Note: { type: String, default: '' },
-    Lesson: { type: Schema.Types.ObjectId, required: true }
+    Lesson: { type: Schema.Types.ObjectId, required: true },
+    Image: { type: Array, default: [] },
 }, { _id: false });
 
 const StudentSchema = new Schema({

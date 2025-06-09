@@ -10,6 +10,8 @@ import Loading from '@/components/(loading)/loading';
 import Noti from '@/components/(noti)/noti';
 
 import styles from './index.module.css';
+import ImageUploader from '../formimage';
+import StudentCourseImageManager from '../formimages';
 
 /* API */
 const updateAttendance = async (courseId, sessionId, attendanceData) => {
@@ -44,6 +46,7 @@ export default function Main({ data }) {
         return {
             ID: stu.ID,
             Name: stu.Name,
+            Image: stu.Learn?.[session.id]?.Image || [],
             Checkin: check,
             originalComment: Array.isArray(stu.Learn?.[session.id]?.Cmt)
                 ? stu.Learn[session.id].Cmt
@@ -144,11 +147,8 @@ export default function Main({ data }) {
                 <div className={styles.content}>
                     <aside className={styles.sidebar}>
                         <p className="text_4">Tài liệu buổi học</p>
-                        {session.image && (
-                            <BoxFile
-                                type="Img" name="Hình ảnh"
-                                href={`https://drive.google.com/drive/u/0/folders/${session.image}`} />
-                        )}
+                        <ImageUploader session={session} courseId={course.ID} />
+
                         {slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={slide} />}
                     </aside>
 
@@ -186,7 +186,7 @@ export default function Main({ data }) {
                             {roll.length ? (
                                 <>
                                     <div className={`${styles.row} ${styles.headerRow}`}>
-                                        {['ID', 'Học sinh', 'Có mặt', 'Vắng mặt', 'Có phép', 'Nhận xét'].map((t, i) => (
+                                        {['ID', 'Học sinh', 'Có mặt', 'Vắng mặt', 'Có phép', 'Nhận xét', 'Hình ảnh'].map((t, i) => (
                                             <div key={t} className="text_6_400"
                                                 style={{
                                                     flex: i === 1 ? 3 : 1, color: '#fff',
@@ -220,13 +220,15 @@ export default function Main({ data }) {
                                                 <button
                                                     onClick={() => { setSelStu(stu); setShowComment(true); }}
                                                     style={{
-                                                        flex: 1, display: 'flex', justifyContent: 'center',
+                                                        flex: 1, display: 'flex', justifyContent: 'center', padding: 0,
                                                         alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer'
                                                     }}>
                                                     <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--text-primary)">
                                                         <path d="M14 11c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1s.45-1 1-1h9c.55 0 1-.45 1 1M3 7c0 .55.45 1 1 1h9c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1m7 8c0-.55-.45 1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1h5c.55 0 1-.45 1-1m8.01-2.13.71-.71c.39-.39 1.02-.39 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.71zm-.71.71-5.16 5.16c-.09.09-.14.21-.14.35v1.41c0 .28.22.5.5.5h1.41c.13 0 .26-.05.35-.15l5.16-5.16z" />
                                                     </svg>
                                                 </button>
+
+                                                <StudentCourseImageManager courseInfo={data.session} studentInfo={stu} course={data.course} />
                                             </div>
                                         );
                                     })}

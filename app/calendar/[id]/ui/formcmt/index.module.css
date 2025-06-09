@@ -1,110 +1,196 @@
-.root {
+.infoBar {
     display: flex;
-    flex-direction: column;
-    gap: 18px;
-    width: 100%;
+    align-items: center;
+    margin-bottom: 16px;
+    /* Tăng khoảng cách cho thoáng */
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.name {
+.infoBox {
+    padding: 10px 12px;
+    gap: 16px;
+    background: var(--bg-secondary, #eef2f7);
+    /* Dùng biến hoặc màu mặc định */
+    display: flex;
+    align-items: center;
+    flex: 1;
+    border-radius: 5px;
+}
+
+.infoBox p {
+    margin: 0;
+    font-size: 14px;
     font-weight: 600;
 }
 
+.infoBox p span {
+    font-weight: 400;
+}
+
+.resetButton {
+    background: var(--main_d, #00796b);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 18px;
+    height: 38px;
+    box-shadow: 0 1px 4px #e0e0e0;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.resetButton:not(:disabled) {
+    cursor: pointer;
+}
+
+.resetButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.resetButton p {
+    color: white;
+    margin: 0;
+}
+
+
+/* === INPUT FIELD & CHIPS === */
 .field {
     display: flex;
     flex-direction: column;
     gap: 6px;
     position: relative;
+    margin-bottom: 8px;
 }
 
-.lbl {
+/* Áp dụng style cho label <p> bên trong .field */
+.field>p {
     font-size: 14px;
+    padding: 8px 0 2px 0;
+    margin: 0;
 }
 
 .inputBox {
-    min-height: 38px;
-    padding: 4px 36px 4px 8px;
-    border: none;
-    border-bottom: 1px solid var(--border);
+    position: relative;
     display: flex;
-    gap: 6px;
     flex-wrap: wrap;
     align-items: center;
+    gap: 6px;
+    padding: 6px 40px 6px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid var(--border, #e0e0e0);
     cursor: pointer;
-    position: relative;
+    transition: border-color 0.2s;
 }
 
 .inputBox:hover {
-    border-bottom-color: var(--main_d);
-}
-
-.inputBox.focus {
-    border-bottom-color: var(--main_d);
+    border-color: var(--main_d, #00796b);
 }
 
 .placeholder {
-    color: var(--text-disabled);
+    color: var(--text-disabled, #999);
+    padding: 6px;
 }
 
 .arrow {
     position: absolute;
-    right: 6px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
+    color: var(--main_d, #00796b);
+    font-size: 18px;
 }
 
 .chip {
-    background: var(--bg-secondary);
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-.dropdown {
-    position: absolute;
-    left: 0;
-    right: 0;
-    max-height: 220px;
-    overflow: auto;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, .12);
-    z-index: 20;
-    margin-top: 4px;
-    padding: 0 16px;
-}
-
-.dropdown li {
-    display: flex;
+    background: var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    padding: 6px 8px;
+}
+
+.removeChip {
     cursor: pointer;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.removeChip:hover {
+    color: var(--red, #ef4444);
+}
+
+
+/* === DROPDOWN MENU === */
+.list_menuwrap {
+    padding: 6px;
+    background: #fff;
+    border: 1px solid var(--border, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.list_li {
+    border-radius: 6px;
+    margin: 0;
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.list_li:hover {
+    background-color: var(--bg-hover, #f1f5f9);
+}
+
+.list_li.disabled {
+    color: #999;
+    cursor: not-allowed;
+    background-color: transparent;
+}
+
+
+/* === ACTION BUTTONS === */
+.btnRow {
+    margin-top: 18px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border, #e0e0e0);
+}
+
+.btnRow button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btnRow button p {
+    margin: 0;
+    font-weight: 500;
     font-size: 14px;
 }
 
-.dropdown li:hover {
-    background: var(--bg-hover);
-}
-
-.btnRow {
-    display: flex;
-    justify-content: flex-end;
-    gap: 18px;
-}
-
-.save,
 .cancel {
-    padding: 8px 22px;
-    border: none;
-    border-radius: 6px;
-    color: #fff;
-    cursor: pointer;
+    background: var(--bg-secondary, #f1f5f9);
+}
+
+.cancel p {
+    color: var(--text-secondary, #555);
 }
 
 .save {
-    background: var(--green);
+    background: var(--green, #22c55e);
 }
 
-.cancel {
-    background: var(--red);
+.save p {
+    color: #fff;
 }

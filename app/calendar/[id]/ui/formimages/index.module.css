@@ -1,0 +1,175 @@
+/* Giao diện cho nút bấm ban đầu */
+.container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex: 1;
+    justify-content: center;
+}
+
+.icon {
+    fill: #4B49AC;
+    /* Màu của icon */
+}
+
+.name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* === Các kiểu cho nội dung Popup === */
+.popupContentWrapper {
+    position: relative;
+    padding: 16px;
+    height: calc(100% - 16px);
+    padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    border-radius: 8px;
+    /* Nếu popup của bạn có bo góc */
+}
+
+/* Header của section trong Popup 1 */
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+    /* Không co lại */
+}
+
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+/* Grid cho ảnh của học sinh (Popup 1) */
+.studentGrid {
+    overflow-y: auto;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    flex-grow: 1;
+    /* Chiếm hết không gian còn lại */
+}
+
+/* Grid cho ảnh của lớp (Popup 2) */
+.classGrid {
+    overflow-y: auto;
+    height: 100%;
+    /* Chiếm toàn bộ chiều cao của wrapper */
+}
+
+.imageItem {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background: #e0e0e0;
+    transition: transform 0.2s;
+}
+
+.imageItem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.3s;
+}
+
+/* Placeholder khi chưa có ảnh nào được chọn */
+.emptyPlaceholder {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #888;
+}
+
+/* Overlay màu đỏ để xóa ảnh (hiện khi hover trên ảnh ở khu vực học sinh) */
+.removeOverlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(220, 53, 69, 0.7);
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.imageItem:hover .removeOverlay {
+    opacity: 1;
+}
+
+/* Kiểu cho ảnh đã được chọn trong danh sách ảnh của lớp */
+.selectedInClass img {
+    opacity: 0.5;
+    /* Làm mờ ảnh nền */
+}
+
+/* Dấu tick màu xanh cho ảnh đã được chọn */
+.checkOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(25, 135, 84, 0.8);
+    color: white;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.actions {
+    width: calc(100%);
+    padding: 10px 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    border-top: 1px solid #e0e0e0;
+    background: #fdfdfd;
+    flex-shrink: 0;
+}
+
+.actions .btn:disabled,
+.actions .btn_pr:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    border-color: #ccc;
+}

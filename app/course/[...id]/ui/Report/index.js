@@ -181,7 +181,7 @@ export default function Report({ course, students }) {
                     <div style={{ flex: 1 }}>
                         <h2 className='text_4'>Danh sách các buổi học cần bù</h2>
                         {makeupLessonsNeeded.length === 0 ? (
-                            <p className={styles.noMakeupMessage}>Không có buổi học nào cần bù. Tất cả học sinh đã hoàn thành các chủ đề.</p>
+                            <p className='text_6_400' style={{ textAlign: 'center', fontStyle: 'italic', padding: '8px 16px', borderRadius: 5, background: 'var(--border-color)' }}>Không có buổi học nào cần bù. Tất cả học sinh đã hoàn thành các chủ đề.</p>
                         ) : (
                             <ul className={styles.makeupList}>
                                 {makeupLessonsNeeded.map(({ topicId, topicName, students: studentsToMakeup }) => (

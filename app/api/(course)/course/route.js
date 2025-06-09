@@ -35,7 +35,7 @@ export async function GET(request) {
 }
 
 const APPSCRIPT =
-    'https://script.google.com/macros/s/AKfycbzntIe1JjogbToY-teezPACCgffLJDyBhJbTSK_WMqutBkaqctocqSZoORASIQS-w4hjw/exec';
+    'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
 
 export async function POST(req) {
     try {

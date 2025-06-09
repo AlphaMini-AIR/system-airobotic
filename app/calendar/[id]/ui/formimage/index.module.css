@@ -1,0 +1,469 @@
+/* General Layout for the trigger component */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px;
+    border-radius: 5px;
+    box-shadow: var(--boxshaw2);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+}
+
+.name {
+    margin-top: 0.25rem;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* Media Gallery (Popup 1) */
+.galleryContainer {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.galleryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.galleryHeader .text_5 {
+    margin: 0;
+}
+
+.emptyGallery {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 48px;
+    text-align: center;
+    color: #64748b;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: thin solid var(--border-color);
+}
+
+.galleryGrid {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+    /* For scrollbar spacing */
+}
+
+.galleryItem {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #e2e8f0;
+    transition: transform 0.2s ease-in-out;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.galleryItem img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.loadingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 10;
+    /* Đảm bảo nó nằm trên nội dung lightbox */
+}
+
+.loadingOverlay p {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+}
+
+.uploadError {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--red_d);
+    /* Hoặc một màu đỏ báo lỗi */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    z-index: 11;
+}
+
+.playIconOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.galleryItem:hover .playIconOverlay {
+    opacity: 1;
+}
+
+.playIconOverlay svg {
+    width: 48px;
+    height: 48px;
+    color: white;
+}
+
+
+/* Upload Manager (Popup 2 - File Selection View) */
+.managerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+}
+
+.dropzone {
+    padding: 32px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.dropzone:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.previewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 8px;
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.previewItem {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #e2e8f0;
+}
+
+.previewItem video,
+.previewItem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.deleteButton {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.previewItem:hover .deleteButton {
+    opacity: 1;
+}
+
+.dotx {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--green);
+}
+
+/* Upload Progress View (Popup 2 - Uploading View) */
+.progressContainer {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    position: fixed;
+    gap: 4px;
+    top: 20px;
+    right: 20px;
+    width: 150px;
+    z-index: 99999;
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--boxshaw2);
+}
+
+.progressContainer h4 {
+    text-align: center;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.progressBarOuter {
+    width: 100%;
+    height: 12px;
+    background-color: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progressBarInner {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.3s ease-in-out;
+    border-radius: 5px;
+}
+
+.progressStats {
+    display: flex;
+    justify-content: space-around;
+    font-size: 14px;
+}
+
+.currentFileStatus {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    font-size: 14px;
+    color: #475569;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+    word-break: break-all;
+    text-align: center;
+}
+
+.lastError {
+    text-align: center;
+    font-style: italic;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Shared Styles */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.managerContainer .actions {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+
+.successText {
+    color: #16a34a;
+    font-weight: bold;
+}
+
+.errorText {
+    color: #dc2626;
+    font-size: 14px;
+    text-align: center;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Lightbox styles */
+.lightboxOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+
+.lightboxContent {
+    position: relative;
+    height: 80vh;
+    width: auto;
+    max-width: 90vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    animation: zoomIn 0.3s ease;
+}
+
+.lightboxContent img,
+.lightboxContent iframe {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.lightboxClose {
+    position: absolute;
+    top: 0px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: white;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 300;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.gallerywarp {
+    flex: 1;
+    margin-right: -16px;
+    overflow: scroll;
+}
+
+.gallerywarp::-webkit-scrollbar {
+    width: 8px;
+}
+
+.gallerywarp::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+.lightboxClose:hover,
+.lightboxClose1:hover,
+.lightboxClose2:hover {
+    transform: translateY(-1px);
+}
+
+.lightboxClose1 {
+    position: absolute;
+    top: 32px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: white;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+    line-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 300;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.lightboxClose2 {
+    position: absolute;
+    top: 64px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    background: var(--red);
+    color: #333;
+    border-radius: 5px;
+    font-size: 20px;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 300;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
