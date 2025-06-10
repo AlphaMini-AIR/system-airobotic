@@ -1,5 +1,5 @@
 # Base image
-FROM node:20-alpine AS base
+FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -28,7 +28,7 @@ RUN npm run build
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
-
+ENV NODE_OPTIONS=--openssl-legacy-provider
 ENV NODE_ENV=production
 # Cấu hình biến môi trường cho Mongoose và các biến khác
 ENV MONGODB_URI="mongodb+srv://AirStudent:9Rq2bovDKGytsonB@air-student.mzfi0.mongodb.net/air"
