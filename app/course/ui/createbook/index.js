@@ -417,11 +417,6 @@ export default function Create() {
                 }, localTeacher)
             );
 
-        /* ----------------------------------------------------------------
-         *  JSX TRẢ VỀ
-         * ---------------------------------------------------------------- */
-        console.log(topicMenu);
-
         return (
             <form className={styles.popupForm} onSubmit={handleSave}>
                 <div>

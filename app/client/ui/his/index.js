@@ -85,8 +85,6 @@ export default function HistoryPopup({ open, onClose, datauser }) {
         return selectedHistory.recipients
             .map(r => {
                 const user = datauser.find(u => u.phone === r.phone) || {};
-                console.log(user);
-                
                 return { phone: r.phone, name: user.nameParent, status: r.status || '—' };
             })
             .filter(({ name, phone }) =>

@@ -48,7 +48,6 @@ export default function Report({ course, students }) {
         setIsOpen(false);
     }, []);
 
-    // Logic tính toán cho báo cáo
     const { attendanceData, makeupLessonsNeeded } = useMemo(() => {
         if (!isOpen || !course || !course.Detail || !course.Student) {
             return { attendanceData: { labels: [], datasets: [] }, makeupLessonsNeeded: [] };
@@ -152,7 +151,6 @@ export default function Report({ course, students }) {
         scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Sĩ số' } } },
     };
     const handleSelectMakeupLesson = useCallback((lesson) => {
-        console.log(lesson);
 
         setSelectedMakeupLesson(lesson);
     }, []);

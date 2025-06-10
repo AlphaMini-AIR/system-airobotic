@@ -328,9 +328,6 @@ export default function DetailStudent({ data: student, course, c, users, student
             </div>
         </>
     );
-    console.log(studentsx);
-
-    /* ───────── RENDER ───────── */
     return (
         <>
             <WrapIcon

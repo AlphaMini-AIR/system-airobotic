@@ -2,8 +2,6 @@ import Link from "next/link"
 import Dot from "./dot"
 
 export default function Timeline({ data, props }) {
-    console.log(props);
-    
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', flex: 1.6 }}>
 

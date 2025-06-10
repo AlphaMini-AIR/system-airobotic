@@ -28,8 +28,6 @@ const getEventStatus = (data) => {
 
 
 export default function TimeLine_Dot({ course, type, index, data, props }) {
-    // console.log(data.Day);
-
     props = props[1] || '';
     let id = data.ID;
     if (data.Student) id += '-' + formatDate(data.Day);

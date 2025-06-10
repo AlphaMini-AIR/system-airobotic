@@ -20,8 +20,6 @@ const areSetsEqual = (setA, setB) => {
 };
 
 export default function StudentImageSelectionManager({ studentInfo, courseInfo, course }) {
-    console.log(studentInfo);
-
     const router = useRouter();
     const [isPrimaryOpen, setPrimaryOpen] = useState(false);
     const [isSecondaryOpen, setSecondaryOpen] = useState(false);

@@ -407,7 +407,6 @@ export default function SidePanel({ open, row, labels = [], onClose, onSave }) {
                         }}
                         className={styles.saveBtn}
                         onClick={() => {
-                            console.log(notiStatus);
                             if (notiStatus) {
                                 onSave();
                             }
