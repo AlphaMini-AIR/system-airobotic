@@ -21,6 +21,13 @@ async function getSheets(mode = 'read') {
 }
 
 export async function GET() {
+  console.log("==============================================");
+  console.log("--- DEBUGGING ENVIRONMENT VARIABLES ---");
+  console.log("PROJECT_ID:", process.env.GOOGLE_PROJECT_ID);
+  console.log("CLIENT_EMAIL:", process.env.GOOGLE_CLIENT_EMAIL);
+  console.log("PRIVATE_KEY:", process.env.GOOGLE_PRIVATE_KEY);
+  console.log("--- END DEBUGGING ---");
+  console.log("==============================================");
   try {
     const sheets = await getSheets('read');
 
