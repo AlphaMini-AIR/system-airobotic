@@ -11,7 +11,7 @@ const postUser = new Schema({
     type: String,
   },
   role: {
-    type: Object,
+    type: Array,
   },
   phone: {
     type: String,

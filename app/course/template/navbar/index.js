@@ -8,6 +8,7 @@ import styles from './index.module.css';
 import { useRouter } from 'next/navigation';
 import { Re_course_all } from '@/data/course';
 import ProgramList from '../../ui/book-item';
+import CourseManagementPage from '../../ui/createbook';
 
 function BookIcon({ active }) {
     return (
@@ -159,7 +160,7 @@ export default function Navbar({ data = [], book = [] }) {
                     >
                         {isReloading ? 'Đang tải...' : 'Làm mới dữ liệu'}
                     </button>
-                    {tab !== 3 ? <Create /> : null}
+                    {tab !== 3 ? <Create /> : <CourseManagementPage />}
                 </div>
             </div>
 

@@ -14,6 +14,7 @@ import { Data_book } from '@/data/book';
 import { Read_Area } from '@/data/area';
 import { Data_user } from '@/data/users';
 import { Re_course_all } from '@/data/course';
+import { Svg_Add } from '@/components/svg';
 
 export default function Create() {
     const router = useRouter();
@@ -308,8 +309,8 @@ export default function Create() {
          *  DỮ LIỆU CHỨC NĂNG
          * ---------------------------------------------------------------- */
         const topicList = programObj
-            ? Object.entries(programObj.Topic).map(([id, info]) => ({
-                id,
+            ? programObj.Topics.map((info) => ({
+                id: info._id,
                 name: info.Name,
                 period: info.Period,
             }))
@@ -420,9 +421,7 @@ export default function Create() {
             <form className={styles.popupForm} onSubmit={handleSave}>
                 <div>
                     <TextNoti
-                        title={
-                            initialData ? 'Chỉnh sửa buổi học' : 'Thông tin buổi học'
-                        }
+                        title={initialData ? 'Chỉnh sửa buổi học' : 'Thông tin buổi học'}
                         color="blue"
                         mes="Thông tin buổi học là bắt buộc"
                     />
@@ -435,7 +434,7 @@ export default function Create() {
                     menuPosition="bottom"
                     isOpen={openTopic}
                     onOpenChange={setOpenTopic}
-                    customButton={ 
+                    customButton={
                         <div
                             className={styles.selectBtn}
                             onClick={(e) => {
@@ -540,7 +539,7 @@ export default function Create() {
      *  COMPONENT: FORM TẠO NHIỀU BUỔI HỌC (popup 2)
      * ---------------------------------------------------------------- */
     const BulkForm = () => {
-        const topicEntries = programObj ? Object.entries(programObj.Topic) : [];
+        const topicEntries = programObj ? programObj.Topics : [];
         const allTopics = topicEntries.map(([id, info]) => ({
             id,
             name: info.Name,
@@ -1111,10 +1110,8 @@ export default function Create() {
         <>
             {/* Button mở popup */}
             <div className={styles.button} onClick={openPopupHandler}>
-                <svg viewBox="0 0 448 512" width="20" height="20" fill="#fff">
-                    <path d="M64 32c-35.3 0-64 28.7-64 64v320c0 35.3 28.7 64 64 64h320c35.3 0 64-28.7 64-64V96c0-35.3-64-64-64-64H64zm136 312v-64h-64c-13.3 0-24-10.7-24-24s10.7-24 24-24h64v-64c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24h-64v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z" />
-                </svg>
-                Thêm khóa học
+                <Svg_Add w={16} h={16} c="white" />
+                <p className='text_6_400' style={{ color: 'white' }}> Thêm khóa học</p>
             </div>
 
             {/* Popup chính / Popup phụ */}

@@ -1,0 +1,196 @@
+.container {
+    display: flex;
+    width: calc(100% - 34px);
+    height: calc(100% - 34px);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 16px;
+    gap: 16px
+}
+
+.infoPanel {
+    flex: 1;
+    min-width: 300px;
+    /* Đảm bảo không bị co quá nhỏ */
+    display: flex;
+    flex-direction: column;
+}
+
+.imageContainer {
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--boxshaw2);
+    transition: transform 0.3s ease;
+
+}
+
+.bookImage {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+}
+
+
+.metaInfo {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.topicsPanel {
+    flex: 3;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+    border-left: thin solid var(--border-color);
+    padding-left: 16px;
+}
+
+.topicsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.topicsHeader h2 {
+    font-size: 1.75rem;
+    color: var(--main_d);
+    margin: 0;
+}
+
+.topicList {
+    flex: 1;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: scroll;
+    padding-right: 10px;
+}
+
+.topicList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.topicList::-webkit-scrollbar-track {
+    background: var(--hover);
+    border-radius: 10px;
+}
+
+.topicList::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.topicList::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+.topicItem {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: transparent;
+    padding: 1rem;
+    border-radius: 8px;
+    border: thin solid var(--border-color);
+    border-left: 3px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.topicItem:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.topicInfo {
+    flex-grow: 1;
+}
+
+.topicKey {
+    display: inline-block;
+    background-color: var(--hover);
+    color: var(--text-secondary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    border: 1px solid var(--border-color);
+}
+
+.topicPeriod {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.editBtn {
+    border-color: var(--main_b);
+    background-color: var(--main_b);
+    margin-top: auto;
+    padding: 10px;
+    color: white;
+}
+
+.editBtn:hover {
+    border-color: var(--main_d);
+    background-color: var(--main_d);
+    transform: translateY(-2px);
+}
+
+.addBtn {
+    background-color: var(--main_b);
+    color: white;
+}
+
+.addBtn:hover {
+    background-color: var(--main_d);
+}
+
+.slideLinkBtn {
+    padding: 10px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+}
+
+.slideLinkBtn:hover {
+    color: var(--main_b);
+    background-color: var(--hover);
+    box-shadow: none;
+}

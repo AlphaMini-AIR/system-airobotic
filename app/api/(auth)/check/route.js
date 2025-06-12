@@ -1,18 +1,31 @@
 import { NextResponse } from 'next/server';
 import authenticate from '@/utils/authenticate';
+import users from '@/models/users';
 
-// API kiểm tra token và trả về thông tin người dùng
 export async function POST(request) {
   try {
     const { user } = await authenticate(request);
     if (!user) {
       return NextResponse.json(
-        { air: 0, mes: 'Xác thực thất bại!' },
+        { status: 1, mes: 'Xác thực thất bại!', data: [] },
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
+    const userone = await users.findById(user.id);
+    if (!userone) {
+      return NextResponse.json(
+        { status: 1, mes: 'Người dùng không tồn tại!', data: [] },
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (user.role != userone.role) {
+      return NextResponse.json(
+        { status: 1, mes: 'Phiên đăng nhập không hợp lệ!', data: [] },
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     return NextResponse.json(
-      { air: 2, mes: 'Lấy thông tin người dùng thành công!', data: user },
+      { status: 2, mes: 'Kiểm tra phiên đăng nhập thành công!', data: user },
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -20,7 +33,7 @@ export async function POST(request) {
     );
   } catch (error) {
     return NextResponse.json(
-      { air: 0, mes: 'Đã xảy ra lỗi trong quá trình xử lý!', error: error.message },
+      { status: 1, mes: `Lỗi: ${error.message}`, data: [] },
       {
         status: 500,
         headers: {

@@ -1,50 +1,60 @@
-import { Schema, model, models } from 'mongoose'
+// models/Book.js
 
-const postBook = new Schema({
-    ID: {
-        type: String,
-        required: true,
-    },
+import { Schema, model, models } from 'mongoose';
+
+// TopicItemSchema không cần thay đổi
+const TopicItemSchema = new Schema({
     Name: {
         type: String,
         required: true,
     },
-    Address: {
+    Period: {
+        type: Number,
+        required: true,
+    },
+    Slide: {
         type: String,
         required: true,
     },
-    Price: {
-        type: Number
-    },
-    Progress: {
-        type: String
-    },
-    Quantity: {
-        type: Number
-    },
     Status: {
-        type: Boolean
+        type: Boolean,
+        default: true,
+    }
+}, { _id: true }); // Giữ lại _id cho từng chủ đề trong mảng
+
+const BookSchema = new Schema({
+    ID: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
     },
-    Status: {
-        type: Boolean
-    },
-    TimeEnd: {
-        type: String
-    },
-    TimeStart: {
-        type: String
+    Name: {
+        type: String,
+        required: [true, 'Tên sách là bắt buộc.'],
+        trim: true,
     },
     Type: {
-        type: String
+        type: String,
+        required: [true, 'Loại sách là bắt buộc.'],
     },
-    Detail: {
-        type: Object
+    // --- THAY ĐỔI CHÍNH Ở ĐÂY ---
+    Topics: {
+        type: [TopicItemSchema], // Chuyển từ Map sang một mảng các TopicItemSchema
+        default: [],             // Giá trị mặc định là một mảng rỗng
+    },
+    // --- KẾT THÚC THAY ĐỔI ---
+    Price: {
+        type: Number,
+        required: true,
+        min: [0],
     },
     Image: {
-        type: String
+        type: String,
+        required: false,
     }
-})
+}, { timestamps: true, });
 
-const PostBook = models.book || model('book', postBook)
+const Book = models.book || model('book', BookSchema);
 
-export default PostBook
+export default Book;

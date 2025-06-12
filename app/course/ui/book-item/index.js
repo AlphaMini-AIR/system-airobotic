@@ -1,6 +1,6 @@
-import { Re_book } from '@/data/book';
 import styles from './index.module.css';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const formatPrice = (price) => {
     if (typeof price !== 'number') return 'N/A';
@@ -8,10 +8,9 @@ const formatPrice = (price) => {
 };
 
 const ProgramCard = ({ program }) => {
-
     const topicCount = Object.keys(program.Topic || {}).length;
     return (
-        <div className={styles.card}>
+        <Link href={`/course/book/${program._id}`} className={styles.card}>
             {/* Phần 1: Ảnh (chiếm 1/3) */}
             <div className={styles.imageWrapper}>
                 <div className={styles.imagePlaceholder}>
@@ -32,7 +31,7 @@ const ProgramCard = ({ program }) => {
                     <p className='text_6'>Giá khóa học: <span style={{ fontWeight: 400 }}>{formatPrice(program.Price)}</span></p>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 };
 
@@ -40,7 +39,8 @@ const ProgramList = ({ programs }) => {
     if (!programs || programs.length === 0) {
         return <div>Không có chương trình nào để hiển thị.</div>;
     }
-
+    console.log(programs);
+    
     return (
         <div className={styles.container}>
             {programs.map(program => (

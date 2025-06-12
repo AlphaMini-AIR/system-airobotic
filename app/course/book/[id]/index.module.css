@@ -1,0 +1,64 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    height: calc(100% - 32px);
+    padding: 16px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formLabel {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.formInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: var(--main_b);
+    box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.2);
+}
+
+.formActions {
+    margin-top: auto;
+    /* Đẩy nút xuống dưới cùng */
+    padding-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.submitBtn {
+    background-color: var(--main_b);
+    color: white;
+    flex-grow: 1;
+}
+
+.submitBtn:hover {
+    background-color: var(--main_d);
+}
+
+.cancelBtn {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.cancelBtn:hover {
+    background-color: var(--hover);
+}

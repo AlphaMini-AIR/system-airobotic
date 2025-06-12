@@ -1,0 +1,455 @@
+/* ---------- BUTTON mở popup ---------- */
+.button {
+    padding: 10px 12px;
+    background: var(--main_d);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.bnt {
+    width: calc(100% - 24px);
+    justify-content: center;
+    padding: 10px 12px;
+    background: var(--main_d);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ---------- FORM trong popup ---------- */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+}
+
+/* ---------- popupForm kiểu chung cho popup con ---------- */
+.popupForm {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+/* ---------- kiểu cho tất cả input trong popup con và scheduleForm ---------- */
+.popupForm input,
+.scheduleForm input {
+    flex: 1 1;
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+    margin-bottom: 12px;
+}
+
+.popupForm>div {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+/* ---------- nhóm .formGroup nếu cần sử dụng sau này ---------- */
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.formGroup input {
+    padding: 8px 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: var(--main);
+}
+
+/* ---------- nút Lưu ---------- */
+.submit {
+    align-self: flex-end;
+    padding: 8px 20px;
+    background: var(--main_d);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.25s;
+}
+
+/* ---------- nút Thêm (dùng chung) ---------- */
+.addBtn {
+    padding: 8px 16px;
+    background: var(--main_d);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.25s;
+}
+
+/* ---------- LIST & MENU chung ---------- */
+.list_li {
+    border-radius: 4px;
+    transition: all 0.3s linear;
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.list_li:hover {
+    background: var(--hover);
+}
+
+.selectBtn {
+    flex: 1 1;
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+    cursor: pointer;
+}
+
+.selectBtnWarning {
+    border-color: #ffd264 !important;
+}
+
+.list_menuwrap {
+    width: 100%;
+    border-radius: 6px;
+    background: var(--bg-primary);
+    margin-top: 8px;
+    box-shadow: var(--boxshaw2);
+    max-height: 350px;
+    overflow: auto;
+}
+
+/* ---------- TAB lịch học ---------- */
+.tabBar {
+    display: flex;
+    gap: 8px;
+}
+
+.tabBar button {
+    flex: 1;
+    padding: 8px 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.tabActive {
+    background: var(--main_l);
+    border-color: var(--main_l);
+    color: #fff;
+}
+
+/* ---------- Schedule form (nếu cần) ---------- */
+.scheduleForm {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.scheduleForm button {
+    padding: 6px 14px;
+    border: none;
+    background: var(--main_d);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* ---------- Schedule list ---------- */
+.scheduleList {
+    border: thin solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.scheduleList table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.scheduleList>div:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.scheduleList th,
+.scheduleList td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.scheduleList th {
+    background: var(--bg-secondary);
+    text-align: left;
+}
+
+.scheduleList tr:hover td {
+    background: var(--hover);
+}
+
+.scheduleList button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.priceTotal {
+    padding: 10px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.scheduleHint {
+    padding: 12px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-light);
+}
+
+/* ---------- Báo lỗi chung ---------- */
+.error {
+    color: var(--red);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.scheduleAction {
+    display: flex;
+    gap: 8px;
+}
+
+/* ---------- Bảng chủ đề (Bulk) ---------- */
+.topicTableWrap {
+    overflow-x: auto;
+}
+
+.topicTableWrap table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.topicTableWrap th,
+.topicTableWrap td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+    text-align: left;
+}
+
+.topicTableWrap tr:hover td {
+    background: var(--hover);
+}
+
+.bulkContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+}
+
+/* ---------- Mỗi buổi học hiển thị thành một item ---------- */
+.bulkItem {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ---------- Mỗi dòng trong item ---------- */
+.bulkLine {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ---------- Dòng 1: ID + Chủ đề ---------- */
+.bulkId {
+    font-weight: 600;
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.bulkTopic {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+}
+
+/* ---------- Dòng 2 và 3: Phần input đồng nhất với CSS đã có ---------- */
+.bulkInput {
+    flex: 1 1;
+    min-width: 120px;
+    max-width: 180px;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.bulkInputSmall {
+    width: 60px;
+    min-width: 60px;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+/* ---------- Nút Lưu tất cả (có thể dùng chung class .submit) ---------- */
+.bulkActions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 8px;
+    gap: 16px;
+}
+
+/* Giữ lại các lớp .list_menuwrap và .list_li đã tối ưu ở trên */
+.list_menuwrap {
+    width: 100%;
+    border-radius: 6px;
+    background: var(--bg-primary);
+    margin-top: 8px;
+    box-shadow: var(--boxshaw2);
+    max-height: 350px;
+    overflow: auto;
+}
+
+.removeBtn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.list_li {
+    border-radius: 4px;
+    transition: all 0.3s linear;
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.list_li:hover {
+    background: var(--hover);
+}
+
+.active {
+    background: var(--main_l);
+    color: #fff;
+}
+
+.errorBorder {
+    border-color: var(--red) !important;
+}
+
+.scheduleItem {
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px;
+    background: var(--bg-primary);
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scheduleLine {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.scheduleIndex {
+    font-weight: 600;
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.scheduleInput {
+    flex: 1 1;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 8px 10px;
+    font-size: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.lessonInput {
+    max-width: 80px;
+}
+
+.removeBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 4px;
+    margin-left: auto;
+}
+
+.scheduleHint {
+    padding: 12px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-light);
+}

@@ -6,12 +6,11 @@ import PostUser from '@/models/users';
 export async function POST(req) {
     try {
         await connectDB();
-
         const {
             name,
             address = '',
             avt = '',
-            role = {},
+            role = ["Teacher"],
             phone = '',
             email,
             password

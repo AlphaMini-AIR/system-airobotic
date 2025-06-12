@@ -7,19 +7,17 @@ import users from '@/models/users';
 export async function POST(req) {
   try {
     await connectDB();
-
     const { email, password, re } = await req.json();
 
     const user = await users.findOne({ email }).lean();
-    if (!user) return jsonRes(404, { error: 'Tài khoản không tồn tại!' });
-    console.log(user);
+    if (!user) return jsonRes(404, { status: 1, mes: 'Tài khoản không tồn tại!', data: [] });
 
     const ok = await bcrypt.compare(password, user.uid);
-    if (!ok) return jsonRes(401, { error: 'Mật khẩu không chính xác!' });
+    if (!ok) return jsonRes(401, { status: 1, mes: 'Mật khẩu không chính xác!', data: [] });
 
     const jwtLife = re ? '30d' : '1h';
     const accessToken = jwt.sign(
-      { userId: user._id },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: jwtLife }
     );
@@ -35,11 +33,10 @@ export async function POST(req) {
     if (re) opts.maxAge = 60 * 60 * 24 * 30;
 
     cookies().set(process.env.token, accessToken, opts);
-
-    return jsonRes(200, { message: 'Đăng nhập thành công' });
+    return jsonRes(200, { status: 2, mes: 'Đăng nhập thành công', data: [] });
   } catch (err) {
     console.error(err);
-    return jsonRes(500, { error: 'Lỗi máy chủ' });
+    return jsonRes(500, { status: 1, mes: 'Lỗi máy chủ', data: [] });
   }
 }
 
