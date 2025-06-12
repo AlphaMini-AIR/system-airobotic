@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import air from '../index.module.css'
-import Menu from '@/components/(button)/menu';
+import Menu from '@/components/(ui)/(button)/menu';
 
 export default function Nav({ data_area, selectedArea, onAreaChange }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);

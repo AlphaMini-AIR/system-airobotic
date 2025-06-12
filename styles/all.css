@@ -317,8 +317,8 @@ a {
 }
 
 .btn {
-  padding: 8px 12px;
-  background: var(--main_d);
+  padding: 10px 12px;
+  background: var(--main_b);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -329,4 +329,11 @@ a {
   font-weight: 500;
   cursor: pointer;
   border: none;
+  transition: all 0.2s linear;
+  margin-top: 8px;
+}
+
+.btn:hover{
+  background: var(--main_d);
+  transform: translateY(-2px);
 }

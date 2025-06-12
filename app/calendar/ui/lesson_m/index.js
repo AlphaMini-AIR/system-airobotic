@@ -1,10 +1,10 @@
 // Lesson_m.jsx
 import React, { useState, useEffect } from 'react';
-import CenterPopup from '@/components/(popup)/popup_center';  // điều chỉnh đường dẫn nếu cần
-import Loading from '@/components/(loading)/loading';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';  // điều chỉnh đường dẫn nếu cần
+import Loading from '@/components/(ui)/(loading)/loading';
 import styles from './index.module.css';
-import Title from '@/components/(popup)/title';
-import BoxFile from '@/components/(box)/file';
+import Title from '@/components/(features)/(popup)/title';
+import BoxFile from '@/components/(ui)/(box)/file';
 
 export default function Lesson_m({ time, topic, courseID, room, id, type }) {
 

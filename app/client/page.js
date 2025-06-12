@@ -22,7 +22,7 @@ import {
     Re_Label
 } from '@/data/client';
 import AddLabelButton from './ui/addlabel';
-import Loading from '@/components/(loading)/loading';
+import Loading from '@/components/(ui)/(loading)/loading';
 
 const PAGE_SIZE = 10;
 const ACCOUNTS = [{ id: 1, name: 'Ai Robotic' }];

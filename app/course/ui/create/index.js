@@ -3,18 +3,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styles from './index.module.css';
 
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import TextNoti from '@/components/(noti)/textnoti';
-import Loading from '@/components/(loading)/loading';
-import Menu from '@/components/(button)/menu';
-import Noti from '@/components/(noti)/noti';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import TextNoti from '@/components/(features)/(noti)/textnoti';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Menu from '@/components/(ui)/(button)/menu';
+import Noti from '@/components/(features)/(noti)/noti';
 
 import { useRouter } from 'next/navigation';
 import { Data_book } from '@/data/book';
 import { Read_Area } from '@/data/area';
 import { Data_user } from '@/data/users';
 import { Re_course_all } from '@/data/course';
-import { Svg_Add } from '@/components/svg';
+import { Svg_Add } from '@/components/(icon)/svg';
 
 export default function Create() {
     const router = useRouter();
@@ -1153,7 +1153,6 @@ export default function Create() {
                 }
             />
 
-            {/* Loading full-screen */}
             {isLoading && (
                 <div
                     style={{
@@ -1169,7 +1168,7 @@ export default function Create() {
                         zIndex: 2000,
                     }}
                 >
-                    <Loading content="Đang xử lý..." />
+                    <Loading content={<p className='text_7' style={{ color: 'white !importants' }}>Đang xử lý...</p>} />
                 </div>
             )}
 

@@ -3,10 +3,8 @@ import { Schema, isValidObjectId, model, models } from 'mongoose';
 const DetailSchema = new Schema({
     ID: { type: String, required: true },
     Day: { type: String, required: true },
-    Topic: { type: String, required: true },
     Room: { type: String },
     Time: { type: String },
-    Lesson: { type: Number },
     Teacher: { type: String },
     TeachingAs: { type: String },
     Image: { type: String },

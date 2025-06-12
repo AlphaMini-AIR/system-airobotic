@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo, startTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import air from './index.module.css';
-import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar } from '../svg';
-import Menu from '../(button)/menu';
-import Switch from "@/components/(button)/swith";
-import WrapIcon from '../(button)/hoveIcon';
+import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar } from '../../(icon)/svg';
+import Menu from '../../(ui)/(button)/menu';
+import Switch from "@/components/(ui)/(button)/swith";
+import WrapIcon from '../../(ui)/(button)/hoveIcon';
 
 const ITEM_HEIGHT = 82;
 
@@ -29,8 +29,6 @@ const navItems = [
       </svg>
     </div>, content: 'Chăm sóc'
   }
-
-
 ];
 
 export default function Nav() {

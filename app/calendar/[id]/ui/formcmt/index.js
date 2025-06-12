@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import styles from './index.module.css';
-import Title from '@/components/(popup)/title';
-import Menu from '@/components/(button)/menu';
+import Title from '@/components/(features)/(popup)/title';
+import Menu from '@/components/(ui)/(button)/menu';
 
 const TDHT_OPTIONS = [
     'Nhiệt tình và chăm chỉ',

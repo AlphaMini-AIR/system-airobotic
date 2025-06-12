@@ -2,7 +2,7 @@
 
 import air from '../index.module.css'
 import { useRouter, usePathname } from 'next/navigation'
-import { Svg_Chart } from '@/components/svg';
+import { Svg_Chart } from '@/components/(icon)/svg';
 
 export default function Home({ children }) {
     const router = useRouter();

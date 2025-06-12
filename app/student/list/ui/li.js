@@ -1,8 +1,8 @@
-import { Svg_Bill, Svg_Chart, Svg_Detail, Svg_Pen, Svg_Profile } from "@/components/svg";
+import { Svg_Bill, Svg_Chart, Svg_Detail, Svg_Pen, Svg_Profile } from "@/components/(icon)/svg";
 import Image from "next/image";
 import air from '../../index.module.css'
-import Tooltip from "@/components/(button)/tooltip";
-import WrapIcon from "@/components/(button)/hoveIcon";
+import Tooltip from "@/components/(ui)/(button)/tooltip";
+import WrapIcon from "@/components/(ui)/(button)/hoveIcon";
 import Link from "next/link";
 
 export function Li_l({ data }) {

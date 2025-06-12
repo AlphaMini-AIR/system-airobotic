@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import Input from '@/components/(input)/input';
+import Input from '@/components/(ui)/(input)/input';
 import styles from './index.module.css';
 
 // Dữ liệu mẫu các hình ảnh (bạn có thể thay đổi theo nhu cầu)

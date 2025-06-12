@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import air from './index.module.css';
-import { Svg_ArowRight, Svg_Eye, Svg_unEye } from '../svg';
+import { Svg_ArowRight, Svg_Eye, Svg_unEye } from '@/components/(icon)/svg';
 
 const isValidEmail = (email) => { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); };
 

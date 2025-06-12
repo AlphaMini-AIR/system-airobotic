@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { cookies } from 'next/headers';
-import Layout_Login from './(auth)/login';
-import Nav from '@/components/nav';
-
+import Layout_Login from '@/app/(auth)/login';
+import Nav from '@/components/(layout)/nav';
 import '@/styles/all.css'
 import air from './layout.module.css'
 
@@ -24,27 +23,22 @@ export default async function RootLayout({ children }) {
     body: JSON.stringify({ source: 1 }),
     cache: 'no-store'
   });
-
   let data = null;
-
   const result = await response.json();
-  if (result.air === 2) {
-    data = result.data;
-  }
-
-
+  if (result.status === 2) { data = result.data }
+  
   return (
     <html lang="en">
       <body>
         {data ?
-            <div className={air.layout}>
-              <div className={air.nav}>
-                <Nav data={data} />
-              </div>
-              <div className={air.main}>
-                {children}
-              </div>
-            </div> :
+          <div className={air.layout}>
+            <div className={air.nav}>
+              <Nav data={data} />
+            </div>
+            <div className={air.main}>
+              {children}
+            </div>
+          </div> :
           <Layout_Login />}
       </body>
     </html>

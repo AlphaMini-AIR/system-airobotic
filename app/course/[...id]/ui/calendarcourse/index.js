@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import { Read_Area } from '@/data/area';
 import { Data_user, Re_user } from '@/data/users';
 import { Data_book } from '@/data/book';
 import { Data_Course_One, Re_course_one } from '@/data/course';
-import WrapIcon from '@/components/(button)/hoveIcon';
-import Noti from '@/components/(noti)/noti';
-import Menu from '@/components/(button)/menu';
-import Loading from '@/components/(loading)/loading';
-import TextNoti from '@/components/(noti)/textnoti';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+import Noti from '@/components/(features)/(noti)/noti';
+import Menu from '@/components/(ui)/(button)/menu';
+import Loading from '@/components/(ui)/(loading)/loading';
+import TextNoti from '@/components/(features)/(noti)/textnoti';
 import { useRouter } from 'next/navigation';
 import styles from './index.module.css';
 

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right'; // <-- Đường dẫn đến component popup
-import Loading from '@/components/(loading)/loading';         // <-- Đường dẫn đến component loading
-import Noti from '@/components/(noti)/noti';                  // <-- Đường dẫn đến component Noti
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; // <-- Đường dẫn đến component popup
+import Loading from '@/components/(ui)/(loading)/loading';         // <-- Đường dẫn đến component loading
+import Noti from '@/components/(features)/(noti)/noti';                  // <-- Đường dẫn đến component Noti
 import styles from './index.module.css';
 import { useRouter } from 'next/navigation';
 import { Re_course_one, Re_lesson } from '@/data/course';               // <-- File CSS Module
@@ -41,7 +41,7 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
         setSelectedImageIds(initialIds);
     }, [studentInfo]);
 
-    const allCourseImages = courseInfo?.imagedetail || [];
+    const allCourseImages = courseInfo?.detailImage || [];
 
     const selectedImageObjects = useMemo(() =>
         allCourseImages.filter(img => selectedImageIds.has(img.id)),

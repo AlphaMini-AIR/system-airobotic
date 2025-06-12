@@ -7,12 +7,12 @@ import styles from './index.module.css';
 import Student from '../student';
 import Calendar from '../calendarcourse';
 import Image from 'next/image';
-import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
+import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
 import AnnounceStudent from '../bell';
 import Report from '../Report';
 import { Re_course_one } from '@/data/course';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/(loading)/loading';
+import Loading from '@/components/(ui)/(loading)/loading';
 
 // THÊM MỚI: Component Icon sắp xếp đơn giản
 const SortIcon = ({ direction }) => {
@@ -250,7 +250,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                     <div style={{ display: 'flex', background: 'var(--border-color)' }}>
                         {title.map((e, i) => {
                             if (params.length > 1 && e.content === 'Buổi bù') return null;
-                            const isSortable = ['m', 'k', 'c', 'b'].includes(e.data); // Các cột có thể sắp xếp
+                            const isSortable = ['m', 'k', 'c', 'b'].includes(e.data);
 
                             return (
                                 <div key={i} className="text_6_400" style={{ flex: e.flex, padding: '12px 8px', fontWeight: '500', display: 'flex', justifyContent: e.align, alignItems: 'center' }}>

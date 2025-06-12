@@ -1,6 +1,6 @@
 'use client'
 import { usePathname } from 'next/navigation'
-import { Svg_Chart, Svg_List } from '@/components/svg'
+import { Svg_Chart, Svg_List } from '@/components/(icon)/svg'
 import air from './index.module.css'
 import Link from 'next/link'
 

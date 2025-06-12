@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import CenterPopup from '@/components/(popup)/popup_center';
-import Title from '@/components/(popup)/title';
-import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/(noti)/noti';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';
+import Title from '@/components/(features)/(popup)/title';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
-import WrapIcon from '@/components/(button)/hoveIcon';
-import { Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/svg';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+import { Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
 import { Re_user } from '@/data/users';
 
 const toArr = (v) =>
@@ -108,13 +108,17 @@ export default function DetailStudent({ data: student, course, c, users, student
         const processedRows = course.map((les, idx) => {
             const lessonDate = parseDMY(les.Day);
             const Status = lessonDate && lessonDate <= today ? 'Đã diễn ra' : 'Chưa diễn ra';
+            console.log(Object.values(studentLearnData).find(lr => lr.Lesson === les._id));
+
             const learnRecord = Object.values(studentLearnData).find(lr => lr.Lesson === les._id) || { Checkin: 0, Cmt: [] };
+
             return {
                 ...les,
                 index: idx + 1,
                 Status,
                 attendance: mapCheckin(learnRecord.Checkin),
                 comments: learnRecord.Cmt,
+                imagestudent: learnRecord.Image,
                 Date: `${les.Time} - ${les.Day}`,
             };
         });
@@ -288,43 +292,47 @@ export default function DetailStudent({ data: student, course, c, users, student
                         return (<Cell key={colKey} {...colProps} header>{col.label}</Cell>);
                     })}
                 </div>
-                {rows.map((row, rowIdx) => (
-                    <div
-                        key={rowIdx}
-                        style={{ display: 'flex', borderTop: '1px solid var(--border-color)', alignItems: 'center', background: row.attendance === 'Có mặt' ? '#e3ffe3' : row.attendance === 'Vắng mặt' ? '#ffebeb' : row.attendance === 'Có phép' ? '#fffadd' : 'none' }}
-                    >
-                        {columns.map(col => {
-                            const { key: colKey, ...colProps } = col;
-                            if (colKey === 'more') {
-                                return (
-                                    <Cell key={colKey} {...colProps}>
-                                        <MoreIcons
-                                            onShowImg={() => setImagePop({ open: true, lessonId: row.ID, imageId: row.Image })}
-                                            onShowCmt={() => setCommentPop({ open: true, lessonId: row.ID, comments: row.comments })}
-                                        />
-                                    </Cell>
-                                );
-                            }
-                            if (colKey === 'Topic') {
-                                return (
-                                    <div key={colKey} style={{ flex: col.flex }} className={styles.topic}>
-                                        <p>{row.ID}: {row.Topic}</p>
-                                    </div>
-                                );
-                            }
-                            if (colKey === 'Status') {
-                                return (
-                                    <Cell key={colKey} {...colProps}>
-                                        <span className={styles.chip} style={{ background: row.Status === 'Đã diễn ra' ? 'var(--green)' : 'var(--red)' }}>
-                                            {row.Status}
-                                        </span>
-                                    </Cell>
-                                );
-                            }
-                            return (<Cell key={colKey} {...colProps}>{row[colKey]}</Cell>);
-                        })}
-                    </div>
-                ))}
+                {rows.map((row, rowIdx) => {
+                    console.log(row);
+
+                    return (
+                        <div
+                            key={rowIdx}
+                            style={{ display: 'flex', borderTop: '1px solid var(--border-color)', alignItems: 'center', background: row.attendance === 'Có mặt' ? '#e3ffe3' : row.attendance === 'Vắng mặt' ? '#ffebeb' : row.attendance === 'Có phép' ? '#fffadd' : 'none' }}
+                        >
+                            {columns.map(col => {
+                                const { key: colKey, ...colProps } = col;
+                                if (colKey === 'more') {
+                                    return (
+                                        <Cell key={colKey} {...colProps}>
+                                            <MoreIcons
+                                                onShowImg={() => setImagePop({ open: true, lessonId: row.ID, imageId: row.imagestudent })}
+                                                onShowCmt={() => setCommentPop({ open: true, lessonId: row.ID, comments: row.comments })}
+                                            />
+                                        </Cell>
+                                    );
+                                }
+                                if (colKey === 'Topic') {
+                                    return (
+                                        <div key={colKey} style={{ flex: col.flex }} className={styles.topic}>
+                                            <p>{row.Topic}</p>
+                                        </div>
+                                    );
+                                }
+                                if (colKey === 'Status') {
+                                    return (
+                                        <Cell key={colKey} {...colProps}>
+                                            <span className={styles.chip} style={{ background: row.Status === 'Đã diễn ra' ? 'var(--green)' : 'var(--red)' }}>
+                                                {row.Status}
+                                            </span>
+                                        </Cell>
+                                    );
+                                }
+                                return (<Cell key={colKey} {...colProps}>{row[colKey]}</Cell>);
+                            })}
+                        </div>
+                    )
+                })}
             </div>
         </>
     );
@@ -382,7 +390,11 @@ export default function DetailStudent({ data: student, course, c, users, student
                 <Title content={<p>Hình ảnh buổi học</p>} click={() => setImagePop({ ...imagePop, open: false })} />
                 <div style={{ padding: 16, textAlign: 'center' }}>
                     {imagePop.imageId
-                        ? <img src={`https://drive.google.com/uc?export=view&id=${imagePop.imageId}`} alt="lesson-img" style={{ maxWidth: '100%', borderRadius: 8 }} />
+                        ? <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {imagePop.imageId.map((img, i) => (
+                                <img key={i} src={`https://lh3.googleusercontent.com/d/${img.id}`} alt={`Hình ảnh buổi học ${i + 1}`} style={{ width: 'calc(25% - 3/4*8px)', aspectRatio: 1, objectFit: 'cover' }} />
+                            ))}
+                        </div>
                         : <p className="text_6_400">Chưa có hình ảnh</p>}
                 </div>
             </CenterPopup>

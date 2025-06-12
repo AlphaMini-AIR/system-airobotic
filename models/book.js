@@ -43,7 +43,6 @@ const BookSchema = new Schema({
         type: [TopicItemSchema], // Chuyển từ Map sang một mảng các TopicItemSchema
         default: [],             // Giá trị mặc định là một mảng rỗng
     },
-    // --- KẾT THÚC THAY ĐỔI ---
     Price: {
         type: Number,
         required: true,

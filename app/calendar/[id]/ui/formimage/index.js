@@ -2,12 +2,12 @@
 
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
-import FlexiblePopup from '@/components/(popup)/popup_right'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import styles from './index.module.css';
-import Loading from '@/components/(loading)/loading'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import Loading from '@/components/(ui)/(loading)/loading'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import { Re_course_one, Re_lesson } from '@/data/course'; // <-- Hãy chắc chắn đường dẫn này là chính xác
-import Noti from '@/components/(noti)/noti'; // <-- Hãy chắc chắn đường dẫn này là chính xác
-import { Svg_Pen } from '@/components/svg';
+import Noti from '@/components/(features)/(noti)/noti'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import { Svg_Pen } from '@/components/(icon)/svg';
 
 
 // ================================================================
@@ -396,7 +396,7 @@ export default function ImageUploader({ session, courseId }) {
     const router = useRouter();
     const [isPopupOpen, setPopupOpen] = useState(false);
     const [isUploaderOpen, setUploaderOpen] = useState(false);
-    const [mediaItems, setMediaItems] = useState(session?.imagedetail || []);
+    const [mediaItems, setMediaItems] = useState(session?.detailImage || []);
     const [lightboxMedia, setLightboxMedia] = useState(null);
 
     // *** STATE MỚI ĐỂ QUẢN LÝ TIẾN TRÌNH UPLOAD Ở CẤP CAO NHẤT ***
@@ -408,8 +408,8 @@ export default function ImageUploader({ session, courseId }) {
     const uploaderRef = useRef();
 
     useEffect(() => {
-        setMediaItems(session?.imagedetail || []);
-    }, [session?.imagedetail]);
+        setMediaItems(session?.detailImage || []);
+    }, [session?.detailImage]);
 
     const handleUploadFinish = async () => {
         // Hàm này có thể được gọi từ nhiều nơi (update, delete, upload)

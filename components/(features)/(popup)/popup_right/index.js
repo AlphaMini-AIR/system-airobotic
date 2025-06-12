@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './index.module.css';
-import Loading from '@/components/(loading)/loading';
+import Loading from '@/components/(ui)/(loading)/loading';
 
 const ANIMATION_DURATION = 300;
 

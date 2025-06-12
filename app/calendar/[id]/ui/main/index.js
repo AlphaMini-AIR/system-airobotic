@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Re_lesson } from '@/data/course';
-import CenterPopup from '@/components/(popup)/popup_center';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';
 import CommentForm from '../formcmt';
-import BoxFile from '@/components/(box)/file';
-import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/(noti)/noti';
+import BoxFile from '@/components/(ui)/(box)/file';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Noti from '@/components/(features)/(noti)/noti';
 
 import styles from './index.module.css';
 import ImageUploader from '../formimage';

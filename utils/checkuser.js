@@ -6,7 +6,6 @@ export default async function CheckToken(request) {
   let source;
   let token;
   const body = await request.json()
-  
   try {
     source = body?.source;
   } catch (err) {
@@ -32,7 +31,8 @@ export default async function CheckToken(request) {
     } catch (err) {
       return { error: 'Token không hợp lệ hoặc đã hết hạn ' + token };
     }
-    return { user: decodedToken.userId, body: body };
+
+    return { user: decodedToken, body: body };
   } catch (error) {
     return { error: `Có lỗi xảy ra: ${source}` };
   }

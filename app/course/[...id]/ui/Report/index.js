@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import Noti from '@/components/(noti)/noti';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
-import { Svg_Chart } from '@/components/svg';
+import { Svg_Chart } from '@/components/(icon)/svg';
 import {
     Chart as ChartJS,
     CategoryScale,

@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import CenterPopup from '@/components/(popup)/popup_center';
-import Loading from '@/components/(loading)/loading';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';
+import Loading from '@/components/(ui)/(loading)/loading';
 import { Data_History_User, Re_Client } from '@/data/client';
-import Noti from '@/components/(noti)/noti';
+import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
-import Title from '@/components/(popup)/title';
+import Title from '@/components/(features)/(popup)/title';
 
 
 export default function SidePanel({ open, row, labels = [], onClose, onSave }) {

@@ -3,20 +3,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import CenterPopup from '@/components/(popup)/popup_center';
-import Menu from '@/components/(button)/menu';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';
+import Menu from '@/components/(ui)/(button)/menu';
 
-import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/(noti)/noti';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Noti from '@/components/(features)/(noti)/noti';
 
 import { Read_Student_All } from '@/data/student';
 import { Re_course_one } from '@/data/course';
 
 import styles from './index.module.css';
-import { Svg_Add, Svg_Student } from '@/components/svg';
-import Title from '@/components/(popup)/title';
-import WrapIcon from '@/components/(button)/hoveIcon';
+import { Svg_Add, Svg_Student } from '@/components/(icon)/svg';
+import Title from '@/components/(features)/(popup)/title';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 
 export default function Student({ course }) {
     const router = useRouter();

@@ -1,12 +1,12 @@
 'use client'
 
-import AnimatedButton from '@/components/(button)/button';
+import AnimatedButton from '@/components/(ui)/(button)/button';
 import air from '../../index.module.css';
 import Nav from '../nav';
 import { Li_l } from './li';
 import { useState } from 'react';
-import { Svg_Add } from '@/components/svg';
-import Input from '@/components/(input)/input';
+import { Svg_Add } from '@/components/(icon)/svg';
+import Input from '@/components/(ui)/(input)/input';
 import Create from './create';
 
 export default function Main({ data_student, data_area }) {

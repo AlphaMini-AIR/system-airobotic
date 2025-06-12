@@ -2,14 +2,14 @@
 
 import React, { useState, useCallback } from 'react';
 import styles from './index.module.css';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import TextNoti from '@/components/(noti)/textnoti';
-import Loading from '@/components/(loading)/loading';
-import Noti from '@/components/(noti)/noti';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import TextNoti from '@/components/(features)/(noti)/textnoti';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Noti from '@/components/(features)/(noti)/noti';
 import { Re_book } from '@/data/book';
 import TopicForm from '@/app/course/book/[id]/ui/AddTopicForm';
 import { useRouter } from 'next/navigation';
-import { Svg_Add, Svg_Slide, Svg_Pen, Svg_Delete } from '@/components/svg';
+import { Svg_Add, Svg_Slide, Svg_Pen, Svg_Delete } from '@/components/(icon)/svg';
 import Link from 'next/link';
 
 export default function Create() {

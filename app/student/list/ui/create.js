@@ -1,6 +1,6 @@
 'use client';
 
-import Input from "@/components/(input)/input";
+import Input from "@/components/(ui)/(input)/input";
 
 export default function Create() {
     return (

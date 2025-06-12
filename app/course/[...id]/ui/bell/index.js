@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import Loading from '@/components/(loading)/loading'; // Sử dụng component Loading của bạn
-import Noti from '@/components/(noti)/noti'; // Sử dụng component Noti của bạn
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import Loading from '@/components/(ui)/(loading)/loading'; // Sử dụng component Loading của bạn
+import Noti from '@/components/(features)/(noti)/noti'; // Sử dụng component Noti của bạn
 import styles from './index.module.css';
-import TextNoti from '@/components/(noti)/textnoti';
+import TextNoti from '@/components/(features)/(noti)/textnoti';
 import { Read_Student_All } from '@/data/student';
 
 const toArr = (v) =>

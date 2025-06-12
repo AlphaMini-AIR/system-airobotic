@@ -1,6 +1,6 @@
-import Login_form from "@/components/login/form";
+import Login_form from "@/components/(layout)/login";
 import Image from "next/image";
-import { Svg_Facebook, Svg_Website } from "@/components/svg";
+import { Svg_Facebook, Svg_Website } from "@/components/(icon)/svg";
 import Link from "next/link";
 
 export default function Layout_Login() {

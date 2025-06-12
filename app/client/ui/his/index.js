@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import FlexiblePopup from '@/components/(popup)/popup_right';
-import CenterPopup from '@/components/(popup)/popup_center';
-import Title from '@/components/(popup)/title';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import CenterPopup from '@/components/(features)/(popup)/popup_center';
+import Title from '@/components/(features)/(popup)/title';
 import { Data_History } from '@/data/client';
 import styles from './index.module.css';
 

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation"; // Import hook để lấy path hiện tại
-import AnimatedButton from "@/components/(button)/button";
-import { Svg_Pen } from "@/components/svg";
+import AnimatedButton from "@/components/(ui)/(button)/button";
+import { Svg_Pen } from "@/components/(icon)/svg";
 import air from "./index.module.css";
 
 export default function Banner({ data }) {
