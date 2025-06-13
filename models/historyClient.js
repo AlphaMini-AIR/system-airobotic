@@ -11,6 +11,7 @@ const sendHistorySchema = new Schema({
     sentBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, required: true },
     labels: { type: [String], default: [] },
+    type: { type: String, default: 'Khách hàng' },
     recipients: { type: [recipientStatusSchema], default: [] },
 }, {
     timestamps: true
