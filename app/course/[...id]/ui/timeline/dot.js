@@ -29,10 +29,9 @@ const getEventStatus = (data) => {
 
 export default function TimeLine_Dot({ course, type, index, data, props }) {
     props = props[1] || '';
-    let id = data.ID;
+    let id = data._id;
     if (data.Student) id += '-' + formatDate(data.Day);
 
-    // 2. Gọi hàm để lấy đối tượng trạng thái
     const status = getEventStatus(data);
 
     return (

@@ -108,8 +108,6 @@ export default function DetailStudent({ data: student, course, c, users, student
         const processedRows = course.map((les, idx) => {
             const lessonDate = parseDMY(les.Day);
             const Status = lessonDate && lessonDate <= today ? 'Đã diễn ra' : 'Chưa diễn ra';
-            console.log(Object.values(studentLearnData).find(lr => lr.Lesson === les._id));
-
             const learnRecord = Object.values(studentLearnData).find(lr => lr.Lesson === les._id) || { Checkin: 0, Cmt: [] };
 
             return {

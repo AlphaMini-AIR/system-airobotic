@@ -226,18 +226,18 @@ const MakeupLessonForm = React.memo(({ course, onDone, initialStudents = [] }) =
             {saving && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 2500 }}><Loading content="Đang lưu..." /></div>}
             <div className={styles.editForm}>
                 <p className="text_6">Chủ đề buổi bù</p>
-                <Menu menuItems={topicMenu} menuPosition="bottom" isOpen={openTopic} onOpenChange={setOpenTopic} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.Topic || 'Chọn chủ đề'}</p></button>} />
+                <Menu menuItems={topicMenu} menuPosition="bottom" isOpen={openTopic} onOpenChange={setOpenTopic} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Topic || 'Chọn chủ đề'}</p></button>} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <input type="date" className={styles.selectBtn} style={{ flex: 1 }} value={form.Day} onChange={e => handleFormChange('Day', e.target.value)} />
                     <input type="time" className={styles.selectBtn} style={{ flex: 1 }} value={form.Start} onChange={e => handleFormChange('Start', e.target.value)} />
                     <input type="number" min="1" className={styles.selectBtn} style={{ width: 90 }} value={form.Lesson} onChange={e => handleFormChange('Lesson', Math.max(1, Number(e.target.value)))} />
                 </div>
                 <p className="text_6" style={{ marginTop: 8 }}>Giáo viên</p>
-                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
+                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Trợ giảng</p>
-                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
+                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Phòng học</p>
-                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
+                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>{isStudentListLocked ? 'Học sinh tham gia (cố định)' : 'Chọn học sinh tham gia'}</p>
                 <div className={styles.stuWrap}>
                     {isStudentListLocked ? (
@@ -323,11 +323,11 @@ const EditLessonForm = React.memo(({ lesson, course, onDone, onCancel }) => {
                 <p className="text_6_400"><strong>Chủ đề</strong>: {form.Topic}</p>
                 <p className="text_6_400"><strong>Thời gian</strong>: {form.Time} – {form.Day}</p>
                 <p className="text_6">Giáo viên giảng dạy</p>
-                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
+                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Trợ giảng</p>
-                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
+                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Phòng học</p>
-                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
+                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
             </div>
             <div className={styles.btnRow}>
                 <button onClick={onCancel} className="btn" style={{ borderRadius: 5, background: 'var(--border-color)' }}>Huỷ bỏ</button>

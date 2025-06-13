@@ -5,6 +5,10 @@ const postSchema = new Schema({
     type: String,
     required: true,
   },
+  Uid: {
+    type: Array,
+    default: []
+  },
   Name: {
     type: String
   },

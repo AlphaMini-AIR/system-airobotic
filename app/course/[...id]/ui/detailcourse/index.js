@@ -1,7 +1,7 @@
 // THÊM MỚI: Chuyển đổi thành Client Component và import hooks cần thiết
 "use client";
 import { useState, useMemo } from 'react';
-
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import DetailStudent from '../detatilstudent';
 import styles from './index.module.css';
 import Student from '../student';
@@ -13,8 +13,8 @@ import Report from '../Report';
 import { Re_course_one } from '@/data/course';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/(ui)/(loading)/loading';
+import CommentPopup from '../cmt';
 
-// THÊM MỚI: Component Icon sắp xếp đơn giản
 const SortIcon = ({ direction }) => {
     if (!direction) {
         return <span style={{ width: 16, display: 'inline-block' }}>↕️</span>;
@@ -135,30 +135,41 @@ export default function Detail({ data, params, book, users, studentsx }) {
     )
 
     const detaillesson = (
-        <> {data.Student.map(stu => (
-            <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
-                {title.map(col => {
-                    let m = stu.Learn[params[1] ? params[1] : '']?.Checkin == '1' ? 1 : 0;
-                    let c = stu.Learn[params[1] ? params[1] : '']?.Checkin == '3' ? 1 : 0;
-                    let k = stu.Learn[params[1] ? params[1] : '']?.Checkin == '2' ? 1 : 0;
-                    stu.m = m;
-                    stu.c = c;
-                    stu.k = k;
-                    if (params.length > 1 && col.data === 'b') return null;
-                    return (
-                        col.data === 'More' ?
-                            <Cell key="more" flex={col.flex} align={col.align}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} >
-                                    <span className="wrapicon" style={{ background: 'var(--main_d)' }}>
-                                        <svg viewBox="0 0 448 512" width="14" height="14" fill="white">  <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
-                                    </span>
-                                </div>
-                            </Cell>
-                            : <Cell key={col.data} flex={col.flex} align={col.align}>{stu[col.data]}</Cell>
-                    )
-                })}
-            </div>
-        ))} </>
+        <> {data.Student.map(stu => {
+            if (!params[1]) return null; 
+            return (
+                <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
+                    {title.map(col => {
+                        let learnDetailsArray = Object.values(stu.Learn || {});
+                        learnDetailsArray = learnDetailsArray.filter(ld => ld.Lesson.toString() === params[1].toString())[0]
+                        let m = learnDetailsArray.Checkin == '1' ? 1 : 0;
+                        let c = learnDetailsArray.Checkin == '3' ? 1 : 0;
+                        let k = learnDetailsArray.Checkin == '2' ? 1 : 0;
+                        let cmt = learnDetailsArray.Cmt || [];
+                        let cmtfn = learnDetailsArray.CmtFn || '';
+                        stu.course = data.ID;
+                        stu.lesson = data.Detail.find(lesson => lesson._id === params[1]);
+                        stu.m = m;
+                        stu.c = c;
+                        stu.k = k;
+                        stu.cmt = cmt;
+                        stu.cmtfn = cmtfn;
+
+                        if (params.length > 1 && col.data === 'b') return null;
+                        return (
+                            col.data === 'More' ?
+                                <Cell key="more" flex={col.flex} align={col.align}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} >
+                                        <CommentPopup data={stu} lesson={params[1]} course={data._id} />
+                                        <DetailStudent data={stu} course={data.Detail} c={data} users={users} studentsx={studentsx} />
+                                    </div>
+                                </Cell>
+                                : <Cell key={col.data} flex={col.flex} align={col.align}>{stu[col.data]}</Cell>
+                        )
+                    })}
+                </div>
+            )
+        })} </>
     )
     const reload = async () => {
         setLoading(true);

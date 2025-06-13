@@ -317,7 +317,7 @@ a {
 }
 
 .btn {
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: var(--main_b);
   display: flex;
   align-items: center;
@@ -329,7 +329,7 @@ a {
   font-weight: 500;
   cursor: pointer;
   border: none;
-  transition: all 0.2s linear;
+  transition: all 0.1s linear;
   margin-top: 8px;
 }
 

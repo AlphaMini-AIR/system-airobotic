@@ -8,7 +8,7 @@ export async function POST(req) {
     try {
         const { user, body } = await authenticate(req);
         const { mes, labels, results } = body;
-        const sentBy = user;
+        const sentBy = user.id;
         if (
             typeof mes !== 'string' ||
             !Array.isArray(labels) ||

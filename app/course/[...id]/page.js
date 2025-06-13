@@ -13,7 +13,6 @@ export default async function OverviewTab({ params }) {
     book = book.filter((b) => data.ID.slice(2, 5) == b.ID)[0]
     let students = await Read_Student_All()
     const users = await Data_user()
-    console.log(data);
     
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
