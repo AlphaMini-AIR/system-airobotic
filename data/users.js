@@ -1,29 +1,24 @@
-import { Schema, model, models } from 'mongoose'
+'use server';
 
-const postUser = new Schema({
-    name: {
-        type: String,
-    },
-    address: {
-        type: String,
-    },
-    avt: {
-        type: String,
-    },
-    role: {
-        type: Array,
-    },
-    phone: {
-        type: String,
-    },
-    email: {
-        type: String,
-    },
-    uid: {
-        type: String,
+import fetchApi from '@/utils/fetchApi';
+import { revalidateTag } from 'next/cache';
+
+
+export async function Data_user() {
+    try {
+        const res = await fetchApi(`/user`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`data_user`] }
+        });
+
+        return res.data || [];
+    } catch (err) {
+        return { data: [] };
     }
-})
+}
 
-const users = models.user || model('user', postUser)
+export async function Re_user() {
+    revalidateTag(`data_user`);
+}
 
-export default users
