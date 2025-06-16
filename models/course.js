@@ -1,12 +1,12 @@
 import { Schema, isValidObjectId, model, models } from 'mongoose';
 
 const DetailSchema = new Schema({
-    ID: { type: String, required: true },
-    Day: { type: String, required: true },
+    Topic: { type: Schema.Types.ObjectId, required: true },
+    Day: { type: Date, required: true },
     Room: { type: String },
     Time: { type: String },
-    Teacher: { type: String },
-    TeachingAs: { type: String },
+    Teacher: { type: Schema.Types.ObjectId },
+    TeachingAs: { type: Schema.Types.ObjectId },
     Image: { type: String },
     DetailImage: { type: Array, default: [] },
     Type: { type: String },
@@ -24,10 +24,8 @@ const LearnDetailSchema = new Schema({
 
 const StudentSchema = new Schema({
     ID: { type: String, required: true },
-    Learn: {
-        type: Map,
-        of: LearnDetailSchema
-    }
+    Learn: { type: [LearnDetailSchema] },
+    default: []
 });
 
 
@@ -35,52 +33,27 @@ const postCourseSchema = new Schema({
     ID: {
         type: String,
         required: true,
-        unique: true // ID khóa học nên là duy nhất
+        unique: true
     },
-    Name: {
-        type: String,
-        required: true
-    },
-    Room: {
-        type: String
-    },
-    Address: {
-        type: String
-    },
-    Price: {
-        type: Number,
-        default: 0
-    },
-    Progress: {
-        type: String
-    },
+    Book: { type: Schema.Types.ObjectId, ref: 'book' },
     Status: {
         type: Boolean,
         default: false
     },
-    TimeEnd: {
-        type: String
-    },
-    TimeStart: {
-        type: String
-    },
-    Type: {
-        type: String
-    },
-    // Sửa lỗi: Đã xóa trường "Name" bị trùng lặp
+    Type: { type: String },
     Detail: {
-        type: [DetailSchema], // Quan trọng: Detail là một MẢNG các đối tượng theo DetailSchema
+        type: [DetailSchema],
         default: []
     },
     Area: {
-        type: String
+        type: Schema.Types.ObjectId, ref: 'area'
     },
     Student: {
-        type: [StudentSchema], // Quan trọng: Student là một MẢNG các đối tượng theo StudentSchema
+        type: [StudentSchema],
         default: []
     },
     TeacherHR: {
-        type: String
+        type: Schema.Types.ObjectId, ref: 'user'
     }
 }, { versionKey: false });
 

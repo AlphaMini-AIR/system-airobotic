@@ -38,8 +38,8 @@ export default function Main({ data }) {
     const [notiMsg, setNotiMsg] = useState('');
 
     const router = useRouter();
+    console.log(data);
 
-    /* danh sách học sinh */
     const roll = (course.Student || []).map(stu => {
         const raw = stu.Learn?.[session.id]?.Checkin;
         const check = raw === 0 || raw === '0' ? '0' : raw === 2 || raw === '2' ? '2' : '1';

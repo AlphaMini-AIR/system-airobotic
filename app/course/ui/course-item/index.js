@@ -1,104 +1,88 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import styles from './index.module.css';
+import { formatDate } from '@/function';
 
-export default function CourseItem({ data }) {
-    const course = data || {};
+export default function CourseItem({ data = {} }) {
+    const { ID = '', Area = '', Detail = [], Student = [], Book = { Name: 'Trống' } } = data;
+    console.log(data);
 
-    // Lấy ngày hiện tại và giờ hiện tại
-    const today = new Date();
-    const currentHour = today.getHours();
-
-    // 2. Tính toán lessonsDone, totalLessons, percent một cách an toàn
+    const allDates = data.Detail.map(item => new Date(item.Day));
+    const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];
     const { lessonsDone, totalLessons, percent } = useMemo(() => {
-        let done = 0;
-        let total = 0;
+        const today = new Date();
+        const currentHour = today.getHours();
 
-        // Kiểm tra data.Detail có phải mảng không, nếu không thì dùng mảng rỗng
-        const details = Array.isArray(course.Detail) ? course.Detail : [];
+        const stats = Detail.reduce(
+            (acc, item) => {
+                if (!item || typeof item.Lesson !== 'number' || typeof item.Day !== 'string') {
+                    return acc;
+                }
 
-        details.forEach((e) => {
-            // Nếu e không hợp lệ hoặc không có trường Lesson, Day, Time thì bỏ qua
-            if (!e || typeof e.Lesson !== 'number' || typeof e.Day !== 'string') return;
+                acc.total += item.Lesson;
 
-            total += e.Lesson;
+                const parts = item.Day.split('/');
+                if (parts.length !== 3) {
+                    return acc;
+                }
+                const [dd, mm, yyyy] = parts;
+                const lessonDate = new Date(`${yyyy}-${mm}-${dd}`);
 
-            // Tách dd/mm/yyyy → yyyy-mm-dd để tạo Date
-            const parts = e.Day.split('/');
-            if (parts.length !== 3) {
-                // Nếu định dạng không đúng, bỏ qua phần tử này
-                return;
-            }
-            const [dd, mm, yyyy] = parts;
-            // Tạo Date theo chuẩn "yyyy-mm-dd"
-            const lessonDate = new Date(`${yyyy}-${mm}-${dd}`);
+                const isPastDay = today > lessonDate;
+                const isSameDay = today.toDateString() === lessonDate.toDateString();
 
-            if (today > lessonDate) {
-                // Nếu đã qua ngày học
-                done += e.Lesson;
-            } else if (today.toDateString() === lessonDate.toDateString()) {
-                // Nếu học cùng ngày: kiểm tra giờ bắt đầu
-                if (typeof e.Time === 'string' && e.Time.length >= 2) {
-                    const hourStart = Number(e.Time.slice(0, 2));
-                    if (!isNaN(hourStart) && hourStart < currentHour) {
-                        done += e.Lesson;
+                if (isPastDay && !isSameDay) {
+                    acc.done += item.Lesson;
+                } else if (isSameDay) {
+                    if (typeof item.Time === 'string' && item.Time.length >= 2) {
+                        const hourStart = Number(item.Time.slice(0, 2));
+                        if (!isNaN(hourStart) && hourStart < currentHour) {
+                            acc.done += item.Lesson;
+                        }
                     }
                 }
-            }
-        });
+
+                return acc;
+            },
+            { done: 0, total: 0 }
+        );
 
         return {
-            lessonsDone: done,
-            totalLessons: total,
-            percent: total > 0 ? (done / total) * 100 : 0,
+            lessonsDone: stats.done,
+            totalLessons: stats.total,
+            percent: stats.total > 0 ? (stats.done / stats.total) * 100 : 0,
         };
-    }, [course.Detail, currentHour, today]);
+    }, [Detail]);
 
-    // 3. Lấy số lượng học sinh một cách an toàn
-    const studentCount =
-        Array.isArray(course.Student) && course.Student.length > 0
-            ? course.Student.length
-            : 0;
-
-    // 4. Lấy các trường hiển thị (ID, Name, Area, TimeStart, TimeEnd) an toàn
-    const courseID = typeof course.ID === 'string' ? course.ID : '';
-    const courseName = typeof course.Name === 'string' ? course.Name : '';
-    const courseArea = typeof course.Area === 'string' ? course.Area : '';
-    const timeStart = typeof course.TimeStart === 'string' ? course.TimeStart : '';
-    const timeEnd = typeof course.TimeEnd === 'string' ? course.TimeEnd : '';
+    const studentCount = Student.length;
 
     return (
-        <Link href={`/course/${courseID}`} className={styles.wrap}>
+        <Link href={`/course/${ID}`} className={styles.wrap}>
             <div className={styles.title}>
-                {/* 4.a. Nếu courseID có độ dài đủ để slice, ngược lại hiển thị chuỗi rỗng */}
                 <div className={styles.courseAvt}>
-                    {courseID.length >= 5 ? courseID.slice(2, 5) : ''}
+                    {ID.length >= 5 ? ID.slice(2, 5) : ''}
                 </div>
-
                 <div className={styles.titleInfo}>
                     <div className={styles.titleText1}>
-                        {courseID}
-                        {courseArea && <span className={styles.chip}>{courseArea}</span>}
+                        {ID}
+                        {Area && <span className={styles.chip}>{Area}</span>}
                     </div>
-                    <p className={styles.courseName}>{courseName}</p>
+                    <p className={styles.courseName}>{Book.Name}</p>
                 </div>
             </div>
 
-            {/* ----- Thời gian học ----- */}
             <div className={styles.infoRow}>
                 <span className={styles.label}>Thời gian:</span>
                 <span className={styles.value}>
-                    {timeEnd} - {timeStart}
+                    {dateRange[0] && dateRange[1] ? `${dateRange[0]} - ${dateRange[1]}` : 'Chưa có thời gian'}
                 </span>
-            </div>
+            </div>  
 
-            {/* ----- Sĩ số ----- */}
             <div className={styles.infoRow}>
                 <span className={styles.label}>Số lượng học sinh:</span>
                 <span className={styles.value}>{studentCount} Học sinh</span>
             </div>
 
-            {/* ----- Tiến độ ----- */}
             <div className={styles.infoRow}>
                 <span className={styles.label}>Tiến độ học:</span>
                 <span className={styles.value}>
@@ -106,7 +90,6 @@ export default function CourseItem({ data }) {
                 </span>
             </div>
 
-            {/* ----- Progress Bar ----- */}
             <div className={styles.progressBar}>
                 <div
                     className={styles.progress}

@@ -9,9 +9,8 @@ const APPSCRIPT_URL =
 export async function GET() {
     try {
         await connectDB();
-        const data = await PostCourse.find({},
-            'ID Name TimeEnd Status TimeStart Area TeacherHR Address Detail Type'
-        ).lean();
+        const data = await PostCourse.find({ Type: 'AI Robotic' }).populate({ path: 'Book', select: 'Name' })
+            .populate({ path: 'TeacherHR', select: 'name' }).lean();
 
         return NextResponse.json(
             { status: 2, mes: 'Lấy dữ liệu thành công.', data },

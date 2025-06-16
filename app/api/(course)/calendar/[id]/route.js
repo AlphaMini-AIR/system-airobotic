@@ -7,7 +7,7 @@ import PostBook from '@/models/book';
 import connectDB from '@/config/connectDB';
 
 export async function GET(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
         return NextResponse.json(
@@ -36,16 +36,22 @@ export async function GET(request, { params }) {
         const { Detail, ...courseInfo } = courseData;
 
         let topicInfo = {};
-
-        // Trích xuất bookId từ courseId để tìm giáo trình tương ứng
+        let t = mongoose.Types.ObjectId.isValid(sessionDetail.ID);
         const match = courseInfo.ID.match(/^\d{2}([A-Z0-9]+)\d{3}$/);
         if (match) {
             const bookId = match[1];
-            // Tìm giáo trình và chỉ lấy về topic khớp với ID của buổi học
-            const bookData = await PostBook.findOne(
-                { ID: bookId },
-                { Topics: { $elemMatch: { _id: new mongoose.Types.ObjectId(sessionDetail.ID) } } }
-            ).lean();
+            let bookData;
+            if (!t) {
+                bookData = await PostBook.findOne(
+                    { ID: bookId },
+                    { Topics: { $elemMatch: { _id: new mongoose.Types.ObjectId(sessionDetail.ID) } } }
+                ).lean();
+            } else {
+                bookData = await PostBook.findOne(
+                    { ID: bookId },
+                    { Topics: { $elemMatch: { _id: new mongoose.Types.ObjectId(sessionDetail.ID) } } }
+                ).lean();
+            }
 
             if (bookData?.Topics?.length > 0) {
                 const foundTopic = bookData.Topics[0];
@@ -65,9 +71,9 @@ export async function GET(request, { params }) {
             teacher: sessionDetail.Teacher,
             teachingAs: sessionDetail.TeachingAs,
             image: sessionDetail.Image,
-            detailImage: sessionDetail.DetailImage, 
+            detailImage: sessionDetail.DetailImage,
             id: sessionDetail.ID,
-            ...topicInfo 
+            ...topicInfo
         };
 
         return NextResponse.json(

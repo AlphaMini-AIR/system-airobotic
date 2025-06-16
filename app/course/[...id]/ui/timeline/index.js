@@ -1,7 +1,11 @@
 import Link from "next/link"
 import Dot from "./dot"
+import { formatDate } from "@/function";
 
 export default function Timeline({ data, props }) {
+    const allDates = data.Detail.map(item => new Date(item.Day));
+    const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];
+    
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', flex: 1.6 }}>
 
@@ -11,7 +15,7 @@ export default function Timeline({ data, props }) {
             }}><Link href={`/course/${data.ID}`}>
                     <div className="text_4_m" style={{ color: 'white', fontWeight: '500' }}>{data.Type}</div>
                     <div className="text_2" style={{ margin: '4px 0', color: 'white' }}>Lớp: {data.ID}</div>
-                    <div className="text_4_m" style={{ color: 'white' }}>Từ {data.TimeStart} đến {data.TimeEnd}</div>
+                    <div className="text_4_m" style={{ color: 'white' }}>Từ {dateRange[0]} đến {dateRange[1]}</div>
                 </Link>
             </div>
 

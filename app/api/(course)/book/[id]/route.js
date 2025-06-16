@@ -28,7 +28,7 @@ async function validateGoogleSlidesLink(url) {
 }
 
 export async function GET(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json({ status: 1, mes: 'ID khóa học không hợp lệ.' }, { status: 400 });
     }
@@ -40,14 +40,11 @@ export async function GET(request, { params }) {
             {
                 $project: {
                     Name: 1, Type: 1, Price: 1, TotalLesson: 1, Image: 1, createdAt: 1, updatedAt: 1,
-                    Topics: {
-                        $filter: {
-                            input: '$Topics', as: 'topic', cond: { $eq: ['$$topic.Status', true] }
-                        }
-                    }
+                    Topics: 1
                 }
             }
         ]);
+        console.log(course);
 
         if (!course || course.length === 0) {
             return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học với ID này.', data: null }, { status: 404 });
@@ -60,7 +57,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json({ status: 1, mes: 'ID khóa học không hợp lệ.' }, { status: 400 });
     }
@@ -72,7 +69,9 @@ export async function POST(request, { params }) {
         }
 
         const { user, body } = authResult;
-        if (!user.role.includes('Admin') && !user.role.includes('Academic')) {
+        console.log(user);
+
+        if (!user.role.includes('Admin') && !user.role.includes('Acadamic')) {
             return NextResponse.json({ status: 1, mes: 'Bạn không có quyền truy cập chức năng này.', data: null }, { status: 403 });
         }
 
@@ -108,7 +107,7 @@ export async function POST(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json({ status: 1, mes: 'ID khóa học không hợp lệ.' }, { status: 400 });
     }
@@ -120,7 +119,7 @@ export async function PUT(request, { params }) {
         }
 
         const { user, body } = authResult;
-        if (!user.role.includes('Admin') && !user.role.includes('Academic')) {
+        if (!user.role.includes('Admin') && !user.role.includes('Acadamic')) {
             return NextResponse.json({ status: 1, mes: 'Bạn không có quyền truy cập chức năng này.', data: null }, { status: 403 });
         }
 
@@ -183,7 +182,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json({ status: 1, mes: 'ID khóa học không hợp lệ.' }, { status: 400 });
     }
@@ -194,8 +193,10 @@ export async function DELETE(request, { params }) {
             return NextResponse.json({ status: 1, mes: 'Xác thực không thành công.', data: null }, { status: 401 });
         }
 
+
         const { user, body } = authResult;
-        if (!user.role.includes('Admin') && !user.role.includes('Academic')) {
+        console.log(user, 1);
+        if (!user.role.includes('Admin') && !user.role.includes('Acadamic')) {
             return NextResponse.json({ status: 1, mes: 'Bạn không có quyền truy cập chức năng này.', data: null }, { status: 403 });
         }
 

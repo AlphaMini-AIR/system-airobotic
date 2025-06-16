@@ -8,26 +8,22 @@ const formatPrice = (price) => {
 };
 
 const ProgramCard = ({ program }) => {
-    const topicCount = Object.keys(program.Topic || {}).length;
+    const topicCount = Object.keys(program.Topics || {}).length;
     return (
         <Link href={`/course/book/${program._id}`} className={styles.card}>
-            {/* Phần 1: Ảnh (chiếm 1/3) */}
             <div className={styles.imageWrapper}>
                 <div className={styles.imagePlaceholder}>
                     <Image src={`${program.Image}`} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" alt={program.Name} />
                 </div>
             </div>
-
-            {/* Phần 2: Thông tin (chiếm 2/3) */}
             <div className={styles.content}>
                 <div className={styles.header}>
                     <p className='text_3'>{program.Name}</p>
-                    {/* <span className={`${styles.badge} text_7`}>{program.Type}</span> */}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <p className='text_6'>Mã chương trình: <span style={{ fontWeight: 400 }}>{program.ID}</span></p>
                     <p className='text_6'>Số chủ đề: <span style={{ fontWeight: 400 }}>{topicCount} chủ đề</span></p>
-                    <p className='text_6'>Số tiết học: <span style={{ fontWeight: 400 }}>{program.TotalLesson} tiết</span></p>
+                    <p className='text_6'>Số tiết học: <span style={{ fontWeight: 400 }}>{program.Topics.reduce((total, item) => total + (item.Period || 0), 0)} tiết</span></p>
                     <p className='text_6'>Giá khóa học: <span style={{ fontWeight: 400 }}>{formatPrice(program.Price)}</span></p>
                 </div>
             </div>

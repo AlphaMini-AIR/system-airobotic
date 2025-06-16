@@ -1,28 +1,21 @@
 import Link from 'next/link';
 import styles from './index.module.css';
+import { formatDate } from '@/function';
 
-// 1. Hàm mới để xác định trạng thái dựa trên dữ liệu
-// Đặt hàm này bên ngoài component để tránh việc khai báo lại mỗi lần render
 const getEventStatus = (data) => {
-    // Ưu tiên các loại đặc biệt trước
-    if (data.Type === 'Học bù') {
-        return { text: 'Học bù', color: 'var(--yellow)' }; // Màu xanh dương
-    }
-    if (data.Type === 'Báo nghỉ') {
-        return { text: 'Báo nghỉ', color: 'var(--red)' }; // Màu đỏ
-    }
+    if (data.Type === 'Học bù') { return { text: 'Học bù', color: 'var(--yellow)' }; }
+    if (data.Type === 'Báo nghỉ') { return { text: 'Báo nghỉ', color: 'var(--red)' }; }
 
-    // Nếu không phải loại đặc biệt, xét theo ngày
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Đặt về đầu ngày để so sánh chỉ dựa trên ngày
+    today.setHours(0, 0, 0, 0);
 
     const [day, month, year] = data.Day.split('/');
-    const eventDate = new Date(year, month - 1, day); // Tháng trong JS là 0-11
+    const eventDate = new Date(year, month - 1, day);
 
     if (eventDate < today) {
-        return { text: 'Đã diễn ra', color: 'var(--green)' }; // Màu xám
+        return { text: 'Đã diễn ra', color: 'var(--green)' };
     } else {
-        return { text: 'Chưa diễn ra', color: 'gray' }; // Màu xanh lá
+        return { text: 'Chưa diễn ra', color: 'gray' };
     }
 };
 
@@ -30,8 +23,7 @@ const getEventStatus = (data) => {
 export default function TimeLine_Dot({ course, type, index, data, props }) {
     props = props[1] || '';
     let id = data._id;
-    if (data.Student) id += '-' + formatDate(data.Day);
-
+    
     const status = getEventStatus(data);
 
     return (
@@ -50,15 +42,10 @@ export default function TimeLine_Dot({ course, type, index, data, props }) {
                             {data.Topic}
 
                         </div>
-                        <div className='text_6_400'>Ngày {data.Day}</div>
+                        <div className='text_6_400'>Ngày {formatDate(new Date(data.Day))}</div>
                     </div>
                 </div>
             </div>
         </Link>
     )
-}
-
-function formatDate(dateStr) {
-    let [day, month, year] = dateStr.split('/');
-    return `${year}${month}${day}`;
 }

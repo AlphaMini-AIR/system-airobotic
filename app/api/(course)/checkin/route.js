@@ -51,7 +51,9 @@ export async function POST(req) {
       { status: 2, mes: 'Cập nhật điểm danh thành công', data: { courseId, sessionId, updatedCount } },
       { status: 200 }
     )
-  } catch {
+  } catch(error) {
+    console.log('Error updating attendance:', error);
+    
     return NextResponse.json(
       { status: 1, mes: 'Lỗi server khi cập nhật điểm danh', data: [] },
       { status: 500 }

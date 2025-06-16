@@ -1,7 +1,7 @@
 // THÊM MỚI: Chuyển đổi thành Client Component và import hooks cần thiết
 "use client";
 import { useState, useMemo } from 'react';
-import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+import ResponsiveGrid from '@/components/(ui)/grid';
 import DetailStudent from '../detatilstudent';
 import styles from './index.module.css';
 import Student from '../student';
@@ -24,6 +24,21 @@ const SortIcon = ({ direction }) => {
 
 
 export default function Detail({ data, params, book, users, studentsx }) {
+    const allImages = data.Detail.flatMap(lesson => lesson.DetailImage || []);
+    const images = allImages.filter(item => item.type === 'image');
+    const videos = allImages.filter(item => item.type === 'video');
+    const ProductCard = ({ id }) => {
+        return (
+            <div style={{ border: '1px solid #ddd', borderRadius: 5, backgroundColor: '#fff', textAlign: 'center', aspectRatio: 1, width: '100%', position: 'relative' }}>
+                <Image src={`https://lh3.googleusercontent.com/d/${id}`} alt={`Product ${id}`} layout="fill" objectFit="cover" />
+            </div>
+        );
+    };
+
+    const lessProductItems = images.map(item => (<ProductCard key={item.id} id={item.id} type={item.type} />));
+    const listColumnsConfig = { mobile: 2, tablet: 4, desktop: 5 };
+
+
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const today = new Date();
@@ -133,10 +148,10 @@ export default function Detail({ data, params, book, users, studentsx }) {
             </div>
         ))} </>
     )
-
+    
     const detaillesson = (
         <> {data.Student.map(stu => {
-            if (!params[1]) return null; 
+            if (!params[1]) return null;
             return (
                 <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
                     {title.map(col => {
@@ -210,7 +225,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Svg_Profile w={14} h={14} c='var(--text-primary)' />
                             <span className='text_6'>Giáo viên chủ nhiệm :</span>
-                            <span className="text_6_400">{data.TeacherHR}</span>
+                            <span className="text_6_400">{data.TeacherHR.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Svg_Area w={14} h={14} c='var(--text-primary)' />
@@ -278,6 +293,15 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         })}
                     </div>
                     {params.length > 1 ? detaillesson : detailcourse}
+
+                </div>
+            </div>
+            <div className={styles.box}>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <p style={{ padding: 16, borderBottom: 'thin solid var(--border-color)' }} className='text_4'>Hình ảnh & video khóa học</p>
+                    {images.length > 0 && (
+                        <ResponsiveGrid items={lessProductItems} columns={listColumnsConfig} type="list" />
+                    )}
                 </div>
             </div>
             {loading && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
@@ -296,6 +320,7 @@ const title = [
     { content: 'Buổi bù', flex: 0.5, data: 'b', align: 'center' },
     { content: 'Thêm', flex: .5, data: 'More', align: 'center' },
 ]
+
 
 function enrichStudents(course, now = new Date()) {
     if (!course || !course.Detail) return []; // Guard clause

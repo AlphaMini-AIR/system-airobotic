@@ -10,10 +10,12 @@ export default async function OverviewTab({ params }) {
     const { id } = await params;
     const data = await Data_Course_One(id[0]);
     let book = await Data_book();
+    console.log(data);
+    
     book = book.filter((b) => data.ID.slice(2, 5) == b.ID)[0]
     let students = await Read_Student_All()
     const users = await Data_user()
-    
+
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
             <Timeline data={data} props={id} />

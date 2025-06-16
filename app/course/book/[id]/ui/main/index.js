@@ -118,13 +118,16 @@ const BookDetail = ({ data: initialData }) => {
             const result = await response.json();
             if (result.status === 2) {
                 setNotiState({ open: true, status: true, mes: result.mes });
-                setBookData({ ...result.data, Topics: result.data.Topics || [] });
+                if (method !== 'DELETE') {
+                    setBookData({ ...result.data, Topics: result.data.Topics || [] });
+                }
+                Re_book_one(initialData._id);
+                Re_book();
+                return true;
             } else {
                 setNotiState({ open: true, status: false, mes: result.mes });
+                return false;
             }
-            Re_book_one(initialData._id);
-            Re_book();
-            return true;
         } catch (error) {
             console.error(`Lỗi khi ${method} API:`, error);
             setNotiState({ open: true, status: false, mes: error.message });
@@ -197,17 +200,15 @@ const BookDetail = ({ data: initialData }) => {
         setCurrentEditingTopic(topic);
         setEditTopicPopupOpen(true);
     }, []);
-
+    let i = 0
     return (
         <>
             <div className={styles.container}>
                 <aside className={styles.infoPanel}>
                     <div className={styles.imageContainer}> <img src={bookData.Image} alt={bookData.Name} className={styles.bookImage} /> </div>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 8, alignItems: 'center' }}>
-                        <p className='text_2'>{bookData.Name}</p>
-                        <p className='text_7' style={{ padding: '4px 16px', borderRadius: 12, background: 'var(--border-color)' }}>{bookData.Type}</p>
-                    </div>
+                    <p className='text_2' style={{ marginBottom: 8 }}>{bookData.Name}</p>
                     <div className={styles.metaInfo} style={{ marginBottom: 16 }}>
+                        <p className='text_6_400'><strong>Loại chương trình:</strong> {bookData.Type}</p>
                         <p className='text_6_400'><strong>Học phí:</strong> {formattedPrice}</p>
                         <p className='text_6_400'><strong>Số chủ đề:</strong> {bookData.Topics.length} chủ đề</p>
                         <p className='text_6_400'><strong>Số tiết quy định:</strong> {bookData.Topics.reduce((total, item) => total + (item.Period || 0), 0)} tiết</p>
@@ -223,7 +224,7 @@ const BookDetail = ({ data: initialData }) => {
                     <ul className={styles.topicList}>
                         {bookData.Topics.map((topic, index) => {
                             if (topic.Status === false) return null;
-
+                            i++;
                             const isDragging = draggedIndex === index;
                             const dragStyle = {
                                 display: 'flex', gap: 8, marginBottom: 8, cursor: 'move',
@@ -237,7 +238,7 @@ const BookDetail = ({ data: initialData }) => {
                                     {dragOverIndex === index && !isDragging && <DropPlaceholder />}
                                     <div draggable onDragStart={(e) => handleDragStart(e, index)} onDragEnter={(e) => handleDragEnter(e, index)} onDragEnd={handleDragEnd} style={dragStyle}>
                                         <div style={topicImageContainerStyle}>
-                                            <p className='text_7'>Chủ đề: {index + 1}</p>
+                                            <p className='text_7'>Chủ đề: {i}</p>
                                         </div>
                                         <li className={styles.topicItem}>
                                             <div className={styles.topicInfo}>
