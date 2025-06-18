@@ -4,15 +4,6 @@ import { Readable } from 'stream';
 import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 
-/**
- * =================================================================
- * HELPER FUNCTION
- * =================================================================
- */
-
-/**
- * Hàm helper để xác thực và khởi tạo Google Drive client.
- */
 async function getDriveClient() {
     const auth = new google.auth.GoogleAuth({
         projectId: process.env.GOOGLE_PROJECT_ID,
@@ -25,18 +16,6 @@ async function getDriveClient() {
     return google.drive({ version: 'v3', auth });
 }
 
-
-/**
- * =================================================================
- * API ENDPOINTS
- * =================================================================
- */
-
-/**
- * @method POST
- * @description Thêm một hoặc nhiều file media (ảnh/video) mới vào một buổi học cụ thể.
- * @body {FormData} - folderId, images (file), fileType ('image' hoặc 'video')
- */
 export async function POST(request) {
     await connectDB();
     try {
@@ -74,7 +53,7 @@ export async function POST(request) {
         }
 
         // --- 2. Tạo đối tượng để lưu vào MongoDB ---
-        const newMediaObject = { id: uploadedId, type: fileType };
+        const newMediaObject = { id: uploadedId, type: fileType, create: new Date() };
 
         // --- 3. Cập nhật vào MongoDB ---
         const updateResult = await PostCourse.updateOne(
