@@ -26,10 +26,6 @@ function getDrive() {
     });
 }
 
-/* ────────────────────────────────────
- * API  POST /api/export
- * body: { title?:string, lessons: Lesson[] }
- * ────────────────────────────────── */
 export async function POST(request) {
     try {
         const { lessons = [], title = 'Báo cáo buổi học' } = await request.json();
@@ -68,10 +64,10 @@ export async function POST(request) {
         ];
         const rows = lessons.map((l, idx) => [
             l.Index ?? idx + 1,
-            l.Topic,
-            l.Teacher,
+            l.LessonDetails.Name,
+            l.Teacher.name,
             l.Status,
-            l.Day,
+            format(new Date(l.Day)),
             l.Time,
             l.Attendance,
             l.Comments ?? '',

@@ -46,9 +46,6 @@ export async function POST(request) {
         const file = formData.get('images');
         const fileType = formData.get('fileType');
 
-        // * Chú ý: `courseId` không được sử dụng trong logic tìm kiếm ban đầu, nên tôi tạm ẩn đi
-        // const courseId = formData.get('courseId'); 
-
         if (!folderId || !file || !fileType) {
             return NextResponse.json(
                 { status: 1, mes: 'Thiếu tham số bắt buộc (folderId, images, fileType).' },

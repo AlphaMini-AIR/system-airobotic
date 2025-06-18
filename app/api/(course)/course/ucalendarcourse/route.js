@@ -2,17 +2,28 @@
 import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 import { NextResponse } from 'next/server';
-import { Types } from 'mongoose';
+import { Types, isValidObjectId } from 'mongoose';
 
-const APPSCRIPT =
-    'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
+const APPSCRIPT = 'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrGXEztuPj1ynKxj-stw/exec';
+const CREATE_LESSON_REQUIRED = ['Day', 'Topic', 'Room', 'Time', 'Teacher'];
 
-const CREATE_LESSON_REQUIRED = ['Day', 'Topic', 'Room', 'Time', 'Lesson', 'ID', 'Teacher', 'TeachingAs'];
-
-const formatDay = d =>
-    /^\d{4}-\d{2}-\d{2}$/.test(d)
-        ? `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
-        : d;
+// Helper function to format date (e.g., 'YYYY-MM-DD' to 'DD/MM/YYYY')
+const formatDay = d => {
+    if (/^\d{4}-\d{2}-\d{2}T/.test(d)) { // Check if it's an ISO string (like 2025-06-18T...)
+        const date = new Date(d);
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const year = date.getUTCFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    // If it's already in DD/MM/YYYY or another format, return as is, or handle specifically
+    // For consistency, if input is 'YYYY-MM-DD', convert it.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        const [year, month, day] = d.split('-');
+        return `${day}/${month}/${year}`;
+    }
+    return d; // Return original if format doesn't match expected
+};
 
 export async function POST(request) {
     try {
@@ -24,66 +35,158 @@ export async function POST(request) {
 
         await connectDB();
 
-        // --- TRƯỜNG HỢP 1: TẠO MỚI BUỔI HỌC BÙ / HỌC THỬ (Không đổi) ---
+        // --- Handle 'Học bù' or 'Học thử' (Add new lesson and update student's Learn array) ---
         if (type === 'Học bù' || type === 'Học thử') {
             const missing = CREATE_LESSON_REQUIRED.filter(k => !(k in data));
             if (missing.length) {
                 return NextResponse.json({ status: 1, mes: `Thiếu trường khi tạo buổi học: ${missing.join(', ')}` }, { status: 400 });
             }
 
-            data.Day = formatDay(data.Day);
-            let imageURL = '';
+            // Validate Topic and Teacher ObjectIds
+            if (!isValidObjectId(data.Topic)) {
+                return NextResponse.json({ status: 1, mes: 'Topic ID không hợp lệ' }, { status: 400 });
+            }
+            if (!isValidObjectId(data.Teacher)) {
+                return NextResponse.json({ status: 1, mes: 'Teacher ID không hợp lệ' }, { status: 400 });
+            }
+            if (data.TeachingAs && !isValidObjectId(data.TeachingAs)) {
+                return NextResponse.json({ status: 1, mes: 'TeachingAs ID không hợp lệ' }, { status: 400 });
+            }
 
+            // Ensure Day is a Date object for MongoDB (Schema expects Date)
+            const lessonDay = new Date(data.Day);
+            if (isNaN(lessonDay.getTime())) {
+                return NextResponse.json({ status: 1, mes: 'Định dạng ngày (Day) không hợp lệ.' }, { status: 400 });
+            }
+
+            let imageURL = '';
             try {
-                const scriptRes = await fetch(`${APPSCRIPT}?ID=${encodeURIComponent(courseId)}&Topic=${encodeURIComponent(data.Day)}`, { cache: 'no-store' });
+                // Assuming APPSCRIPT needs original Day format or a specific topic ID
+                // The provided APPSCRIPT example uses Day, but if Topic is an ID, it's better to use it.
+                // Let's assume for now it uses the Day string for sheet lookup.
+                const formattedDayForAppscript = formatDay(data.Day); // Use the formatted day for the script query
+                const scriptRes = await fetch(`${APPSCRIPT}?ID=${encodeURIComponent(courseId)}&Topic=${encodeURIComponent(formattedDayForAppscript)}`, { cache: 'no-store' });
                 if (scriptRes.ok) {
                     const c = await scriptRes.json();
-                    if (c && c.urls) imageURL = c.urls;
+                    if (c?.urls) imageURL = c.urls;
                 }
             } catch (err) {
                 console.error('[udetail] APPSCRIPT_ERROR:', err);
+                // Continue execution even if appscript fails, just without an imageURL
             }
 
-            delete data.Start;
+            // Create a new ObjectId for the new lesson
             const newLessonObjectId = new Types.ObjectId();
-            const newDetail = { _id: newLessonObjectId, ...data, Image: imageURL, Type: type, Students: student };
-            const updateOperations = { $push: { Detail: newDetail } };
-            const options = { new: true, projection: { Detail: 1, ID: 1, Student: 1 } };
 
-            if (student && student.length > 0) {
-                const lessonId = data.ID;
-                const dynamicLearnPath = `Student.$[elem].Learn.${lessonId}`;
-                updateOperations.$set = {
-                    [dynamicLearnPath]: {
-                        Checkin: 0, Cmt: "", Note: "", Lesson: newLessonObjectId
-                    }
-                };
-                options.arrayFilters = [{ "elem.ID": { $in: student } }];
+            // Construct the new Detail entry
+            const newDetailEntry = {
+                _id: newLessonObjectId, // MongoDB will use this _id
+                Topic: new Types.ObjectId(data.Topic), // Convert to ObjectId
+                Day: lessonDay, // Use the Date object
+                Room: data.Room,
+                Time: data.Time,
+                Teacher: new Types.ObjectId(data.Teacher), // Convert to ObjectId
+                TeachingAs: data.TeachingAs ? new Types.ObjectId(data.TeachingAs) : null, // Handle optional TeachingAs
+                Image: imageURL,
+                DetailImage: [], // Default as per schema
+                Type: type,
+                Note: data.Note || '' // Add Note if provided, else empty string
+            };
+
+            // Prepare update operations
+            const updateOperations = {
+                $push: { Detail: newDetailEntry } // Push the new lesson to Detail array
+            };
+
+            // Prepare Learn entries for affected students
+            const studentLearnUpdates = [];
+            if (student.length > 0) {
+                // For each student ID provided, create a $push operation to their Learn array
+                // We will use arrayFilters to target specific students
+                student.forEach(sId => {
+                    studentLearnUpdates.push({
+                        "Student.$[elem].Learn": {
+                            Checkin: 0,
+                            Cmt: [],
+                            CmtFn: "",
+                            Note: "",
+                            Lesson: newLessonObjectId, // Reference the new lesson's _id
+                            Image: []
+                        }
+                    });
+                });
+
+                // Combine all student Learn updates into a single $push operation
+                // Use $push with $each for multiple elements, but here we are pushing one per student element
+                // The current schema structure makes this a bit tricky for a single `updateOne` call
+                // Let's adjust for clarity: find the document, then update students iteratively or use multiple updates
+                // However, a single update with arrayFilters and $push is possible for a nested array.
+                // Given your schema for `Student.Learn` is an array of `LearnDetailSchema`,
+                // we'll push into that array.
             }
 
-            const updated = await PostCourse.findByIdAndUpdate(courseId, updateOperations, options);
+            // Use findByIdAndUpdate for the main course document
+            const updatedCourse = await PostCourse.findByIdAndUpdate(
+                courseId,
+                updateOperations, // Add the new lesson to Detail
+                { new: true, projection: { Detail: 1, ID: 1, Student: 1 } }
+            );
 
-            if (!updated) {
+            if (!updatedCourse) {
                 return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học để thêm buổi học' }, { status: 404 });
             }
 
-            return NextResponse.json({ status: 2, mes: `Đã thêm buổi ${type} thành công`, data: updated }, { status: 200 });
+            // --- Update Learn array for selected students ---
+            // This part needs a separate update because `findByIdAndUpdate` with arrayFilters
+            // on a top-level array and then trying to $set or $push into a nested array within it
+            // directly in the same operation can become very complex or not work as expected
+            // with arrayFilter on the *outer* `Student` array.
+
+            if (student.length > 0) {
+                const studentUpdateResult = await PostCourse.updateOne(
+                    { _id: courseId },
+                    {
+                        $push: {
+                            "Student.$[studentElem].Learn": { // Push into the Learn array of specific students
+                                Checkin: 0,
+                                Cmt: [],
+                                CmtFn: "",
+                                Note: "",
+                                Lesson: newLessonObjectId, // Reference the new lesson's _id
+                                Image: []
+                            }
+                        }
+                    },
+                    {
+                        arrayFilters: [{ "studentElem.ID": { $in: student } }], // Filter to update only students whose IDs are in the 'student' array
+                        new: true
+                    }
+                );
+
+                if (studentUpdateResult.matchedCount === 0) {
+                    console.warn(`[udetail] No matching students found in course ${courseId} for Learn updates.`);
+                }
+            }
+
+            return NextResponse.json({ status: 2, mes: `Đã thêm buổi ${type} thành công`, data: updatedCourse }, { status: 200 });
         }
 
-        // --- TRƯỜNG HỢP 2: BÁO NGHỈ BUỔI HỌC (Mới) ---
-        else if (type === 'Báo nghỉ') {
+        // --- Handle 'Báo nghỉ' (Update existing lesson's Type and Note) ---
+        if (type === 'Báo nghỉ') {
             if (!detailId) {
                 return NextResponse.json({ status: 1, mes: 'Thiếu detailId để báo nghỉ' }, { status: 400 });
             }
+            if (!isValidObjectId(detailId)) {
+                return NextResponse.json({ status: 1, mes: 'detailId không hợp lệ' }, { status: 400 });
+            }
 
-            // Tạo đối tượng set để cập nhật Type và Note
             const setObj = {
-                'Detail.$.Type': type, // Cập nhật Type thành "Báo nghỉ"
-                'Detail.$.Note': data.Note || '' // Cập nhật Note từ data, nếu không có thì là chuỗi rỗng
+                'Detail.$.Type': type, // Update the Type of the matched Detail element
+                'Detail.$.Note': data.Note || '' // Update the Note of the matched Detail element
             };
 
             const updated = await PostCourse.findOneAndUpdate(
-                { _id: courseId, 'Detail._id': detailId },
+                { _id: courseId, 'Detail._id': detailId }, // Find by courseId and the specific Detail element's _id
                 { $set: setObj },
                 { new: true, projection: { Detail: 1, ID: 1 } }
             );
@@ -91,39 +194,135 @@ export async function POST(request) {
             if (!updated) {
                 return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học hoặc buổi học để báo nghỉ' }, { status: 404 });
             }
-
             return NextResponse.json({ status: 2, mes: 'Báo nghỉ buổi học thành công', data: updated }, { status: 200 });
         }
 
-        // --- TRƯỜNG HỢP 3: CẬP NHẬT BUỔI HỌC HIỆN CÓ (Không đổi) ---
-        else {
-            if (!detailId) {
-                return NextResponse.json({ status: 1, mes: 'Thiếu detailId để cập nhật' }, { status: 400 });
+        if (!detailId) {
+            return NextResponse.json({ status: 1, mes: 'Thiếu detailId để cập nhật' }, { status: 400 });
+        }
+        if (!isValidObjectId(detailId)) {
+            return NextResponse.json({ status: 1, mes: 'detailId không hợp lệ' }, { status: 400 });
+        }
+
+        const setObj = {};
+        const { Room, Teacher, TeachingAs = null, Students: updatedStudentIds = null } = data;
+
+        if (Room !== undefined) {
+            setObj['Detail.$.Room'] = Room;
+        }
+        if (Teacher) {
+            if (!isValidObjectId(Teacher)) return NextResponse.json({ status: 1, mes: 'ID giáo viên (Teacher) không hợp lệ' }, { status: 400 });
+            setObj['Detail.$.Teacher'] = Teacher;
+        }
+        if (TeachingAs !== undefined) {
+            if (TeachingAs === null) {
+                setObj['Detail.$.TeachingAs'] = null;
+            } else if (isValidObjectId(TeachingAs)) {
+                setObj['Detail.$.TeachingAs'] = new Types.ObjectId(TeachingAs);
+            } else {
+                return NextResponse.json({ status: 1, mes: 'ID trợ giảng (TeachingAs) không hợp lệ' }, { status: 400 });
             }
+        }
 
-            const setObj = {};
-            Object.keys(data).forEach(k => (setObj[`Detail.$.${k}`] = data[k]));
-
-            if (student && Array.isArray(student)) {
-                setObj['Detail.$.Students'] = student;
-            }
-
-            if (Object.keys(setObj).length === 0) {
-                return NextResponse.json({ status: 1, mes: 'Không có dữ liệu để cập nhật' }, { status: 400 });
-            }
-
-            const updated = await PostCourse.findOneAndUpdate(
+        // Perform the update for lesson details first
+        let updatedCourse;
+        if (Object.keys(setObj).length > 0) {
+            updatedCourse = await PostCourse.findOneAndUpdate(
                 { _id: courseId, 'Detail._id': detailId },
                 { $set: setObj },
-                { new: true, projection: { Detail: 1, ID: 1 } }
+                { new: true, projection: { Detail: 1, ID: 1, Student: 1 } } // Project Student for subsequent ops
             );
 
-            if (!updated) {
+            if (!updatedCourse) {
                 return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học hoặc buổi học để cập nhật' }, { status: 404 });
             }
-
-            return NextResponse.json({ status: 2, mes: 'Cập nhật buổi học thành công', data: updated }, { status: 200 });
+        } else {
+            // If only student updates are happening, fetch the course to get current student data
+            updatedCourse = await PostCourse.findById(courseId, { Detail: 1, ID: 1, Student: 1 });
+            if (!updatedCourse) {
+                return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học để cập nhật học sinh' }, { status: 404 });
+            }
         }
+
+        // --- Handle Student participation updates for existing lesson ---
+        if (updatedStudentIds !== null) { // Only proceed if Students array is provided in data
+            const lessonObjectId = new Types.ObjectId(detailId);
+
+            // 1. Get current students associated with this lesson
+            const currentLessonStudents = new Set();
+            updatedCourse.Student.forEach(s => {
+                if (s.Learn.some(learnItem => learnItem.Lesson.equals(lessonObjectId))) {
+                    currentLessonStudents.add(s.ID);
+                }
+            });
+
+            // Convert updatedStudentIds to a Set for efficient lookup
+            const newStudentIdsSet = new Set(updatedStudentIds);
+
+            // Students to remove (currently in lesson, but not in new list)
+            const studentsToRemoveLearn = [];
+            currentLessonStudents.forEach(sId => {
+                if (!newStudentIdsSet.has(sId)) {
+                    studentsToRemoveLearn.push(sId);
+                }
+            });
+
+            // Students to add (in new list, but not currently in lesson)
+            const studentsToAddLearn = [];
+            newStudentIdsSet.forEach(sId => {
+                if (!currentLessonStudents.has(sId)) {
+                    studentsToAddLearn.push(sId);
+                }
+            });
+
+            // Remove Learn entries for students no longer participating
+            if (studentsToRemoveLearn.length > 0) {
+                await PostCourse.updateOne(
+                    { _id: courseId },
+                    {
+                        $pull: {
+                            "Student.$[studentElem].Learn": { Lesson: lessonObjectId }
+                        }
+                    },
+                    {
+                        arrayFilters: [{ "studentElem.ID": { $in: studentsToRemoveLearn } }]
+                    }
+                );
+            }
+
+            // Add new Learn entries for newly participating students
+            if (studentsToAddLearn.length > 0) {
+                // Find the actual student subdocuments to update
+                const studentsToUpdate = updatedCourse.Student.filter(s => studentsToAddLearn.includes(s.ID));
+
+                if (studentsToUpdate.length > 0) {
+                    // This requires iterating or a more complex single query.
+                    // For simplicity and clarity with Mongoose updateOne, iterate.
+                    // MongoDB's `arrayFilters` allow targeting specific elements in a top-level array
+                    // to then push into a nested array within those elements.
+                    await PostCourse.updateOne(
+                        { _id: courseId },
+                        {
+                            $push: {
+                                "Student.$[studentElem].Learn": {
+                                    Checkin: 0,
+                                    Cmt: [],
+                                    CmtFn: "",
+                                    Note: "",
+                                    Lesson: lessonObjectId,
+                                    Image: []
+                                }
+                            }
+                        },
+                        {
+                            arrayFilters: [{ "studentElem.ID": { $in: studentsToAddLearn } }]
+                        }
+                    );
+                }
+            }
+        }
+
+        return NextResponse.json({ status: 2, mes: 'Cập nhật buổi học thành công', data: updatedCourse }, { status: 200 });
 
     } catch (err) {
         console.error('[udetail] top-level error:', err);

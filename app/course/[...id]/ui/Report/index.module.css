@@ -13,6 +13,21 @@
     transition: all .1s linear;
 }
 
+.mainContentRow {
+    display: flex;
+    gap: 16px
+}
+
+.chartWrapper {
+    flex: 1.5;
+}
+.chartWrapper > canvas {
+    width: 100% !important;
+}
+.makeupContainer {
+    flex: 1;
+}
+
 .trigger:hover {
     transform: translateY(-2px);
     background: rgb(255, 246, 208);

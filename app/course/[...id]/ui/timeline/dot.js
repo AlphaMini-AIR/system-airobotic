@@ -8,9 +8,7 @@ const getEventStatus = (data) => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    const [day, month, year] = data.Day.split('/');
-    const eventDate = new Date(year, month - 1, day);
+    const eventDate = new Date(data.Day);
 
     if (eventDate < today) {
         return { text: 'Đã diễn ra', color: 'var(--green)' };
@@ -39,7 +37,7 @@ export default function TimeLine_Dot({ course, type, index, data, props }) {
                             {status.text}
                         </p>
                         <div className="text_4" style={{ display: 'flex', alignItems: 'center', color: props == id ? 'var(--main_d)' : 'var(--text-primary)' }}>
-                            {data.Topic}
+                            {data.LessonDetails.Name || 'Không có tên chủ đề'}
 
                         </div>
                         <div className='text_6_400'>Ngày {formatDate(new Date(data.Day))}</div>

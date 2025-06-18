@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
-import { Read_Area } from '@/data/area';
-import { Data_user, Re_user } from '@/data/users';
-import { Data_book } from '@/data/book';
+import { Data_user } from '@/data/users';
 import { Data_Course_One, Re_course_one } from '@/data/course';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import Noti from '@/components/(features)/(noti)/noti';
@@ -13,6 +11,7 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
 import { useRouter } from 'next/navigation';
 import styles from './index.module.css';
+import { countStudentsWithLesson, formatDate } from '@/function';
 
 const toArr = v =>
     Array.isArray(v) ? v : v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
@@ -60,14 +59,17 @@ const MoreIcons = React.memo(({ onEdit, onDelete, onDetail, isCancelled, onCreat
 ));
 
 const StudentListForLesson = React.memo(({ lesson, allStudentsInCourse }) => {
-    const studentIdsInLesson = useMemo(() => toArr(lesson.Students), [lesson.Students]);
     const studentsToShow = useMemo(() => {
-        if (!studentIdsInLesson.length) return [];
-        return allStudentsInCourse.filter(student => studentIdsInLesson.includes(student.ID));
-    }, [studentIdsInLesson, allStudentsInCourse]);
+        if (!lesson?._id || !allStudentsInCourse) return [];
+        return allStudentsInCourse.filter(student =>
+            student.Learn?.some(learnItem => learnItem.Lesson === lesson._id)
+        );
+    }, [lesson, allStudentsInCourse]);
+
     if (studentsToShow.length === 0) {
         return <div style={{ padding: '20px', textAlign: 'center' }}>Không có học sinh nào trong buổi học này.</div>;
     }
+
     return (
         <div style={{ padding: '8px' }}>
             {studentsToShow.map(student => (
@@ -106,21 +108,27 @@ const cols = [
 const ScheduleTable = React.memo(({ course, onEdit, onDelete, onShowStudents, onCreateMakeup }) => (
     <div className={styles.detailContainer}>
         <div className={styles.rowHead}>
-            {cols.map(({ key, ...rest }, i) => (
-                <Cell key={i} {...rest} header>{rest.label}</Cell>
+            {cols.map((col, i) => (
+                <Cell key={i} flex={col.flex} align={col.align} header>{col.label}</Cell>
             ))}
         </div>
-        {toArr(course.Detail).map((row, index) => (
+        {toArr(course?.Detail).map((row, index) => (
             <div
-                key={index}
+                key={row._id || index}
                 className={styles.row}
                 style={{ background: row.Type === 'Học bù' ? '#fffadd' : row.Type === 'Báo nghỉ' ? '#ffe6e6' : 'transparent' }}
             >
-                {cols.map(({ key, ...rest }) => {
-                    switch (key) {
+                {cols.map((col) => {
+                    switch (col.key) {
+                        case 'Topic':
+                            return <Cell key={col.key} flex={col.flex} align={col.align}>{row.LessonDetails?.Name || 'N/A'}</Cell>;
+                        case 'Teacher':
+                            return <Cell key={col.key} flex={col.flex} align={col.align}>{row.Teacher?.name || 'N/A'}</Cell>;
+                        case 'Day':
+                            return <Cell key={col.key} flex={col.flex} align={col.align}>{formatDate(new Date(row.Day))}</Cell>;
                         case 'more':
                             return (
-                                <Cell key="more" {...rest}>
+                                <Cell key={col.key} flex={col.flex} align={col.align}>
                                     <MoreIcons
                                         onEdit={() => onEdit(row)}
                                         onDelete={() => onDelete(row)}
@@ -132,7 +140,7 @@ const ScheduleTable = React.memo(({ course, onEdit, onDelete, onShowStudents, on
                             );
                         case 'Type':
                             return (
-                                <Cell key={key} {...rest}>
+                                <Cell key={col.key} flex={col.flex} align={col.align}>
                                     <span className='text_7' style={{
                                         padding: '4px 16px', borderRadius: '12px',
                                         background: row.Type === 'Học bù' ? 'var(--yellow)' : row.Type === 'Báo nghỉ' ? 'var(--red)' : 'var(--green)', color: 'white'
@@ -143,14 +151,12 @@ const ScheduleTable = React.memo(({ course, onEdit, onDelete, onShowStudents, on
                             );
                         case 'Students':
                             return (
-                                <Cell key={key} {...rest}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                        <span>{toArr(row.Students).length} Học sinh</span>
-                                    </div>
+                                <Cell key={col.key} flex={col.flex} align={col.align}>
+                                    <span>{countStudentsWithLesson(row._id, course.Student)} học sinh</span>
                                 </Cell>
                             );
                         default:
-                            return <Cell key={key} {...rest}>{row[key]}</Cell>;
+                            return <Cell key={col.key} flex={col.flex} align={col.align}>{row[col.key]}</Cell>;
                     }
                 })}
             </div>
@@ -159,85 +165,101 @@ const ScheduleTable = React.memo(({ course, onEdit, onDelete, onShowStudents, on
 ));
 
 const MakeupLessonForm = React.memo(({ course, onDone, initialStudents = [] }) => {
-    const [form, setForm] = useState({ Topic: '', Day: '', Start: '', Lesson: 1, Time: '', Teacher: '', TeachingAs: '', Room: '', Students: initialStudents });
-    const [topics, setTopics] = useState([]);
-    const [teachers, setTeachers] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [loadingTopic, setLoadingTopic] = useState(true);
-    const [loadingT, setLoadingT] = useState(true);
-    const [loadingR, setLoadingR] = useState(true);
-    const [openTopic, setOpenTopic] = useState(false);
-    const [openTeacher, setOpenTeacher] = useState(false);
-    const [openAssist, setOpenAssist] = useState(false);
-    const [openRoom, setOpenRoom] = useState(false);
+    const [form, setForm] = useState({ Topic: '', Day: '', Start: '', Time: '', Teacher: '', TeachingAs: '', Room: '', Students: initialStudents });
+    const [allTopics, setAllTopics] = useState(course.Book?.Topics || []);
+    const [allTeachers, setAllTeachers] = useState([]);
+    const [allRooms, setAllRooms] = useState(course.Area ? course.Area.room || [] : []);
+    const [loading, setLoading] = useState({ topics: true, teachers: true, rooms: true });
+    const [open, setOpen] = useState({ topic: false, teacher: false, assist: false, room: false });
     const [saving, setSaving] = useState(false);
 
     const isStudentListLocked = useMemo(() => initialStudents && initialStudents.length > 0, [initialStudents]);
 
     useEffect(() => {
         let mounted = true;
-        Data_book().then(res => { if (!mounted) return; const prog = toArr(res?.data ?? res).find(p => p.Name === course.Name); setTopics(prog?.Topic); }).finally(() => mounted && setLoadingTopic(false));
-        Data_user().then(res => { if (mounted) setTeachers(toArr(res?.data ?? res).map(u => u.name)); }).finally(() => mounted && setLoadingT(false));
-        Read_Area().then(res => { if (!mounted) return; const area = toArr(res?.data ?? res).find(a => a.name === course.Area); setRooms(toArr(area?.room)); }).finally(() => mounted && setLoadingR(false));
+        Data_user().then(res => {
+            if (mounted) setAllTeachers(toArr(res?.data ?? res));
+        }).finally(() => mounted && setLoading(l => ({ ...l, teachers: false })));
         return () => { mounted = false; };
-    }, [course.Name, course.Area]);
+    }, [course.Area]);
+
 
     const handleFormChange = useCallback((field, value) => setForm(f => ({ ...f, [field]: value })), []);
     const toggleStu = useCallback(id => { setForm(f => ({ ...f, Students: f.Students.includes(id) ? f.Students.filter(x => x !== id) : [...f.Students, id] })); }, []);
-
+    const handleOpen = useCallback((menu, value) => setOpen(o => ({ ...o, [menu]: value })), []);
     const save = useCallback(async () => {
-        if (!form.Topic || !form.Day || !form.Start) { onDone(false, 'Vui lòng nhập đầy đủ thông tin khi lưu'); return; }
-        const topicEntry = Object.entries(topics).find(([, value]) => value.Name === form.Topic);
-        const lessonId = topicEntry ? topicEntry[0] : '';
+        if (!form.Topic || !form.Day || !form.Start) {
+            onDone(false, 'Vui lòng nhập đầy đủ thông tin khi lưu');
+            return;
+        }
+
+        const topicEntry = course.Book.Topics.find(t => t.Name === form.Topic);
+        const teacherEntry = allTeachers.find(t => t.name === form.Teacher);
+        const teachingAsEntry = allTeachers.find(t => t.name === form.TeachingAs);
+
         const [h, m] = form.Start.split(':').map(Number);
-        const totalMin = h * 60 + m + form.Lesson * 45;
+        const totalMin = h * 60 + m + (topicEntry?.Period || 0) * 45; // Added nullish coalescing for topicEntry.Period
         const endH = String(Math.floor(totalMin / 60)).padStart(2, '0');
         const endM = String(totalMin % 60).padStart(2, '0');
-        const payload = { courseId: course._id, data: { ...form, ID: lessonId, Time: `${form.Start}-${endH}:${endM}` }, student: form.Students, type: 'Học bù' };
+
+        const payload = {
+            courseId: course._id,
+            student: form.Students,
+            type: 'Học bù',
+            data: {
+                ...form,
+                Teacher: teacherEntry?._id,
+                TeachingAs: teachingAsEntry?._id,
+                Time: `${form.Start}-${endH}:${endM}`
+            }
+        };
+        delete payload.data.Students;
+        payload.data.Topic = topicEntry?._id;
+        payload.data.Time = `${form.Start}-${endH}:${endM}`;
         setSaving(true);
         try {
             const res = await fetch('/api/course/ucalendarcourse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const json = await res.json();
             onDone(res.ok && json.status === 2, json.mes || (res.ok ? 'Tạo thành công' : 'Tạo thất bại'));
-        } catch { onDone(false, 'Lỗi kết nối máy chủ'); } finally { setSaving(false); }
-    }, [form, course._id, onDone, topics]);
+        } catch {
+            onDone(false, 'Lỗi kết nối máy chủ');
+        } finally {
+            setSaving(false);
+        }
+    }, [form, course._id, onDone, allTopics, allTeachers, course.Book.Topics]); // Added course.Book.Topics to dependencies
 
-    const handleTopicPick = useCallback(v => { handleFormChange('Topic', v); setOpenTopic(false); }, [handleFormChange]);
-    const handleTeacherPick = useCallback(v => { handleFormChange('Teacher', v); setOpenTeacher(false); }, [handleFormChange]);
-    const handleAssistPick = useCallback(v => { handleFormChange('TeachingAs', v === '— Không chọn —' ? '' : v); setOpenAssist(false); }, [handleFormChange]);
-    const handleRoomPick = useCallback(v => { handleFormChange('Room', v); setOpenRoom(false); }, [handleFormChange]);
+    const handlePick = useCallback((setter, menuName, value) => {
+        setter(value);
+        handleOpen(menuName, false);
+    }, [handleOpen]);
 
-    const availableTeachers = useMemo(() => teachers.filter(t => t !== form.TeachingAs), [teachers, form.TeachingAs]);
-    const availableAssistants = useMemo(() => ['— Không chọn —', ...teachers.filter(t => t !== form.Teacher)], [teachers, form.Teacher]);
+    const availableTeachers = useMemo(() => allTeachers.filter(t => t.name !== form.TeachingAs).map(t => t.name), [allTeachers, form.TeachingAs]);
+    const availableAssistants = useMemo(() => ['— Không chọn —', ...allTeachers.filter(t => t.name !== form.Teacher).map(t => t.name)], [allTeachers, form.Teacher]);
 
-    const topicMenu = useMemo(() => <ListMenu arr={toArr(topics).map(t => t.Name)} loading={loadingTopic} empty="Chưa có chủ đề" onPick={handleTopicPick} />, [topics, loadingTopic, handleTopicPick]);
-    const teacherMenu = useMemo(() => <ListMenu arr={availableTeachers} loading={loadingT} empty="Chưa có GV" onPick={handleTeacherPick} />, [availableTeachers, loadingT, handleTeacherPick]);
-    const assistMenu = useMemo(() => <ListMenu arr={availableAssistants} loading={loadingT} empty="" onPick={handleAssistPick} />, [availableAssistants, loadingT, handleAssistPick]);
-    const roomMenu = useMemo(() => <ListMenu arr={rooms} loading={loadingR} empty="Chưa có phòng" onPick={handleRoomPick} />, [rooms, loadingR, handleRoomPick]);
 
     const lockedStudentDetails = useMemo(() => {
         if (!isStudentListLocked) return [];
         const allCourseStudents = toArr(course.Student);
         return initialStudents.map(id => allCourseStudents.find(s => s.ID === id)).filter(Boolean);
     }, [isStudentListLocked, initialStudents, course.Student]);
-
     return (
         <>
             {saving && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 2500 }}><Loading content="Đang lưu..." /></div>}
             <div className={styles.editForm}>
                 <p className="text_6">Chủ đề buổi bù</p>
-                <Menu menuItems={topicMenu} menuPosition="bottom" isOpen={openTopic} onOpenChange={setOpenTopic} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Topic || 'Chọn chủ đề'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={allTopics.map(t => t.Name)} empty="Chưa có chủ đề" onPick={v => {
+                    handlePick(value => handleFormChange('Topic', value), 'topic', v)
+                }} />} menuPosition="bottom" isOpen={open.topic} onOpenChange={v => handleOpen('topic', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Topic || 'Chọn chủ đề'}</p></button>} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <input type="date" className={styles.selectBtn} style={{ flex: 1 }} value={form.Day} onChange={e => handleFormChange('Day', e.target.value)} />
                     <input type="time" className={styles.selectBtn} style={{ flex: 1 }} value={form.Start} onChange={e => handleFormChange('Start', e.target.value)} />
-                    <input type="number" min="1" className={styles.selectBtn} style={{ width: 90 }} value={form.Lesson} onChange={e => handleFormChange('Lesson', Math.max(1, Number(e.target.value)))} />
                 </div>
                 <p className="text_6" style={{ marginTop: 8 }}>Giáo viên</p>
-                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={availableTeachers} loading={loading.teachers} empty="Chưa có GV" onPick={v => handlePick(value => handleFormChange('Teacher', value), 'teacher', v)} />} menuPosition="bottom" isOpen={open.teacher} onOpenChange={v => handleOpen('teacher', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Trợ giảng</p>
-                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={availableAssistants} loading={loading.teachers} empty="" onPick={v => handlePick(value => handleFormChange('TeachingAs', value === '— Không chọn —' ? '' : value), 'assist', v)} />} menuPosition="bottom" isOpen={open.assist} onOpenChange={v => handleOpen('assist', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Phòng học</p>
-                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={allRooms} empty="Chưa có phòng" onPick={v => handlePick(value => handleFormChange('Room', value), 'room', v)} />} menuPosition="bottom" isOpen={open.room} onOpenChange={v => handleOpen('room', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>{isStudentListLocked ? 'Học sinh tham gia (cố định)' : 'Chọn học sinh tham gia'}</p>
                 <div className={styles.stuWrap}>
                     {isStudentListLocked ? (
@@ -265,37 +287,47 @@ const MakeupLessonForm = React.memo(({ course, onDone, initialStudents = [] }) =
 });
 
 const EditLessonForm = React.memo(({ lesson, course, onDone, onCancel }) => {
-    const [form, setForm] = useState({ ...lesson });
-    const [teachers, setTeachers] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [loadingT, setLoadingT] = useState(true);
-    const [loadingR, setLoadingR] = useState(true);
-    const [openTeacher, setOpenTeacher] = useState(false);
-    const [openAssist, setOpenAssist] = useState(false);
-    const [openRoom, setOpenRoom] = useState(false);
+    const [form, setForm] = useState({
+        Day: lesson.Day.split('T')[0],
+        Topic: lesson.LessonDetails?.Name,
+        Teacher: lesson.Teacher?.name,
+        TeachingAs: lesson.TeachingAs?.name,
+        Room: lesson.Room,
+        Students: toArr(course.Student).filter(s => s.Learn?.some(l => l.Lesson === lesson._id)).map(s => s.ID)
+    });
+    const [allTeachers, setAllTeachers] = useState([]);
+    const [allRooms, setAllRooms] = useState(course.Area ? course.Area.room || [] : []); // Initialize allRooms from course.Area
+    const [loading, setLoading] = useState({ teachers: true, rooms: true });
+    const [open, setOpen] = useState({ teacher: false, assist: false, room: false });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         let mounted = true;
-        Data_user().then(res => mounted && setTeachers(toArr(res?.data ?? res).map(u => u.name))).finally(() => mounted && setLoadingT(false));
-        Read_Area().then(res => { if (!mounted) return; const area = toArr(res?.data ?? res).find(a => a.name === course.Area); setRooms(toArr(area?.room)); }).finally(() => mounted && setLoadingR(false));
+        Data_user().then(res => mounted && setAllTeachers(toArr(res?.data ?? res))).finally(() => mounted && setLoading(l => ({ ...l, teachers: false })));
         return () => { mounted = false; };
-    }, [course.Area]);
+    }, []); // Removed course.Area from dependencies for Data_user as it might not change, but kept for `allRooms` init
 
     const handleFormChange = useCallback((field, value) => setForm(f => ({ ...f, [field]: value })), []);
+    const toggleStu = useCallback(id => { setForm(f => ({ ...f, Students: f.Students.includes(id) ? f.Students.filter(x => x !== id) : [...f.Students, id] })); }, []);
+    const handleOpen = useCallback((menu, value) => setOpen(o => ({ ...o, [menu]: value })), []);
 
     const handleSave = useCallback(async () => {
+        const teacherEntry = allTeachers.find(t => t.name === form.Teacher);
+        const teachingAsEntry = allTeachers.find(t => t.name === form.TeachingAs);
+
+        const payload = {
+            courseId: course._id,
+            detailId: lesson._id,
+            data: {
+                ...form,
+                Teacher: teacherEntry?._id,
+                TeachingAs: teachingAsEntry?._id,
+                Students: form.Students // Add selected students to the payload
+            }
+        };
         setSaving(true);
         try {
-            const res = await fetch('/api/course/ucalendarcourse', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    courseId: course._id,
-                    detailId: lesson._id,
-                    data: { Day: form.Day, Topic: form.Topic, Teacher: form.Teacher, TeachingAs: form.TeachingAs, Room: form.Room }
-                })
-            });
+            const res = await fetch('/api/course/ucalendarcourse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const json = await res.json();
             onDone(form, res.ok && json.status === 2, json.mes || (res.ok ? 'Đã lưu thay đổi' : 'Lưu thất bại'));
         } catch {
@@ -303,31 +335,39 @@ const EditLessonForm = React.memo(({ lesson, course, onDone, onCancel }) => {
         } finally {
             setSaving(false);
         }
-    }, [form, course._id, lesson._id, onDone]);
+    }, [form, course._id, lesson._id, onDone, allTeachers]);
 
-    const handleTeacherPick = useCallback(v => { handleFormChange('Teacher', v); setOpenTeacher(false); }, [handleFormChange]);
-    const handleAssistPick = useCallback(v => { handleFormChange('TeachingAs', v === '— Không chọn —' ? '' : v); setOpenAssist(false); }, [handleFormChange]);
-    const handleRoomPick = useCallback(v => { handleFormChange('Room', v); setOpenRoom(false); }, [handleFormChange]);
+    const handlePick = useCallback((setter, menuName, value) => {
+        setter(value);
+        handleOpen(menuName, false);
+    }, [handleOpen]);
 
-    const availableTeachers = useMemo(() => teachers.filter(t => t !== form.TeachingAs), [teachers, form.TeachingAs]);
-    const availableAssistants = useMemo(() => ['— Không chọn —', ...teachers.filter(t => t !== form.Teacher)], [teachers, form.Teacher]);
-
-    const teacherMenu = useMemo(() => <ListMenu arr={availableTeachers} loading={loadingT} empty="Chưa có GV" onPick={handleTeacherPick} />, [availableTeachers, loadingT, handleTeacherPick]);
-    const assistMenu = useMemo(() => <ListMenu arr={availableAssistants} loading={loadingT} empty="" onPick={handleAssistPick} />, [availableAssistants, loadingT, handleAssistPick]);
-    const roomMenu = useMemo(() => <ListMenu arr={rooms} loading={loadingR} empty="Chưa có phòng" onPick={handleRoomPick} />, [rooms, loadingR, handleRoomPick]);
+    const availableTeachers = useMemo(() => allTeachers.filter(t => t.name !== form.TeachingAs).map(t => t.name), [allTeachers, form.TeachingAs]);
+    const availableAssistants = useMemo(() => ['— Không chọn —', ...allTeachers.filter(t => t.name !== form.Teacher).map(t => t.name)], [allTeachers, form.Teacher]);
 
     return (
         <>
             {saving && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 2500 }}><Loading content="Đang cập nhật..." /></div>}
             <div className={styles.editForm}>
                 <p className="text_6_400"><strong>Chủ đề</strong>: {form.Topic}</p>
-                <p className="text_6_400"><strong>Thời gian</strong>: {form.Time} – {form.Day}</p>
+                <p className="text_6_400"><strong>Thời gian</strong>: {lesson.Time} – {formatDate(new Date(lesson.Day))}</p>
                 <p className="text_6">Giáo viên giảng dạy</p>
-                <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openTeacher} onOpenChange={setOpenTeacher} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={availableTeachers} loading={loading.teachers} empty="Chưa có GV" onPick={v => handlePick(value => handleFormChange('Teacher', value), 'teacher', v)} />} menuPosition="bottom" isOpen={open.teacher} onOpenChange={v => handleOpen('teacher', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Teacher || 'Chọn GV'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Trợ giảng</p>
-                <Menu menuItems={assistMenu} menuPosition="bottom" isOpen={openAssist} onOpenChange={setOpenAssist} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={availableAssistants} loading={loading.teachers} empty="" onPick={v => handlePick(value => handleFormChange('TeachingAs', value === '— Không chọn —' ? '' : value), 'assist', v)} />} menuPosition="bottom" isOpen={open.assist} onOpenChange={v => handleOpen('assist', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.TeachingAs || 'Không có'}</p></button>} />
                 <p className="text_6" style={{ marginTop: 8 }}>Phòng học</p>
-                <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
+                <Menu menuItems={<ListMenu arr={allRooms} empty="Chưa có phòng" onPick={v => handlePick(value => handleFormChange('Room', value), 'room', v)} />} menuPosition="bottom" isOpen={open.room} onOpenChange={v => handleOpen('room', v)} customButton={<button className={styles.selectBtn} style={{ textAlign: 'flex-start' }}><p className="text_6_400">{form.Room || 'Chọn phòng'}</p></button>} />
+                <p className="text_6" style={{ marginTop: 8 }}>Chọn học sinh tham gia</p>
+                <div className={styles.stuWrap}>
+                    {toArr(course.Student).map(s => {
+                        const selected = form.Students.includes(s.ID);
+                        return (
+                            <div key={s.ID} className="text_6_400" onClick={() => toggleStu(s.ID)} style={{ padding: '10px 16px', borderRadius: 4, cursor: 'pointer', background: selected ? 'var(--green)' : 'var(--border-color)', color: selected ? '#fff' : 'var(--text-primary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                                <p style={{ fontSize: 14 }}>{s.ID} – {s.Name}</p><p style={{ fontSize: 14 }}>{selected ? 'Chọn' : 'Không chọn'}</p>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
             <div className={styles.btnRow}>
                 <button onClick={onCancel} className="btn" style={{ borderRadius: 5, background: 'var(--border-color)' }}>Huỷ bỏ</button>
@@ -337,7 +377,6 @@ const EditLessonForm = React.memo(({ lesson, course, onDone, onCancel }) => {
     );
 });
 
-// THAY ĐỔI 2: Cập nhật component `CancelLessonForm`
 const CancelLessonForm = React.memo(({ onCancel, onConfirm }) => {
     const [reason, setReason] = useState('');
     return (
@@ -346,7 +385,7 @@ const CancelLessonForm = React.memo(({ onCancel, onConfirm }) => {
             <textarea className={styles.textarea} placeholder="Lý do (tuỳ chọn)" value={reason} onChange={e => setReason(e.target.value)} />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
                 <button onClick={onCancel} className="btn" style={{ background: 'var(--border-color)' }}>Hủy</button>
-                <button onClick={() => onConfirm(reason)} className="btn" style={{ background: 'var(--red)' }}>Xác nhận Báo nghỉ</button>
+                <button onClick={() => onConfirm(reason)} className="btn" style={{ background: 'var(--red)' }}>Xác nhận báo nghỉ</button>
             </div>
         </div>
     );
@@ -357,54 +396,84 @@ export default function Calendar({ course }) {
     const router = useRouter();
     const [curCourse, setCurCourse] = useState(course);
     const [open, setOpen] = useState(false);
-    const [editPop, setEditPop] = useState({ open: false, lesson: null });
-    const [cancelPop, setCancelPop] = useState({ open: false, lesson: null });
-    const [makeupPop, setMakeupPop] = useState({ open: false, initialStudents: [] });
-    const [studentListPop, setStudentListPop] = useState({ open: false, lesson: null });
+    const [popups, setPopups] = useState({
+        edit: { open: false, lesson: null },
+        cancel: { open: false, lesson: null },
+        makeup: { open: false, initialStudents: [] },
+        studentList: { open: false, lesson: null },
+    });
     const [toast, setToast] = useState({ open: false, status: false, mes: '' });
     const [isSaving, setIsSaving] = useState(false);
 
+    useEffect(() => {
+        setCurCourse(course);
+    }, [course]);
+
+    const handleClosePopup = useCallback((popupName) => {
+        setPopups(p => ({ ...p, [popupName]: { ...p[popupName], open: false } }));
+    }, []);
+
     const handleUpdateCourse = useCallback(async () => {
+        setIsSaving(true);
         await Re_course_one(course.ID);
         const freshData = await Data_Course_One(course.ID);
         if (freshData) setCurCourse(freshData);
         router.refresh();
+        setIsSaving(false);
     }, [course.ID, router]);
 
-    const handleDone = useCallback(async (ok, mes, closePopup) => {
+    const handleDone = useCallback(async (ok, mes, popupToClose) => {
         setToast({ open: true, status: ok, mes });
         if (ok) {
+            popupToClose();
             await handleUpdateCourse();
-            closePopup();
         }
     }, [handleUpdateCourse]);
 
-    // THAY ĐỔI 3: Cập nhật hàm mở popup chỉnh sửa
     const openEditPopup = useCallback((lesson) => {
         if (lesson.Type === 'Báo nghỉ') {
-            setToast({
-                open: true,
-                status: false,
-                mes: 'Không thể chỉnh sửa buổi học đã báo nghỉ.'
-            });
+            setToast({ open: true, status: false, mes: 'Không thể chỉnh sửa buổi học đã báo nghỉ.' });
             return;
         }
-        setEditPop({ open: true, lesson });
+        setPopups(p => ({ ...p, edit: { open: true, lesson } }));
     }, []);
 
-    const openCancelPopup = useCallback((lesson) => setCancelPop({ open: true, lesson }), []);
-    const openStudentListPopup = useCallback((lesson) => setStudentListPop({ open: true, lesson }), []);
+    const openCancelPopup = useCallback((lesson) => setPopups(p => ({ ...p, cancel: { open: true, lesson } })), []);
+    const openStudentListPopup = useCallback((lesson) => setPopups(p => ({ ...p, studentList: { open: true, lesson } })), []);
     const openMakeupForCancelled = useCallback((lesson) => {
-        setMakeupPop({ open: true, initialStudents: toArr(lesson.Students) });
-    }, []);
+        const studentIds = toArr(course.Student)
+            .filter(s => s.Learn?.some(l => l.Lesson === lesson._id))
+            .map(s => s.ID);
+        setPopups(p => ({ ...p, makeup: { open: true, initialStudents: studentIds } }));
+    }, [course.Student]);
+
+    const openGeneralMakeup = useCallback(() => {
+        setPopups(p => ({ ...p, makeup: { open: true, initialStudents: [] } }))
+    }, [])
+
+    const handleConfirmCancel = useCallback(async (reason) => {
+        const lesson = popups.cancel.lesson;
+        if (!lesson) return;
+        setIsSaving(true);
+        try {
+            const payload = { courseId: curCourse._id, detailId: lesson._id, type: 'Báo nghỉ', data: { Note: reason } };
+            const res = await fetch('/api/course/ucalendarcourse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const json = await res.json();
+            handleDone(res.ok && json.status === 2, json.mes, () => handleClosePopup('cancel'));
+        } catch (error) {
+            handleDone(false, 'Lỗi kết nối máy chủ', () => { });
+        } finally {
+            setIsSaving(false);
+        }
+    }, [popups.cancel.lesson, curCourse._id, handleDone, handleClosePopup]);
+
 
     const scheduleRender = useMemo(() => (
         <>
             <div className={styles.top}>
-                <button className="btn" style={{ background: 'var(--green)' }} onClick={() => setMakeupPop({ open: true, initialStudents: [] })}>Tạo buổi bù</button>
+                <button className="btn" style={{ background: 'var(--green)' }} onClick={openGeneralMakeup}>Tạo buổi bù</button>
             </div>
             <ScheduleTable
-
                 course={curCourse}
                 onEdit={openEditPopup}
                 onDelete={openCancelPopup}
@@ -412,7 +481,7 @@ export default function Calendar({ course }) {
                 onCreateMakeup={openMakeupForCancelled}
             />
         </>
-    ), [curCourse, openEditPopup, openCancelPopup, openStudentListPopup, openMakeupForCancelled]);
+    ), [curCourse, openEditPopup, openCancelPopup, openStudentListPopup, openMakeupForCancelled, openGeneralMakeup]);
 
     return (
         <>
@@ -425,15 +494,12 @@ export default function Calendar({ course }) {
 
             <FlexiblePopup open={open} onClose={() => setOpen(false)} title={`Lịch học - ${curCourse.ID}`} width={1200} renderItemList={() => scheduleRender} />
 
-            {makeupPop.open && <FlexiblePopup open={makeupPop.open} onClose={() => setMakeupPop({ open: false, initialStudents: [] })} title="Tạo buổi bù" width={600} renderItemList={() => <MakeupLessonForm course={curCourse} initialStudents={makeupPop.initialStudents} onDone={(ok, mes) => handleDone(ok, mes, () => setMakeupPop({ open: false, initialStudents: [] }))} />} />}
+            {popups.makeup.open && <FlexiblePopup open={true} onClose={() => handleClosePopup('makeup')} title="Tạo buổi bù" width={600} renderItemList={() => <MakeupLessonForm course={curCourse} initialStudents={popups.makeup.initialStudents} onDone={(ok, mes) => handleDone(ok, mes, () => handleClosePopup('makeup'))} />} />}
+            {popups.edit.open && <FlexiblePopup open={true} onClose={() => handleClosePopup('edit')} title="Chỉnh sửa buổi học" width={600} renderItemList={() => <EditLessonForm course={curCourse} lesson={popups.edit.lesson} onDone={(_d, ok, mes) => handleDone(ok, mes, () => handleClosePopup('edit'))} onCancel={() => handleClosePopup('edit')} />} />}
+            {popups.studentList.open && <FlexiblePopup open={true} onClose={() => handleClosePopup('studentList')} title={`Học sinh buổi "${popups.studentList.lesson?.LessonDetails?.Name || ''}"`} width={500} renderItemList={() => <StudentListForLesson lesson={popups.studentList.lesson} allStudentsInCourse={toArr(curCourse.Student)} />} />}
+            {popups.cancel.open && <FlexiblePopup open={true} onClose={() => handleClosePopup('cancel')} title="Báo nghỉ buổi học" width={420} renderItemList={() => <CancelLessonForm onCancel={() => handleClosePopup('cancel')} onConfirm={handleConfirmCancel} />} />}
 
-            {editPop.open && <FlexiblePopup open={editPop.open} onClose={() => setEditPop({ open: false, lesson: null })} title="Chỉnh sửa buổi học" width={600} renderItemList={() => <EditLessonForm course={curCourse} lesson={editPop.lesson} onDone={(_d, ok, mes) => handleDone(ok, mes, () => setEditPop({ open: false, lesson: null }))} onCancel={() => setEditPop({ open: false, lesson: null })} />} />}
-
-            {studentListPop.open && <FlexiblePopup open={studentListPop.open} onClose={() => setStudentListPop({ open: false, lesson: null })} title={`Danh sách học sinh - Buổi ${studentListPop.lesson?.Topic || ''}`} width={500} renderItemList={() => <StudentListForLesson lesson={studentListPop.lesson} allStudentsInCourse={toArr(curCourse.Student)} />} />}
-
-            {cancelPop.open && <FlexiblePopup open={cancelPop.open} onClose={() => setCancelPop({ open: false, lesson: null })} title="Báo nghỉ buổi học" width={420} renderItemList={() => cancelPop.lesson && <CancelLessonForm lesson={cancelPop.lesson} onCancel={() => setCancelPop({ open: false, lesson: null })} onConfirm={async (reason) => { if (!cancelPop.lesson) return; setIsSaving(true); try { const payload = { courseId: curCourse._id, detailId: cancelPop.lesson._id, type: 'Báo nghỉ', data: { Note: reason } }; const res = await fetch('/api/course/ucalendarcourse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const json = await res.json(); if (res.ok && json.status === 2) { await handleUpdateCourse(); } setToast({ open: true, status: res.ok && json.status === 2, mes: json.mes }); } catch (error) { setToast({ open: true, status: false, mes: 'Lỗi kết nối máy chủ' }); } finally { setIsSaving(false); setCancelPop({ open: false, lesson: null }); } }} />} />}
-
-            <Noti open={toast.open} status={toast.status} mes={toast.mes} onClose={() => setToast(t => ({ ...t, open: false }))} button={<button className="btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setToast(t => ({ ...t, open: false }))}>Tắt thông báo</button>} />
+            <Noti open={toast.open} status={toast.status} mes={toast.mes} onClose={() => setToast(t => ({ ...t, open: false }))} />
         </>
     );
 }

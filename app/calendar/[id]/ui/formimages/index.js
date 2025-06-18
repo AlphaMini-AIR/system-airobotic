@@ -20,6 +20,7 @@ const areSetsEqual = (setA, setB) => {
 };
 
 export default function StudentImageSelectionManager({ studentInfo, courseInfo, course }) {
+
     const router = useRouter();
     const [isPrimaryOpen, setPrimaryOpen] = useState(false);
     const [isSecondaryOpen, setSecondaryOpen] = useState(false);
@@ -27,7 +28,6 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
     // Tách riêng state loading cho 2 popup
     const [isLoadingPrimary, setIsLoadingPrimary] = useState(false);
     const [isLoadingSecondary, setIsLoadingSecondary] = useState(false);
-
     // State quản lý thông báo Noti
     const [notification, setNotification] = useState({ open: false, status: false, mes: '' });
 
@@ -36,12 +36,12 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
     const [tempSelection, setTempSelection] = useState(new Set());
 
     useEffect(() => {
-        const initialIds = new Set(studentInfo?.Image?.map(img => img.id) || []);
+        const initialIds = new Set(studentInfo.Image.map(img => img.id) || []);
         setOriginalImageIds(initialIds);
         setSelectedImageIds(initialIds);
     }, [studentInfo]);
 
-    const allCourseImages = courseInfo?.detailImage || [];
+    const allCourseImages = courseInfo?.DetailImage || [];
 
     const selectedImageObjects = useMemo(() =>
         allCourseImages.filter(img => selectedImageIds.has(img.id)),
@@ -91,8 +91,9 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
     const handleSaveFromSecondary = async () => {
         setIsLoadingSecondary(true);
         try {
+
             // Lấy ID của buổi học từ courseInfo (được truyền vào component)
-            const lessonImageId = courseInfo?.image;
+            const lessonImageId = courseInfo?._id;
             if (!lessonImageId) {
                 throw new Error("Không tìm thấy mã định danh của buổi học (courseInfo.Image).");
             }
@@ -107,7 +108,7 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    image: lessonImageId,         // ID của buổi học để tìm kiếm
+                    lessonId: lessonImageId,         // ID của buổi học để tìm kiếm
                     studentId: studentInfo.ID,
                     newImages: imagesToSave       // Mảng object ảnh mới
                 }),
@@ -119,7 +120,7 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
                 throw new Error(result.message || 'Lỗi từ server');
             }
             await Re_course_one(course.ID);
-            await Re_lesson(courseInfo.image);
+            await Re_lesson(courseInfo._id);
             router.refresh();
 
             // Cập nhật state chính sau khi API thành công

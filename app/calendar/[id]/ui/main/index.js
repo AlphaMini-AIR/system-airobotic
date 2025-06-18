@@ -13,7 +13,6 @@ import styles from './index.module.css';
 import ImageUploader from '../formimage';
 import StudentCourseImageManager from '../formimages';
 
-/* API */
 const updateAttendance = async (courseId, sessionId, attendanceData) => {
     const r = await fetch('/api/checkin', {
         method: 'POST',
@@ -21,11 +20,11 @@ const updateAttendance = async (courseId, sessionId, attendanceData) => {
         body: JSON.stringify({ courseId, sessionId, attendanceData })
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();                            // { status, mes }
+    return r.json();
 };
 
 export default function Main({ data }) {
-    const { course, session, slide } = data;
+    const { course, session, students } = data;
 
     const [showComment, setShowComment] = useState(false);
     const [selStu, setSelStu] = useState(null);
@@ -38,26 +37,26 @@ export default function Main({ data }) {
     const [notiMsg, setNotiMsg] = useState('');
 
     const router = useRouter();
-    console.log(data);
 
-    const roll = (course.Student || []).map(stu => {
-        const raw = stu.Learn?.[session.id]?.Checkin;
-        const check = raw === 0 || raw === '0' ? '0' : raw === 2 || raw === '2' ? '2' : '1';
+    const roll = (students || []).map(stu => {              
+        const rawCheckin = stu.attendance?.Checkin;
+        const check = (rawCheckin === 0 || rawCheckin === '0') ? '0' : (rawCheckin === 2 || rawCheckin === '2') ? '2' : '1';
+
         return {
             ID: stu.ID,
             Name: stu.Name,
-            Image: stu.Learn?.[session.id]?.Image || [],
+            Image: stu.attendance?.Image ?? [],
             Checkin: check,
-            originalComment: Array.isArray(stu.Learn?.[session.id]?.Cmt)
-                ? stu.Learn[session.id].Cmt
-                : []
+            originalComment: stu.attendance?.Cmt ?? [],
         };
     });
 
     const cur = s => (att[s.ID] !== undefined ? att[s.ID] : s.Checkin);
+
+
     const cm = roll.filter(s => cur(s) === '1').length;
-    const vk = roll.filter(s => cur(s) === '0').length;
-    const vc = roll.filter(s => cur(s) === '2').length;
+    const vk = roll.filter(s => cur(s) === '2').length;
+    const vc = roll.filter(s => cur(s) === '3').length;
 
     /* handler */
     const changeAtt = (id, v) => setAtt(prev => ({ ...prev, [id]: v }));
@@ -90,13 +89,13 @@ export default function Main({ data }) {
 
         setSaving(true);
         try {
-            const res = await updateAttendance(course._id, session.id, payload);
+            const res = await updateAttendance(course._id, session._id, payload);
             setNotiOK(res.status === 2);
             setNotiMsg(res.mes || (res.status === 2 ? 'Lưu thành công!' : 'Lưu thất bại!'));
 
             if (res.status === 2) {
                 setAtt({}); setCmts({});
-                await Re_lesson(session.image);
+                await Re_lesson(session._id);
                 router.refresh();
             }
         } catch {
@@ -134,7 +133,7 @@ export default function Main({ data }) {
                 {/* Header */}
                 <header className={styles.header}>
                     <p className="text_3" style={{ color: '#fff' }}>
-                        {course.ID ?? '-'} – Chủ đề: {session.topic ?? '-'}
+                        {course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}
                     </p>
                     <div className={styles.statsContainer}>
                         <div className={`${styles.statBox} ${styles.present}`}>Có mặt: {cm}</div>
@@ -148,8 +147,7 @@ export default function Main({ data }) {
                     <aside className={styles.sidebar}>
                         <p className="text_4">Tài liệu buổi học</p>
                         <ImageUploader session={session} courseId={course.ID} />
-
-                        {slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={slide} />}
+                        {session.LessonDetails?.Slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={session.LessonDetails.Slide} />}
                     </aside>
 
                     <main className={styles.main}>
@@ -157,9 +155,9 @@ export default function Main({ data }) {
 
                         <section className={styles.infoSection}>
                             <div className={styles.infoHeader}>
-                                <div>Thời gian: <span className={styles.infoValue}>{session.time}</span></div>
-                                <div>Giáo viên: <span className={styles.infoValue}>{session.teacher}</span></div>
-                                <div>Trợ giảng: <span className={styles.infoValue}>{session.teachingAs || '–'}</span></div>
+                                <div>Thời gian: <span className={styles.infoValue}>{session.Time}</span></div>
+                                <div>Giáo viên: <span className={styles.infoValue}>{session.Teacher.name}</span></div>
+                                <div>Trợ giảng: <span className={styles.infoValue}>{session.TeachingAs?.name || '–'}</span></div>
                             </div>
 
                             <div className={styles.divider} />
@@ -199,6 +197,7 @@ export default function Main({ data }) {
                                     </div>
 
                                     {roll.map(stu => {
+
                                         const c = cur(stu);
                                         return (
                                             <div key={stu.ID} className={styles.row}
@@ -207,7 +206,7 @@ export default function Main({ data }) {
                                                 <div className="text_6_400" style={{ flex: 3, padding: '12px 8px', fontWeight: 500 }}>{stu.Name}</div>
 
                                                 <div style={{ flex: 3, display: 'flex', alignItems: 'center' }}>
-                                                    {['1', '0', '2'].map(v => (
+                                                    {['1', '2', '3'].map(v => (
                                                         <label key={v} style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'pointer' }}>
                                                             <input type="radio" name={`att_${stu.ID}`} value={v}
                                                                 checked={c === v}

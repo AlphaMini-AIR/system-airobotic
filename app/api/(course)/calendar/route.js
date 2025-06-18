@@ -4,14 +4,13 @@ import connectDB from '@/config/connectDB';
 
 export async function GET(request) {
   try {
-    // 1. Parse month & year from query
     const { searchParams } = new URL(request.url);
-    const monthParam = parseInt(searchParams.get('month') || '', 10);
-    const yearParam = parseInt(searchParams.get('year') || '', 10);
+    const monthParam = parseInt(searchParams.get('month'), 10);
+    const yearParam = parseInt(searchParams.get('year'), 10);
 
     if (
-      Number.isNaN(monthParam) ||
-      Number.isNaN(yearParam) ||
+      !Number.isInteger(monthParam) ||
+      !Number.isInteger(yearParam) ||
       monthParam < 1 ||
       monthParam > 12
     ) {
@@ -21,73 +20,104 @@ export async function GET(request) {
       );
     }
 
-    // 2. Connect to the database
     await connectDB();
 
-    // 3. Compute the date range for that month
-    //    JS Date months are 0-based
-    const startDate = new Date(yearParam, monthParam - 1, 1);
-    const endDate = new Date(yearParam, monthParam, 1);
+    const startDate = new Date(Date.UTC(yearParam, monthParam - 1, 1));
+    const endDate = new Date(Date.UTC(yearParam, monthParam, 1));
 
-    // 4. Run the aggregation pipeline
     const events = await PostCourse.aggregate([
       { $unwind: '$Detail' },
-
-      // Parse the 'dd/MM/yyyy' string into a real Date object
-      {
-        $addFields: {
-          parsedDate: {
-            $dateFromString: {
-              dateString: '$Detail.Day',
-              format: '%d/%m/%Y'
-            }
-          }
-        }
-      },
-
-      // Only keep those within the requested month/year
       {
         $match: {
-          parsedDate: {
+          'Detail.Day': {
             $gte: startDate,
-            $lt: endDate
-          }
-        }
+            $lt: endDate,
+          },
+        },
       },
 
-      // Sort ascending by that date
-      { $sort: { parsedDate: 1 } },
+      // === BẮT ĐẦU CHUỖI XỬ LÝ TOPIC PHỨC TẠP ===
 
-      // Project the fields you need
+      // 1. Join với collection 'books' để lấy document book tương ứng
+      {
+        $lookup: {
+          from: 'books', // Tên collection của model Book
+          localField: 'Book',
+          foreignField: '_id',
+          as: 'bookInfo',
+        },
+      },
+      // Lấy document book ra khỏi mảng bookInfo (vì kết quả lookup luôn là mảng)
+      {
+        $addFields: {
+          bookDoc: { $arrayElemAt: ['$bookInfo', 0] },
+        },
+      },
+      // 2. Lọc mảng 'Topics' bên trong bookDoc để tìm đúng topic
+      {
+        $addFields: {
+          matchedTopic: {
+            $filter: {
+              input: '$bookDoc.Topics',
+              as: 'topicItem',
+              cond: { $eq: ['$$topicItem._id', '$Detail.Topic'] },
+            },
+          },
+        },
+      },
+      // 3. Lấy object topic ra khỏi mảng kết quả sau khi lọc
+      {
+        $addFields: {
+          topic: { $arrayElemAt: ['$matchedTopic', 0] },
+        },
+      },
+
+      // === KẾT THÚC CHUỖI XỬ LÝ TOPIC ===
+
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'Detail.Teacher',
+          foreignField: '_id',
+          as: 'teacherInfo',
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'Detail.TeachingAs',
+          foreignField: '_id',
+          as: 'teachingAsInfo',
+        },
+      },
+      { $sort: { 'Detail.Day': 1 } },
       {
         $project: {
-          _id: 0,
+          _id: '$Detail._id',
           courseId: '$ID',
           courseName: '$Name',
-          day: '$Detail.Day',
-          month: { $month: '$parsedDate' },
-          year: { $year: '$parsedDate' },
-          topic: '$Detail.Topic',
+          day: { $dayOfMonth: '$Detail.Day' },
+          month: { $month: '$Detail.Day' },
+          year: { $year: '$Detail.Day' },
+          date: '$Detail.Day',
           room: '$Detail.Room',
           time: '$Detail.Time',
-          lesson: '$Detail.Lesson',
-          teacher: '$Detail.Teacher',
-          teachingAs: '$Detail.TeachingAs',
-          id: '$Detail.Image',
-        }
-      }
+          image: '$Detail.Image',
+          topic: '$topic',
+          teacher: { $arrayElemAt: ['$teacherInfo', 0] },
+          teachingAs: { $arrayElemAt: ['$teachingAsInfo', 0] },
+        },
+      },
     ]);
 
-    // 5. Return JSON
     return NextResponse.json(
-      { status: 2, mes: 'Lấy dữ liệu thành công', data: events },
+      { success: true, message: 'Lấy dữ liệu thành công', data: events },
       { status: 200 }
     );
-
   } catch (error) {
-    console.error('Schedule API error:', error);
+    console.error('Lỗi API lấy lịch trình:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { success: false, error: 'Lỗi máy chủ nội bộ' },
       { status: 500 }
     );
   }

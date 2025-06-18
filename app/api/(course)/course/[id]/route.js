@@ -1,14 +1,15 @@
-// File: app/api/course-details/[id]/route.js
-
 import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 import PostBook from '@/models/book';
+import PostArea from '@/models/area';
+import Postuser from '@/models/users';
 import PostStudent from '@/models/student';
+import User from '@/models/users';
 import { NextResponse } from 'next/server';
-import { Types } from 'mongoose'; // Import Types để sử dụng ObjectId
+import { Types } from 'mongoose';
 
 export async function GET(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
         return NextResponse.json(
@@ -20,8 +21,13 @@ export async function GET(request, { params }) {
     try {
         await connectDB();
 
-        const course = await PostCourse.findOne({ ID: id }).populate({ path: 'Book', select: '-Topics' })
-            .populate({ path: 'TeacherHR', select: 'name phone' }).lean();
+        const course = await PostCourse.findOne({ ID: id })
+            .populate([
+                { path: 'Book' },
+                { path: 'TeacherHR', select: 'name phone' },
+                { path: 'Area', select: 'name room color' }
+            ])
+            .lean();
 
         if (!course) {
             return NextResponse.json(
@@ -30,75 +36,64 @@ export async function GET(request, { params }) {
             );
         }
 
-        // --- LOGIC MỚI ĐỂ LINK DỮ LIỆU TỪ DETAIL.LESSON ---
-        if (course.Detail && course.Detail.length > 0) {
-            const lessonIds = [
-                ...new Set(
-                    course.Detail
-                        .map(d => d.Lesson?.toString()) // Lấy ID và chuyển sang string
-                        .filter(Boolean) // Loại bỏ các giá trị null hoặc undefined
-                )
-            ];
+        const userIds = new Set();
+        course.Detail?.forEach(d => {
+            if (d.Teacher && Types.ObjectId.isValid(d.Teacher)) {
+                userIds.add(d.Teacher.toString());
+            }
+            if (d.TeachingAs && Types.ObjectId.isValid(d.TeachingAs)) {
+                userIds.add(d.TeachingAs.toString());
+            }
+        });
 
-            if (lessonIds.length > 0) {
-                // 3. Tìm tất cả các sách có chứa bất kỳ topic nào có _id trong danh sách lessonIds
-                const relevantBooks = await PostBook.find({
-                    'Topics._id': { $in: lessonIds.map(lid => new Types.ObjectId(lid)) }
-                }).lean()
+        const lessonIds = [...new Set(course.Detail?.map(d => d.Topic?.toString()).filter(Boolean) || [])];
+        const studentIds = course.Student?.map(s => s.ID) || [];
 
-                // 4. Xây dựng một Map tra cứu hiệu quả: TopicID -> { BookInfo, TopicInfo }
-                const lessonDetailsMap = new Map();
-                for (const book of relevantBooks) {
-                    // Tách thông tin sách (không bao gồm mảng Topics lớn)
-                    const { Topics, ...bookInfo } = book;
+        const promises = [
+            userIds.size > 0
+                ? User.find({ _id: { $in: Array.from(userIds) } }).select('name phone').lean()
+                : Promise.resolve([]),
 
-                    for (const topic of book.Topics) {
-                        const topicIdStr = topic._id.toString();
-                        // Nếu topic này nằm trong danh sách lesson ta cần tìm
-                        if (lessonIds.includes(topicIdStr)) {
-                            lessonDetailsMap.set(topicIdStr, {
-                                Book: bookInfo, // Thông tin sách chứa topic
-                                Topic: topic,    // Thông tin chi tiết của topic (bài học)
-                            });
-                        }
+            lessonIds.length > 0
+                ? PostBook.find({ 'Topics._id': { $in: lessonIds.map(lid => new Types.ObjectId(lid)) } }).lean()
+                : Promise.resolve([]),
+
+            studentIds.length > 0
+                ? PostStudent.find({ ID: { $in: studentIds } }).select('ID Name').lean()
+                : Promise.resolve([])
+        ];
+
+        const [usersData, relevantBooks, studentsData] = await Promise.all(promises);
+
+        const userDetailsMap = new Map(usersData.map(u => [u._id.toString(), u]));
+        const lessonDetailsMap = new Map();
+
+        if (relevantBooks.length > 0) {
+            for (const book of relevantBooks) {
+                for (const topic of book.Topics) {
+                    const topicIdStr = topic._id.toString();
+                    if (lessonIds.includes(topicIdStr)) {
+                        lessonDetailsMap.set(topicIdStr, topic);
                     }
                 }
-
-                // 5. "Làm giàu" (enrich) mảng Detail của khóa học
-                course.Detail = course.Detail.map(detailItem => {
-                    const lessonId = detailItem.Lesson?.toString();
-                    // Lấy thông tin chi tiết từ Map đã tạo
-                    const lessonData = lessonDetailsMap.get(lessonId);
-
-                    return {
-                        ...detailItem,
-                        // Thêm trường mới chứa thông tin đã được gộp
-                        LessonDetails: lessonData || null
-                    };
-                });
             }
         }
-        // --- KẾT THÚC LOGIC MỚI ---
 
-
-        // 6. Xử lý và gộp thông tin Học sinh (Student) - Logic này không đổi
-        if (course.Student && course.Student.length > 0) {
-            const studentIds = course.Student.map(s => s.ID);
-            const studentsData = await PostStudent.find({ ID: { $in: studentIds } })
-                .select('ID Name')
-                .lean();
-
-            const studentInfoMap = new Map(
-                studentsData.map(s => [s.ID, { Name: s.Name }])
-            );
-
-            course.Student = course.Student.map(studentInCourse => ({
-                ...studentInCourse,
-                Name: studentInfoMap.get(studentInCourse.ID)?.Name || 'Không tìm thấy',
-            }));
+        if (course.Detail) {
+            course.Detail.forEach(detailItem => {
+                detailItem.LessonDetails = lessonDetailsMap.get(detailItem.Topic?.toString()) || null;
+                detailItem.Teacher = userDetailsMap.get(detailItem.Teacher?.toString()) || null;
+                detailItem.TeachingAs = userDetailsMap.get(detailItem.TeachingAs?.toString()) || null;
+            });
         }
 
-        // 7. Trả về dữ liệu đã được tổng hợp hoàn chỉnh
+        if (studentsData.length > 0) {
+            const studentInfoMap = new Map(studentsData.map(s => [s.ID, s]));
+            course.Student.forEach(studentInCourse => {
+                studentInCourse.Name = studentInfoMap.get(studentInCourse.ID)?.Name || 'Không tìm thấy';
+            });
+        }
+
         return NextResponse.json(
             { status: 2, mes: 'Lấy dữ liệu chi tiết khóa học thành công.', data: course },
             { status: 200 }

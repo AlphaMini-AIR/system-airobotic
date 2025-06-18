@@ -1,95 +1,72 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/config/connectDB';      // Giả định bạn có file kết nối db
-import PostCourse from '@/models/course';        // Import model của bạn
+import mongoose from 'mongoose';
+import connectDB from '@/config/connectDB';
+import PostCourse from '@/models/course';
 
 export async function POST(req) {
-    // Kết nối đến cơ sở dữ liệu
-    await dbConnect();
+    await connectDB();
 
     try {
-        // Lấy dữ liệu từ body của yêu cầu POST
         const body = await req.json();
-        const { image, studentId, newImages } = body;
+        const { studentId, lessonId, newImages } = body;
 
-        // --- 1. Validation đầu vào ---
-        if (!image || !studentId || !newImages) {
+        if (!studentId || !lessonId || !newImages) {
             return NextResponse.json(
-                { success: false, message: "Thiếu trường 'image', 'studentId', hoặc 'newImages' trong body." },
-                { status: 400 } // Bad Request
+                { success: false, message: "Thiếu trường 'studentId', 'lessonId', hoặc 'newImages'." },
+                { status: 400 }
             );
         }
-
-        if (!Array.isArray(newImages)) {
+        if (!mongoose.Types.ObjectId.isValid(lessonId)) {
             return NextResponse.json(
-                { success: false, message: "'newImages' phải là một mảng." },
+                { success: false, message: "Trường 'lessonId' không phải là một ObjectId hợp lệ." },
+                { status: 400 }
+            );
+        }
+        if (!Array.isArray(newImages) || newImages.length === 0) {
+            return NextResponse.json(
+                { success: false, message: "'newImages' phải là một mảng và không được rỗng." },
                 { status: 400 }
             );
         }
 
-        // --- 2. Tìm kiếm khóa học chứa buổi học ---
-        const course = await PostCourse.findOne({ 'Detail.Image': image });
+        const result = await PostCourse.updateOne(
+            // Sửa lại filter: Chỉ cần tìm đúng học sinh, arrayFilters sẽ lo phần còn lại.
+            { "Detail._id": lessonId, "Student.ID": studentId },
+            // Thay đổi $set thành $addToSet với $each
+            {
+                $set: {
+                    "Student.$.Learn.$[learnElem].Image": newImages
+                }
+            },
+            {
+                arrayFilters: [{ "learnElem.Lesson": new mongoose.Types.ObjectId(lessonId) }]
+            }
+        );
 
-        if (!course) {
+        if (result.matchedCount === 0) {
             return NextResponse.json(
-                { success: false, message: `Không tìm thấy khóa học nào chứa buổi học với mã image: ${image}` },
-                { status: 404 } // Not Found
-            );
-        }
-
-        // --- 3. Xác định buổi học và học sinh ---
-        const lessonDetail = course.Detail.find(d => d.Image === image);
-        if (!lessonDetail) {
-            // Trường hợp này hiếm khi xảy ra nếu course được tìm thấy, nhưng vẫn kiểm tra cho chắc chắn
-            return NextResponse.json({ success: false, message: "Lỗi nội bộ: Không tìm thấy chi tiết buổi học." }, { status: 500 });
-        }
-        const lessonObjectId = lessonDetail._id; // Lấy ObjectId để lưu vào trường Lesson
-        const lessonCustomId = lessonDetail.ID;  // Lấy ID tùy chỉnh để làm key cho Map
-
-        const studentIndex = course.Student.findIndex(s => s.ID === studentId);
-        if (studentIndex === -1) {
-            return NextResponse.json(
-                { success: false, message: `Không tìm thấy học sinh với ID: ${studentId} trong khóa học này.` },
+                { success: false, message: `Không tìm thấy khóa học nào có học sinh với ID: ${studentId}` },
                 { status: 404 }
             );
         }
 
-        const imageUpdatePath = `Student.${studentIndex}.Learn.${lessonCustomId}.Image`;
-        const lessonUpdatePath = `Student.${studentIndex}.Learn.${lessonCustomId}.Lesson`;
-
-        const result = await PostCourse.updateOne(
-            { _id: course._id }, 
-            {
-                $set: {
-                    [imageUpdatePath]: newImages,       
-                    [lessonUpdatePath]: lessonObjectId  
-                }
-            }
-        );
-
-        if (result.modifiedCount === 0 && result.matchedCount > 0) {
+        if (result.modifiedCount === 0) {
             return NextResponse.json(
-                { success: true, message: 'Dữ liệu không thay đổi (có thể đã được lưu trước đó).' },
+                { success: true, message: 'Dữ liệu không thay đổi. Có thể do buổi học không tồn tại hoặc tất cả ảnh đã có sẵn.' },
                 { status: 200 }
             );
         }
 
-        // --- 5. Trả về kết quả thành công ---
         return NextResponse.json(
-            { success: true, message: `Cập nhật ảnh cho học sinh ${studentId} thành công.` },
-            { status: 200 } // OK
+            { success: true, message: `Thêm ảnh cho học sinh ${studentId} thành công.` },
+            { status: 200 }
         );
 
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('API Error [add-lesson-images]:', error);
         if (error instanceof SyntaxError) {
-            return NextResponse.json(
-                { success: false, message: 'Dữ liệu JSON trong body không hợp lệ.' },
-                { status: 400 }
-            );
+            return NextResponse.json({ success: false, message: 'Dữ liệu JSON trong body không hợp lệ.' }, { status: 400 });
         }
-        return NextResponse.json(
-            { success: false, message: 'Lỗi máy chủ.', error: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: false, message: 'Lỗi máy chủ.', error: error.message }, { status: 500 });
     }
 }

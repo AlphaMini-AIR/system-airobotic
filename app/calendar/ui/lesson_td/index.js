@@ -7,7 +7,7 @@ import Link from 'next/link';
 const CalendarCourse = ({ data = {} }) => {
 
     return (
-        <Link href={`/calendar/${data.id}`} className={styles.calendarCourse} >
+        <Link href={`/calendar/${data._id}`} className={styles.calendarCourse} >
             <div className={styles.dot} />
             <div className={styles.content}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -24,9 +24,9 @@ const CalendarCourse = ({ data = {} }) => {
                         {data.room}
                     </div>
                 </div>
-                <div><span style={{ fontWeight: 500 }}>Chủ đề:</span> {data.topic} </div>
-                <div><span style={{ fontWeight: 500 }}>Giáo viên:</span> {data.teacher} </div>
-                <div><span style={{ fontWeight: 500 }}>Trợ giảng:</span> {data.teachingAs ? data.teachingAs : '-'} </div>
+                <div><span style={{ fontWeight: 500 }}>Chủ đề:</span> {data.topic.Name} </div>
+                <div><span style={{ fontWeight: 500 }}>Giáo viên:</span> {data.teacher.name} </div>
+                <div><span style={{ fontWeight: 500 }}>Trợ giảng:</span> {data.teachingAs?.name ? data.teachingAs.name : '-'} </div>
             </div>
 
         </Link >

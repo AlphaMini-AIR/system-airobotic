@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import styles from './index.module.css';
-import { formatDate } from '@/function';
+import { calculatePastLessons, formatDate } from '@/function';
 
 export default function CourseItem({ data = {} }) {
-    const { ID = '', Area = '', Detail = [], Student = [], Book = { Name: 'Trống' } } = data;
-    console.log(data);
-
+    const pastLessonsCount = calculatePastLessons(data);
+    const { ID = '', Area = {}, Detail = [], Student = [], Book = { Name: 'Trống' } } = data;
     const allDates = data.Detail.map(item => new Date(item.Day));
     const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];
     const { lessonsDone, totalLessons, percent } = useMemo(() => {
@@ -65,7 +64,10 @@ export default function CourseItem({ data = {} }) {
                 <div className={styles.titleInfo}>
                     <div className={styles.titleText1}>
                         {ID}
-                        {Area && <span className={styles.chip}>{Area}</span>}
+                        {Area && <span className={`chip text_7_400`} style={{
+                            background: Area.color, borderRadius: 16,
+                            padding: '4px 16px', color: 'white'
+                        }}>{Area.name}</span>}
                     </div>
                     <p className={styles.courseName}>{Book.Name}</p>
                 </div>
@@ -76,24 +78,29 @@ export default function CourseItem({ data = {} }) {
                 <span className={styles.value}>
                     {dateRange[0] && dateRange[1] ? `${dateRange[0]} - ${dateRange[1]}` : 'Chưa có thời gian'}
                 </span>
-            </div>  
+            </div>
 
             <div className={styles.infoRow}>
                 <span className={styles.label}>Số lượng học sinh:</span>
                 <span className={styles.value}>{studentCount} Học sinh</span>
             </div>
-
             <div className={styles.infoRow}>
+                <span className={styles.label}>Giáo viên chủ nhiệm:</span>
+                <span className={styles.value}>
+                    {data.TeacherHR.name}
+                </span>
+            </div>
+            <div className={styles.infoRow} style={{ marginBottom: 8 }}>
                 <span className={styles.label}>Tiến độ học:</span>
                 <span className={styles.value}>
-                    {lessonsDone}/{totalLessons} Tiết
+                    {pastLessonsCount}/{data.Detail.length} Buổi
                 </span>
             </div>
 
-            <div className={styles.progressBar}>
+            <div className={styles.progressBar} >
                 <div
                     className={styles.progress}
-                    style={{ width: `${percent}%` }}
+                    style={{ width: `${Number(pastLessonsCount) / data.Detail.length * 100}%` }}
                     aria-label="progress"
                 />
             </div>

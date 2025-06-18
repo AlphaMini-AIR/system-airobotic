@@ -13,18 +13,19 @@ export default async function Page(props) {
   const viewMonth = parseInt(monthParam, 10) || currentMonth;
   const viewYear = parseInt(yearParam, 10) || currentYear;
 
-  const viewPromise = Data_calendar(viewMonth, viewYear);
+  const viewPromise = await Data_calendar(viewMonth, viewYear);
+  console.log(viewPromise);
+  
   const todayPromise = viewMonth === currentMonth && viewYear === currentYear
     ? viewPromise
-    : Data_calendar(currentMonth, currentYear);
+    : await Data_calendar(currentMonth, currentYear);
+
 
   const [viewData, todayData] = await Promise.all([viewPromise, todayPromise]);
-
   const todayEvents = todayData.filter(ev => {
-    const [d, m, y] = ev.day.split('/').map(Number);
+    const [d, m, y] = [ev.day, ev.month, ev.year]
     return d === currentDay && m === currentMonth && y === currentYear;
   });
-
   return (
     <div style={{
       display: 'flex',

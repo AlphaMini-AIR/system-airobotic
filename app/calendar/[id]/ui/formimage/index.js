@@ -322,7 +322,7 @@ const UploadManager = forwardRef(({
             try {
                 const fileType = file.type.startsWith('video') ? 'video' : 'image';
                 const formData = new FormData();
-                formData.append('folderId', session.image);
+                formData.append('folderId', session.Image);
                 formData.append('images', file);
                 formData.append('fileType', fileType);
 
@@ -396,7 +396,7 @@ export default function ImageUploader({ session, courseId }) {
     const router = useRouter();
     const [isPopupOpen, setPopupOpen] = useState(false);
     const [isUploaderOpen, setUploaderOpen] = useState(false);
-    const [mediaItems, setMediaItems] = useState(session?.detailImage || []);
+    const [mediaItems, setMediaItems] = useState(session?.DetailImage || []);
     const [lightboxMedia, setLightboxMedia] = useState(null);
 
     // *** STATE MỚI ĐỂ QUẢN LÝ TIẾN TRÌNH UPLOAD Ở CẤP CAO NHẤT ***
@@ -408,13 +408,12 @@ export default function ImageUploader({ session, courseId }) {
     const uploaderRef = useRef();
 
     useEffect(() => {
-        setMediaItems(session?.detailImage || []);
-    }, [session?.detailImage]);
-
+        setMediaItems(session?.DetailImage || []);
+    }, [session?.DetailImage]);
+    
     const handleUploadFinish = async () => {
-        // Hàm này có thể được gọi từ nhiều nơi (update, delete, upload)
         await Re_course_one(courseId);
-        await Re_lesson(session.image);
+        await Re_lesson(session._id);
         router.refresh();
     };
 
@@ -489,11 +488,10 @@ export default function ImageUploader({ session, courseId }) {
     };
 
 
-    if (!session?.image) return null;
+    if (!session?.Image) return null;
 
     return (
         <>
-            {/* Đây là nút bấm ban đầu của bạn */}
             <div className={styles.container} onClick={() => setPopupOpen(true)}>
                 <img src={'https://assets.minimals.cc/public/assets/icons/files/ic-img.svg'} alt="icon" loading="lazy" className={styles.icon} />
                 <div className={styles.name}>Hình ảnh & Video</div>

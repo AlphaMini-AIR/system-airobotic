@@ -8,8 +8,8 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
-import { Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
-import { Re_user } from '@/data/users';
+import { Svg_Canlendar, Svg_Course, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
+import { formatDate } from '@/function';
 
 const toArr = (v) =>
     Array.isArray(v) ? v : v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
@@ -30,11 +30,8 @@ const SummaryBox = ({ title, data }) => (
 
 export default function DetailStudent({ data: student, course, c, users, studentsx }) {
     Object.assign(student, studentsx.find(i => i.ID === student.ID) || {})
-    let TeacherHR = users.find(t => t.name === c.TeacherHR);
-    if (!TeacherHR) {
-        TeacherHR = users.find(t => t._id === c.TeacherHR);
-    }
-
+    const allDates = c.Detail.map(item => new Date(item.Day));
+    const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];
     const [openMain, setOpenMain] = useState(false);
     const [commentPop, setCommentPop] = useState({ open: false, lessonId: '', comments: [] });
     const [imagePop, setImagePop] = useState({ open: false, lessonId: '', imageId: '' });
@@ -63,7 +60,7 @@ export default function DetailStudent({ data: student, course, c, users, student
     /* ───────── DATA PROCESSING ───────── */
     const { rows, summaryStats } = useMemo(() => {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Chuẩn hóa về đầu ngày
+        today.setHours(0, 0, 0, 0);
 
         const studentLearnData = student.Learn || {};
         const allLessonsInCourse = toArr(c?.Detail);
@@ -81,12 +78,12 @@ export default function DetailStudent({ data: student, course, c, users, student
                 return;
             }
             if (learnRecord) {
-                if (learnRecord.Checkin === '1') {
+                if (learnRecord.Checkin == '1') {
                     attendedOfficial++;
-                } else if (learnRecord.Checkin === '2') {
+                } else if (learnRecord.Checkin == '2') {
                     absentUnexcused++;
                     topicsToMakeUp.add(officialLesson.Topic);
-                } else if (learnRecord.Checkin === '3') {
+                } else if (learnRecord.Checkin == '3') {
                     absentExcused++;
                     topicsToMakeUp.add(officialLesson.Topic);
                 }
@@ -106,7 +103,7 @@ export default function DetailStudent({ data: student, course, c, users, student
         });
 
         const processedRows = course.map((les, idx) => {
-            const lessonDate = parseDMY(les.Day);
+            const lessonDate = new Date(les.Day);
             const Status = lessonDate && lessonDate <= today ? 'Đã diễn ra' : 'Chưa diễn ra';
             const learnRecord = Object.values(studentLearnData).find(lr => lr.Lesson === les._id) || { Checkin: 0, Cmt: [] };
 
@@ -148,7 +145,7 @@ export default function DetailStudent({ data: student, course, c, users, student
             setLoading(true);
             const lessonsPayload = rows.map((r, i) => ({
                 Index: i + 1,
-                Topic: r.Topic,
+                Topic: r.LessonDetails,
                 Teacher: r.Teacher,
                 Status: r.Status,
                 Day: r.Day,
@@ -161,10 +158,12 @@ export default function DetailStudent({ data: student, course, c, users, student
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    teacherHR: TeacherHR,
+                    teacherHR: c.TeacherHR.name,
                     lessons: lessonsPayload,
                     course: c,
-                    student
+                    student,
+                    summaryStats,
+                    date: dateRange
                 }),
             });
 
@@ -229,25 +228,30 @@ export default function DetailStudent({ data: student, course, c, users, student
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <p className='text_4'>Thông tin khóa học</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
-                            <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" /></svg>
+                        <Svg_Course w={14} h={14} c='var(--text-primary)' />
                         <span className='text_6'>Tên khóa học :</span>
                         <span className="text_6_400">{c.ID}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
+                            <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" /></svg>
+                        <span className='text_6'>Chương trình học :</span>
+                        <span className="text_6_400">{c.Book.Name}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Svg_Canlendar w={14} h={14} c='var(--text-primary)' />
                         <span className='text_6'>Thời gian học :</span>
-                        <span className="text_6_400">{c.TimeStart} - {c.TimeEnd}</span>
+                        <span className="text_6_400">{dateRange[0] || 'Không có'} - {dateRange[1] || 'Không có'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Svg_Profile w={14} h={14} c='var(--text-primary)' />
                         <span className='text_6'>Chủ nhiệm :</span>
-                        <span className="text_6_400">{c.TeacherHR}</span>
+                        <span className="text_6_400">{c.TeacherHR.name}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Svg_Profile w={14} h={14} c='var(--text-primary)' />
                         <span className='text_6'>Số điện thoại :</span>
-                        <span className="text_6_400">{users.filter(t => t.name == c.TeacherHR)[0]?.phone}</span>
+                        <span className="text_6_400">{c.TeacherHR.phone}</span>
                     </div>
                 </div>
                 <div className={styles.summaryContainer}>
@@ -291,7 +295,6 @@ export default function DetailStudent({ data: student, course, c, users, student
                     })}
                 </div>
                 {rows.map((row, rowIdx) => {
-                    console.log(row);
 
                     return (
                         <div
@@ -300,6 +303,20 @@ export default function DetailStudent({ data: student, course, c, users, student
                         >
                             {columns.map(col => {
                                 const { key: colKey, ...colProps } = col;
+                                if (colKey === 'Topic') {
+                                    return (
+                                        <Cell key={colKey} {...colProps}>
+                                            {row.LessonDetails.Name || 'Chưa có'}
+                                        </Cell>
+                                    );
+                                }
+                                if (colKey === 'Teacher') {
+                                    return (
+                                        <Cell key={colKey} {...colProps}>
+                                            {row.Teacher.name || 'Chưa có'}
+                                        </Cell>
+                                    );
+                                }
                                 if (colKey === 'more') {
                                     return (
                                         <Cell key={colKey} {...colProps}>
@@ -310,11 +327,11 @@ export default function DetailStudent({ data: student, course, c, users, student
                                         </Cell>
                                     );
                                 }
-                                if (colKey === 'Topic') {
+                                if (colKey === 'Date') {
                                     return (
-                                        <div key={colKey} style={{ flex: col.flex }} className={styles.topic}>
-                                            <p>{row.Topic}</p>
-                                        </div>
+                                        <Cell key={colKey} {...colProps}>
+                                            <span className="text_6_400">{row.Date.split(' - ')[0]} - {formatDate(new Date(row.Date.split(' - ')[1].trim()))}</span>
+                                        </Cell>
                                     );
                                 }
                                 if (colKey === 'Status') {

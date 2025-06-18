@@ -49,41 +49,52 @@ export default function Navbar({ data = [], book = [], user }) {
 
     const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
-            counts: { inProgress: 0, completed: 0, trial: 0, book: 0 },
-            groups: { inProgress: [], completed: [], trial: [], book: [] },
-            areaSet: new Set(),
+            counts: { inProgress: 0, completed: 0, trial: 0, book: book.length }, // Gộp counts.book vào đây
+            groups: { inProgress: [], completed: [], trial: [] },
+            areaMap: new Map(), // Sử dụng Map thay vì Set
         };
 
         data.forEach((c) => {
-            result.areaSet.add(c.Area);
+            // Thêm khu vực vào Map để đảm bảo tính duy nhất dựa trên _id
+            if (c.Area && c.Area._id) {
+                result.areaMap.set(c.Area._id, c.Area);
+            }
+
+            // Logic phân loại khóa học không đổi
             if (!c.Status && c.Type !== 'Học thử') {
-                result.counts.inProgress += 1;
                 result.groups.inProgress.push(c);
             } else if (c.Status && c.Type === 'AI Robotic') {
-                result.counts.completed += 1;
                 result.groups.completed.push(c);
             } else if (c.Type === 'Học thử') {
-                result.counts.trial += 1;
                 result.groups.trial.push(c);
             }
         });
 
+        // Cập nhật số lượng sau khi đã lặp
+        result.counts.inProgress = result.groups.inProgress.length;
+        result.counts.completed = result.groups.completed.length;
+        result.counts.trial = result.groups.trial.length;
+
         return {
             counts: result.counts,
             groups: result.groups,
-            areaOptions: [''].concat(Array.from(result.areaSet)),
+            // Chuyển các giá trị của Map thành một mảng
+            areaOptions: Array.from(result.areaMap.values()),
         };
     }, [data, book]);
+
     counts.book = book.length;
 
     const courseFilter = useCallback(
         (c) => {
-            if (area && c.Area !== area) return false;
+            console.log(c, area);
+
+            if (area && c.Area._id !== area) return false;
             if (!search) return true;
             const q = search.trim().toLowerCase();
             return (
                 c.ID.toLowerCase().includes(q) ||
-                (c.TeacherHR && c.TeacherHR.toLowerCase().includes(q))
+                (c.TeacherHR && c.TeacherHR.name.toLowerCase().includes(q))
             );
         },
         [search, area]
@@ -98,7 +109,7 @@ export default function Navbar({ data = [], book = [], user }) {
             case 2:
                 return groups.trial.filter(courseFilter);
             default:
-                return groups.book.filter(courseFilter);
+                return book.filter(courseFilter);
         }
     }, [tab, groups, courseFilter]);
 
@@ -146,13 +157,12 @@ export default function Navbar({ data = [], book = [], user }) {
                                 onChange={(e) => setArea(e.target.value)}
                             >
                                 <option value="" className='text_6_400'>Tất cả khu vực</option>
-                                {areaOptions.map(
-                                    (a) =>
-                                        a && (
-                                            <option key={a} value={a} className='text_6_400'>
-                                                {a}
-                                            </option>
-                                        )
+                                {areaOptions.map((a, index) =>
+                                    a && (
+                                        <option key={index} value={a._id} className='text_6_400'>
+                                            {a.name}
+                                        </option>
+                                    )
                                 )}
                             </select>
                         </> : null}

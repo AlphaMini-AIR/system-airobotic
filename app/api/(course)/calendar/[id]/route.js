@@ -1,17 +1,19 @@
-// app/api/sessions/[id]/route.js (hoặc đường dẫn của bạn)
+// app/api/sessions/[id]/route.js
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
+import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 import PostBook from '@/models/book';
-import connectDB from '@/config/connectDB';
+import PostStudent from '@/models/student';
+import User from '@/models/users';
 
 export async function GET(request, { params }) {
     const { id } = await params;
 
-    if (!id) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
-            { status: 1, mes: 'Thiếu ID hình ảnh của buổi học.', data: [] },
+            { success: false, message: 'ID của buổi học không hợp lệ.' },
             { status: 400 }
         );
     }
@@ -19,72 +21,68 @@ export async function GET(request, { params }) {
     try {
         await connectDB();
 
-        // Tìm khóa học và buổi học cụ thể chứa ID hình ảnh
         const courseData = await PostCourse.findOne(
-            { 'Detail.Image': id },
-            { 'Detail.$': 1, ID: 1, Area: 1, TeacherHR: 1, Student: 1 }
+            { 'Detail._id': id },
+            { 'Detail.$': 1, ID: 1, Book: 1, Student: 1 }
         ).lean();
 
         if (!courseData || !courseData.Detail?.length) {
             return NextResponse.json(
-                { status: 1, mes: 'Buổi học không được tìm thấy.', data: [] },
+                { success: false, message: 'Buổi học không được tìm thấy.' },
                 { status: 404 }
             );
         }
 
-        const sessionDetail = courseData.Detail[0];
-        const { Detail, ...courseInfo } = courseData;
+        const session = courseData.Detail[0];
 
-        let topicInfo = {};
-        let t = mongoose.Types.ObjectId.isValid(sessionDetail.ID);
-        const match = courseInfo.ID.match(/^\d{2}([A-Z0-9]+)\d{3}$/);
-        if (match) {
-            const bookId = match[1];
-            let bookData;
-            if (!t) {
-                bookData = await PostBook.findOne(
-                    { ID: bookId },
-                    { Topics: { $elemMatch: { _id: new mongoose.Types.ObjectId(sessionDetail.ID) } } }
-                ).lean();
-            } else {
-                bookData = await PostBook.findOne(
-                    { ID: bookId },
-                    { Topics: { $elemMatch: { _id: new mongoose.Types.ObjectId(sessionDetail.ID) } } }
-                ).lean();
-            }
+        const userIdsToPopulate = [
+            session.Teacher,
+            session.TeachingAs,
+        ].filter(Boolean);
 
-            if (bookData?.Topics?.length > 0) {
-                const foundTopic = bookData.Topics[0];
-                topicInfo = {
-                    topicName: foundTopic.Name,
-                    slide: foundTopic.Slide,
-                    period: foundTopic.Period
-                };
-            }
-        }
+        const studentStringIds = courseData.Student?.map(s => s.ID) || [];
 
-        const sessionData = {
-            day: sessionDetail.Day,
-            room: sessionDetail.Room,
-            time: sessionDetail.Time,
-            lesson: sessionDetail.Lesson,
-            teacher: sessionDetail.Teacher,
-            teachingAs: sessionDetail.TeachingAs,
-            image: sessionDetail.Image,
-            detailImage: sessionDetail.DetailImage,
-            id: sessionDetail.ID,
-            ...topicInfo
+        const [users, book, students] = await Promise.all([
+            User.find({ _id: { $in: userIdsToPopulate } }).select('name').lean(),
+            PostBook.findOne({ 'Topics._id': session.Topic }).select({ 'Topics.$': 1 }).lean(),
+            PostStudent.find({ ID: { $in: studentStringIds } }).select('ID Name').lean()
+        ]);
+
+        const userMap = new Map(users.map(u => [u._id.toString(), u]));
+        const studentNameMap = new Map(students.map(s => [s.ID, s.Name]));
+
+        session.Teacher = userMap.get(session.Teacher?.toString()) || null;
+        session.TeachingAs = userMap.get(session.TeachingAs?.toString()) || null;
+        session.Topic = book?.Topics?.[0] || null;
+
+        const studentsWithAttendance = courseData.Student.map(s => {
+            const attendance = s.Learn.find(learnItem => learnItem.Lesson.equals(session._id));
+            return {
+                _id: s._id,
+                ID: s.ID,
+                Name: studentNameMap.get(s.ID) || 'Không có tên',
+                attendance: attendance || { Checkin: 0, Cmt: [], Note: '' }
+            };
+        });
+
+        const responsePayload = {
+            course: {
+                _id: courseData._id,
+                ID: courseData.ID,
+            },
+            session: session,
+            students: studentsWithAttendance,
         };
 
         return NextResponse.json(
-            { status: 2, mes: 'Lấy dữ liệu thành công', data: { course: courseInfo, session: sessionData } },
+            { success: true, message: 'Lấy dữ liệu buổi học thành công', data: responsePayload },
             { status: 200 }
         );
 
     } catch (error) {
-        console.error('[SESSION_GET_ERROR]', error);
+        console.error(`[SESSION_GET_BY_ID_ERROR] ID: ${id}`, error);
         return NextResponse.json(
-            { status: 1, mes: 'Lỗi máy chủ nội bộ.', data: [] },
+            { success: false, message: 'Lỗi từ máy chủ.' },
             { status: 500 }
         );
     }

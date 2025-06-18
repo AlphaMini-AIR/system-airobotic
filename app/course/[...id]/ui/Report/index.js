@@ -1,243 +1,225 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, } from 'chart.js';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import Noti from '@/components/(features)/(noti)/noti';
-import styles from './index.module.css';
 import { Svg_Chart } from '@/components/(icon)/svg';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import styles from './index.module.css';
 
-// Đăng ký các thành phần cần thiết cho Chart.js
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend
-);
+// --- Đăng ký Chart.js ---
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-// Hằng số và Hàm tiện ích
+// --- Hằng số ---
 const ATTENDANCE_STATUS = {
-    PRESENT: '1',
-    ABSENT_NO_PERMISSION: '2',
-    ABSENT_WITH_PERMISSION: '3',
+    PRESENT: 1,
+    ABSENT_NO_PERMISSION: 2,
+    ABSENT_WITH_PERMISSION: 3,
 };
 
-const parseDdMmYyyy = (dateString) => {
-    if (!dateString) return new Date();
-    const parts = dateString.split('/');
-    // Tháng trong JavaScript bắt đầu từ 0 (0-11)
-    return new Date(+parts[2], parts[1] - 1, +parts[0]);
-};
-
-export default function Report({ course, students }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [noti, setNoti] = useState({ open: false, mes: '', status: false });
-    const [selectedMakeupLesson, setSelectedMakeupLesson] = useState(null);
-    const resetPopup = useCallback(() => {
-        setIsOpen(false);
-    }, []);
-
-    const { attendanceData, makeupLessonsNeeded } = useMemo(() => {
-        if (!isOpen || !course || !course.Detail || !course.Student) {
-            return { attendanceData: { labels: [], datasets: [] }, makeupLessonsNeeded: [] };
+// --- Custom Hook: Tách toàn bộ logic tính toán ra khỏi component ---
+const useCourseAnalytics = (course) => {
+    return useMemo(() => {
+        if (!course || !course.Detail || !course.Student) {
+            return { attendanceData: { labels: [], datasets: [] }, makeupLessonsNeeded: [], canCompleteCourse: false };
         }
 
-        const labels = course.Detail.map(lesson => `ID: ${lesson.ID}`);
-        const presentData = [];
-        const permittedAbsenceData = [];
-        const unpermittedAbsenceData = [];
-        const notMarkedData = [];
+        // Tối ưu: Tạo một map để tra cứu trạng thái điểm danh của học sinh nhanh hơn
+        const studentLearnMap = new Map(
+            course.Student.map(student => [
+                student.ID,
+                new Map(student.Learn.map(learnItem => [learnItem.Lesson, learnItem.Checkin]))
+            ])
+        );
 
-        course.Detail.forEach(lesson => {
-            let presentCount = 0;
-            let permittedAbsenceCount = 0;
-            let unpermittedAbsenceCount = 0;
-
-            course.Student.forEach(studentInCourse => {
-                const checkinStatus = studentInCourse.Learn?.[lesson.ID]?.Checkin?.toString();
-
+        // 1. Tính toán dữ liệu điểm danh cho biểu đồ
+        const labels = course.Detail.map((lesson, index) => `Chủ đề ${index + 1}`);
+        const attendanceCounts = course.Detail.map(lesson => {
+            const counts = { present: 0, permitted: 0, unpermitted: 0 };
+            course.Student.forEach(student => {
+                const checkinStatus = studentLearnMap.get(student.ID)?.get(lesson._id);
                 switch (checkinStatus) {
                     case ATTENDANCE_STATUS.PRESENT:
-                        presentCount++;
-                        break;
-                    case ATTENDANCE_STATUS.ABSENT_NO_PERMISSION:
-                        unpermittedAbsenceCount++;
+                        counts.present++;
                         break;
                     case ATTENDANCE_STATUS.ABSENT_WITH_PERMISSION:
-                        permittedAbsenceCount++;
+                        counts.permitted++;
+                        break;
+                    case ATTENDANCE_STATUS.ABSENT_NO_PERMISSION:
+                        counts.unpermitted++;
                         break;
                     default:
                         break;
                 }
             });
-
-            const totalStudents = course.Student.length;
-            const notMarkedCount = totalStudents - presentCount - permittedAbsenceCount - unpermittedAbsenceCount;
-
-            presentData.push(presentCount);
-            permittedAbsenceData.push(permittedAbsenceCount);
-            unpermittedAbsenceData.push(unpermittedAbsenceCount);
-            notMarkedData.push(notMarkedCount);
+            return counts;
         });
 
-        const chartData = {
+        const totalStudents = course.Student.length;
+        const attendanceData = {
             labels,
             datasets: [
-                { label: 'Có mặt', data: presentData, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
-                { label: 'Vắng có phép', data: permittedAbsenceData, backgroundColor: 'rgba(255, 206, 86, 0.7)' },
-                { label: 'Vắng không phép', data: unpermittedAbsenceData, backgroundColor: 'rgba(255, 99, 132, 0.7)' },
-                { label: 'Chưa điểm danh', data: notMarkedData, backgroundColor: 'rgba(201, 203, 207, 0.7)' },
+                { label: 'Có mặt', data: attendanceCounts.map(c => c.present), backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                { label: 'Vắng có phép', data: attendanceCounts.map(c => c.permitted), backgroundColor: 'rgba(255, 206, 86, 0.7)' },
+                { label: 'Vắng không phép', data: attendanceCounts.map(c => c.unpermitted), backgroundColor: 'rgba(255, 99, 132, 0.7)' },
+                { label: 'Chưa điểm danh', data: attendanceCounts.map(c => totalStudents - c.present - c.permitted - c.unpermitted), backgroundColor: 'rgba(201, 203, 207, 0.7)' },
             ],
         };
 
         // 2. Phân tích các buổi cần bù
-        const lessonsByTopicId = course.Detail.reduce((acc, lesson) => {
-            acc[lesson.ID] = acc[lesson.ID] || [];
-            acc[lesson.ID].push(lesson);
+        const lessonsByTopic = course.Detail.reduce((acc, lesson) => {
+            if (!acc[lesson.Topic]) {
+                acc[lesson.Topic] = { topicName: lesson.LessonDetails?.Name, sessions: [] };
+            }
+            acc[lesson.Topic].sessions.push(lesson);
             return acc;
         }, {});
 
-        const makeupLessons = [];
-        Object.entries(lessonsByTopicId).forEach(([topicId, sessions]) => {
-            const studentsNeedingMakeup = [];
-            const topicName = sessions[0].Topic;
+        const makeupLessonsNeeded = Object.entries(lessonsByTopic).map(([topicId, { topicName, sessions }]) => {
+            const studentsNeedingMakeup = course.Student.filter(student => {
+                const learnMap = studentLearnMap.get(student.ID);
+                if (!learnMap) return false;
 
-            course.Student.forEach(studentInCourse => {
-                const wasPresent = sessions.some(s => studentInCourse.Learn?.[s.ID]?.Checkin === ATTENDANCE_STATUS.PRESENT);
+                const wasPresent = sessions.some(s => learnMap.get(s._id) === ATTENDANCE_STATUS.PRESENT);
+                if (wasPresent) return false;
 
-                if (!wasPresent) {
-                    const hadPermittedAbsence = sessions.some(s => studentInCourse.Learn?.[s.ID]?.Checkin === ATTENDANCE_STATUS.ABSENT_WITH_PERMISSION);
-                    if (hadPermittedAbsence) {
-                        studentsNeedingMakeup.push(studentInCourse);
-                    }
-                }
+                const hadPermittedAbsence = sessions.some(s => learnMap.get(s._id) === ATTENDANCE_STATUS.ABSENT_WITH_PERMISSION);
+                return hadPermittedAbsence;
             });
 
-            if (studentsNeedingMakeup.length > 0) {
-                makeupLessons.push({ topicId, topicName, students: studentsNeedingMakeup });
-            }
-        });
+            return { topicId, topicName, students: studentsNeedingMakeup };
+        }).filter(item => item.students.length > 0);
 
-        return { attendanceData: chartData, makeupLessonsNeeded: makeupLessons };
-    }, [course, isOpen]);
+        const allDates = course.Detail.map(item => new Date(item.Day));
+        const dateRange = [new Date(Math.min(...allDates)), new Date(Math.max(...allDates))];
+        const isPastEndDate = new Date(dateRange[1]) ? new Date() > new Date(dateRange[1]) : false;
+        const canCompleteCourse = makeupLessonsNeeded.length === 0 && isPastEndDate;
 
-    // 3. Kiểm tra điều kiện hoàn thành khóa học
-    const canCompleteCourse = useMemo(() => {
-        if (!course.TimeEnd) return false;
-        const noMakeupNeeded = makeupLessonsNeeded.length === 0;
-        const isPastEndDate = new Date() > parseDdMmYyyy(course.TimeEnd);
-        return noMakeupNeeded && isPastEndDate;
-    }, [makeupLessonsNeeded, course.TimeEnd]);
+        return { attendanceData, makeupLessonsNeeded, canCompleteCourse };
+    }, [course]);
+};
 
-    const handleCompleteCourse = () => {
+
+// --- Các Component con để làm sạch phần render ---
+
+const ReportTrigger = ({ onClick }) => (
+    <div className={styles.trigger} onClick={onClick}>
+        <Svg_Chart w={18} h={18} c='var(--text-primary)' />
+        <p className="text_7">Báo cáo</p>
+    </div>
+);
+
+const MakeupSection = ({ lessons, onSelect }) => (
+    <div className={styles.makeupContainer}>
+        <h2 className='text_4'>Danh sách chủ đề cần bù</h2>
+        {lessons.length === 0 ? (
+            <p className={`${styles.noMakeupMessage}`} style={{ fontSize: 14 }}>Không có buổi học nào cần bù.</p>
+        ) : (
+            <ul className={styles.makeupList}>
+                {lessons.map(({ topicId, topicName, students }) => (
+                    <li key={topicId} className={styles.makeupItem} onClick={() => onSelect({ topicId, topicName, students })}>
+                        <p className='text_6'>Chủ đề: {topicName} (ID: {topicId})</p>
+                        <p className='text_6_400'>Số lượng học sinh cần bù: {students.length}</p>
+                    </li>
+                ))}
+            </ul>
+        )}
+    </div>
+);
+
+const StudentListPopup = ({ lesson, onClose }) => {
+    if (!lesson) return null;
+    return (
+        <FlexiblePopup
+            open={!!lesson}
+            onClose={onClose}
+            width={600}
+            title={`Học sinh cần bù | Chủ đề: ${lesson.topicName}`}
+            renderItemList={() => (
+                <div className={styles.studentListContainer}>
+                    {lesson.students.map((student, index) => (
+                        <div key={student.ID} className={styles.studentItem}>
+                            <span className={styles.studentIndex}>{index + 1}.</span>
+                            <div className={styles.studentInfo}>
+                                <span className={styles.studentName}>{student.Name}</span>
+                                <span className={styles.studentId}>ID: {student.ID}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        />
+    );
+};
+
+const CompletionButton = ({ onClick, disabled }) => (
+    <div className={styles.completionArea}>
+        <button className="btn" onClick={onClick} disabled={disabled} style={{ background: disabled ? 'var(--gray_3)' : 'var(--main_d)' }}>
+            <p className='text_6_400' style={{ color: 'white' }}>Xác nhận hoàn thành</p>
+        </button>
+        {disabled && <p className={styles.completionNote}>Khóa học chưa thể hoàn thành do vẫn còn học sinh cần bù hoặc chưa tới ngày kết thúc.</p>}
+    </div>
+);
+
+
+// --- Component Chính ---
+export default function Report({ course }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [noti, setNoti] = useState({ open: false, mes: '', status: false });
+    const [selectedMakeupLesson, setSelectedMakeupLesson] = useState(null);
+
+    const { attendanceData, makeupLessonsNeeded, canCompleteCourse } = useCourseAnalytics(course);
+
+    const resetPopup = useCallback(() => setIsOpen(false), []);
+    const handleCompleteCourse = useCallback(() => {
         setNoti({ open: true, mes: 'Xác nhận hoàn thành khóa học thành công!', status: true });
         resetPopup();
-    };
+    }, [resetPopup]);
 
     const chartOptions = {
-        plugins: { title: { display: true, text: `Tình hình điểm danh khóa học: ${course.Name}`, font: { size: 18 } } },
+        plugins: { title: { display: true, text: `Tình hình điểm danh: ${course?.Name || course?.ID}`, font: { size: 18 } } },
         responsive: true,
+        maintainAspectRatio: false,
         scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Sĩ số' } } },
     };
-    const handleSelectMakeupLesson = useCallback((lesson) => {
 
-        setSelectedMakeupLesson(lesson);
-    }, []);
-
-    const renderStudentListPopup = () => {
-        if (!selectedMakeupLesson) return null;
-        return (
-            <div className={styles.studentListContainer}>
-                {selectedMakeupLesson.students.map((student, index) => (
-                    <div key={student.ID} className={styles.studentItem}>
-                        <span className={styles.studentIndex}>{index + 1}.</span>
-                        <div className={styles.studentInfo}>
-                            <span className={styles.studentName}>{student.Name}</span>
-                            <span className={styles.studentId}>ID: {student.ID}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-    const renderForm = () => {
-        return (
-            <div className={styles.reportContainer}>
-                <div className={styles.chartContainer}>
+    const renderMainReport = () => (
+        <div className={styles.reportContainer}>
+            <div className={styles.mainContentRow}>
+                <div className={styles.chartWrapper}>
                     <Bar options={chartOptions} data={attendanceData} />
-                    <div style={{ flex: 1 }}>
-                        <h2 className='text_4'>Danh sách các buổi học cần bù</h2>
-                        {makeupLessonsNeeded.length === 0 ? (
-                            <p className='text_6_400' style={{ textAlign: 'center', fontStyle: 'italic', padding: '8px 16px', borderRadius: 5, background: 'var(--border-color)' }}>Không có buổi học nào cần bù. Tất cả học sinh đã hoàn thành các chủ đề.</p>
-                        ) : (
-                            <ul className={styles.makeupList}>
-                                {makeupLessonsNeeded.map(({ topicId, topicName, students: studentsToMakeup }) => (
-                                    <li key={topicId} className={styles.makeupItem} onClick={() => handleSelectMakeupLesson({ topicId, topicName, students: studentsToMakeup })}>
-                                        <p className='text_6'>Chủ đề: {topicName} (ID: {topicId})</p>
-                                        <p className='text_6'>Số lượng học sinh cần bù: {studentsToMakeup.length}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
                 </div>
+                <MakeupSection lessons={makeupLessonsNeeded} onSelect={setSelectedMakeupLesson} />
+            </div>
 
-
-
-                <div className={styles.completionArea}>
-                    <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
-                            <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
-                        </svg>
-                        <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
-                    </div>
-                </div>
-            </div >
-        );
-    };
+            {/* Nút hoàn thành được đặt bên ngoài hàng trên, do đó nó sẽ nằm ở dưới cùng */}
+            <CompletionButton onClick={handleCompleteCourse} disabled={!canCompleteCourse} />
+        </div>
+    );
 
     return (
         <>
-            <div className={styles.trigger} onClick={() => setIsOpen(true)}>
-                <Svg_Chart w={18} h={18} c='var(--text-primary)' />
-                <p className="text_7">Báo cáo</p>
-            </div>
+            <ReportTrigger onClick={() => setIsOpen(true)} />
 
             <FlexiblePopup
                 open={isOpen}
                 onClose={resetPopup}
                 width={1200}
                 title={`Tổng quan khóa học ${course?.ID || '-'}`}
-                renderItemList={renderForm}
+                renderItemList={renderMainReport}
             />
-            <FlexiblePopup
-                open={!!selectedMakeupLesson}
+
+            <StudentListPopup
+                lesson={selectedMakeupLesson}
                 onClose={() => setSelectedMakeupLesson(null)}
-                width={600}
-                title={`Chủ đề: ${selectedMakeupLesson?.topicId}- ${selectedMakeupLesson?.topicName || ''}`}
-                renderItemList={renderStudentListPopup}
             />
+
             <Noti
                 open={noti.open}
                 onClose={() => setNoti(n => ({ ...n, open: false }))}
                 status={noti.status}
                 mes={noti.mes}
-                button={
-                    <button className="btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setNoti(n => ({ ...n, open: false }))}>
-                        Đã hiểu
-                    </button>
-                }
             />
         </>
     );

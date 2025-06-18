@@ -1,6 +1,3 @@
-
-
-
 'use client';
 
 import React, { useState, useCallback, useEffect, memo } from 'react';
@@ -70,11 +67,9 @@ const SingleForm = memo(({ initialData, onSave, programObj, areaObj, teachersLis
     const [localTeacher, setLocalTeacher] = useState(() => initialData ? initialData.Teacher : mainTeacher);
     const [start, setStart] = useState(() => initialData ? initialData.Time.split('-')[0] : '08:00');
     const [lesson, setLesson] = useState(() => initialData ? initialData.Lesson : 4);
-
     const [openTopic, setOpenTopic] = useState(false);
     const [openRoom, setOpenRoom] = useState(false);
     const [openSingleTeacher, setOpenSingleTeacher] = useState(false);
-
     const topicList = programObj?.Topics || [];
     const roomList = areaObj?.room || [];
     const teacherNames = teachersList.map((u) => u.name);
@@ -136,31 +131,24 @@ const SingleForm = memo(({ initialData, onSave, programObj, areaObj, teachersLis
     return (
         <form className={styles.popupForm} onSubmit={handleSave}>
             <TextNoti title={initialData ? 'Chỉnh sửa buổi học' : 'Thông tin buổi học'} color="blue" mes="Thông tin buổi học là bắt buộc" />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Chủ đề</p>
             <Menu menuItems={topicMenu} menuPosition="bottom" isOpen={openTopic} onOpenChange={setOpenTopic}
                 customButton={<div onClick={() => setOpenTopic(o => !o)} className={styles.selectBtn}>{topicObj?.Name || 'Chọn chủ đề'}</div>}
             />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Phòng học</p>
             <Menu menuItems={roomMenu} menuPosition="bottom" isOpen={openRoom} onOpenChange={setOpenRoom}
                 customButton={<div onClick={() => setOpenRoom(o => !o)} className={styles.selectBtn}>{room}</div>}
             />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Giáo viên</p>
             <Menu menuItems={singleTeacherMenu} menuPosition="bottom" isOpen={openSingleTeacher} onOpenChange={setOpenSingleTeacher}
                 customButton={<div onClick={() => setOpenSingleTeacher(o => !o)} className={styles.selectBtn}>{localTeacher}</div>}
             />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Ngày học</p>
             <input type="date" value={day} onChange={(e) => setDay(e.target.value)} required />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Thời gian bắt đầu</p>
             <input type="time" value={start} onChange={(e) => setStart(e.target.value)} />
-
             <p className="text_6_400" style={{ marginBottom: 4 }}>Số tiết</p>
             <input type="number" min="1" value={lesson} readOnly className={styles.readOnlyInput} />
-
             <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: 12 }}>
                 <button type="submit" className={styles.submit} style={{ fontWeight: 400 }}>
                     {initialData ? 'Cập nhật buổi học' : 'Lưu buổi học'}
@@ -170,7 +158,6 @@ const SingleForm = memo(({ initialData, onSave, programObj, areaObj, teachersLis
     );
 });
 SingleForm.displayName = 'SingleForm';
-
 
 const BulkForm = memo(({ programObj, areaObj, teachersList, mainTeacher, addMany, closeSecondary }) => {
     const allTopics = programObj ? programObj.Topics.map(topic => ({
@@ -218,9 +205,7 @@ const BulkForm = memo(({ programObj, areaObj, teachersList, mainTeacher, addMany
     const handleFirstDayChange = (e) => {
         const firstDateValue = e.target.value;
         if (!firstDateValue) return;
-
         const firstDate = new Date(firstDateValue);
-
         setRows(prevRows => {
             return prevRows.map((row, index) => {
                 if (index === 0) {
@@ -235,7 +220,6 @@ const BulkForm = memo(({ programObj, areaObj, teachersList, mainTeacher, addMany
 
     const handleSave = () => {
         const missing = new Set(rows.reduce((acc, r, i) => (!r.day || !r.room || !r.teacher ? [...acc, i] : acc), []));
-
         if (missing.size > 0) {
             setInvalidRows(missing);
             setErrorBulk('Có buổi học thiếu thông tin. Vui lòng điền đầy đủ và thử lại.');
@@ -311,7 +295,6 @@ const BulkForm = memo(({ programObj, areaObj, teachersList, mainTeacher, addMany
 });
 BulkForm.displayName = 'BulkForm';
 
-
 const ScheduleList = memo(({ schedules, onEdit, onDelete }) => {
     if (schedules.length === 0) {
         return <p className={styles.scheduleHint}>Chưa có buổi học nào</p>;
@@ -344,7 +327,6 @@ ScheduleList.displayName = 'ScheduleList';
 
 export default function Create() {
     const router = useRouter();
-
     const [openPopup, setOpenPopup] = useState(false);
     const [program, setProgram] = useState(initialProgramState);
     const [courseType, setCourseType] = useState(initialCourseTypeState);
@@ -354,13 +336,10 @@ export default function Create() {
     const [errorMsg, setErrorMsg] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [noti, setNoti] = useState({ open: false, status: false, message: '' });
-
     const [openMenus, setOpenMenus] = useState({ program: false, type: false, area: false, teacher: false });
-
     const { data: programs, loading: loadingProg } = useFetchData(Data_book, openPopup);
     const { data: areas, loading: loadingArea } = useFetchData(Read_Area, openPopup);
     const { data: teachersList, loading: loadingTeacher } = useFetchData(Data_user, openPopup);
-
     const resetForm = useCallback(() => {
         setProgram(initialProgramState);
         setCourseType(initialCourseTypeState);
@@ -370,14 +349,12 @@ export default function Create() {
         setErrorMsg('');
         setOpenMenus({ program: false, type: false, area: false, teacher: false });
     }, []);
-
     const closePopupHandler = useCallback(() => {
         setOpenPopup(false);
         setSecondaryOpen(false);
         setNoti(prev => ({ ...prev, open: false }));
         resetForm();
     }, [resetForm]);
-
     const [secondaryOpen, setSecondaryOpen] = useState(false);
     const [secondaryType, setSecondaryType] = useState(null);
     const [editingIndex, setEditingIndex] = useState(null);
@@ -413,24 +390,46 @@ export default function Create() {
             return;
         }
 
+        const teacherHrObj = teachersList.find(t => t.name === teacher);
+        if (!program._id || !area._id || !teacherHrObj?._id) {
+            setNoti({ open: true, status: false, message: 'Thông tin Chương trình, Khu vực hoặc Giáo viên không hợp lệ.' });
+            return;
+        }
+
+        const formattedDetail = schedules.map(s => {
+            const topicObj = program.Topics.find(t => t.Name === s.Topic);
+            const teacherObj = teachersList.find(t => t.name === s.Teacher);
+            const teachingAsObj = teachersList.find(t => t.name === s.TeachingAs);
+
+            return {
+                Topic: topicObj?._id,
+                Day: new Date(s.Day.split('/').reverse().join('-')).toISOString(),
+                Room: s.Room,
+                Time: s.Time,
+                Teacher: teacherObj?._id,
+                TeachingAs: teachingAsObj?._id || null,
+            };
+        });
+
         const payload = {
-            Name: program.Name,
-            Type: courseType,
-            Area: area.name,
-            TeacherHR: teacher,
-            Status: 'planning',
-            TimeStart: schedules[0].Day.split('/').reverse().join('-'),
-            TimeEnd: schedules.at(-1)?.Day.split('/').reverse().join('-'),
-            Detail: schedules,
             code: program.ID,
+            Book: program._id,
+            Area: area._id,
+            TeacherHR: teacherHrObj._id,
+            Type: courseType,
+            Detail: formattedDetail,
         };
 
         setIsLoading(true);
         fetch('/api/course', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             .then(r => r.json().then(j => ({ ok: r.ok, data: j })))
-            .then(({ ok, data }) => {
-                setNoti({ open: true, status: ok, message: ok ? 'Đã lưu khóa học thành công!' : (data.mes || 'Lỗi từ server') });
-                if (ok) { Re_course_all(); router.refresh(); }
+            .then(async ({ ok, data }) => {
+                setNoti({ open: true, status: ok, message: data.mes || 'Lỗi từ server' });
+                if (ok) {
+                    await Re_course_all();
+                    router.refresh();
+                    closePopupHandler();
+                }
             })
             .catch(err => setNoti({ open: true, status: false, message: err.message || 'Không thể kết nối đến server' }))
             .finally(() => setIsLoading(false));
@@ -458,7 +457,6 @@ export default function Create() {
     const renderCourseForm = () => (
         <form className={styles.form} onSubmit={handleSaveCourse}>
             <TextNoti title="Thông tin khóa học" color="blue" mes="Thông tin khóa học là bắt buộc" />
-
             <Menu menuItems={programMenu} menuPosition="bottom" isOpen={openMenus.program} onOpenChange={(isOpen) => setOpenMenus(p => ({ ...p, program: isOpen }))}
                 customButton={<div onClick={() => setOpenMenus(p => ({ ...p, program: !p.program }))} className={`${styles.selectBtn} ${program.Name.startsWith('Chọn') ? styles.selectBtnWarning : ''}`}>{program.Name}</div>}
             />
@@ -471,15 +469,12 @@ export default function Create() {
             <Menu menuItems={teacherMenu} menuPosition="bottom" isOpen={openMenus.teacher} onOpenChange={(isOpen) => setOpenMenus(p => ({ ...p, teacher: isOpen }))}
                 customButton={<div onClick={() => setOpenMenus(p => ({ ...p, teacher: !p.teacher }))} className={`${styles.selectBtn} ${teacher.startsWith('Chọn') ? styles.selectBtnWarning : ''}`}>{teacher}</div>}
             />
-
             {errorMsg && <p className={styles.error} style={{ marginTop: 8 }}>{errorMsg}</p>}
-
             <TextNoti title="Lịch học" color="blue" mes="Bạn có thể thêm từng buổi hoặc tạo hàng loạt." />
             <div className={styles.scheduleAction}>
                 <button type="button" className={styles.addBtn} onClick={() => openSecondary('single')}>+ Thêm buổi</button>
                 <button type="button" className={styles.addBtn} onClick={() => openSecondary('bulk')}>+ Tạo toàn bộ</button>
             </div>
-
             <ScheduleList schedules={schedules} onEdit={openEdit} onDelete={(idx) => setSchedules(prev => prev.filter((_, i) => i !== idx))} />
             <button type="submit" className={styles.submit}>Lưu khóa học</button>
         </form>
@@ -504,7 +499,6 @@ export default function Create() {
                 <Svg_Add w={16} h={16} c="white" />
                 <p className='text_6_400' style={{ color: 'white' }}>Thêm khóa học</p>
             </div>
-
             <FlexiblePopup
                 open={openPopup}
                 onClose={closePopupHandler}
@@ -519,13 +513,11 @@ export default function Create() {
                         secondaryType === 'edit' ? 'Chỉnh sửa buổi học' : 'Tạo lịch hàng loạt'
                 }
             />
-
             {isLoading && (
                 <div className={styles.loadingOverlay}>
                     <Loading content={<p className='text_7' style={{ color: 'white' }}>Đang xử lý...</p>} />
                 </div>
             )}
-
             <Noti
                 open={noti.open}
                 onClose={() => setNoti(prev => ({ ...prev, open: false }))}

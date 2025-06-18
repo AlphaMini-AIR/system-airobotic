@@ -22,6 +22,8 @@ export async function Data_lesson(id) {
     try {
         const res = await fetchApi(`/calendar/${id}`, {
             method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`data_lesson${id}`] }
         });
 
         return res.data || [];

@@ -14,6 +14,7 @@ import { Re_course_one } from '@/data/course';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/(ui)/(loading)/loading';
 import CommentPopup from '../cmt';
+import { formatDate } from '@/function';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -23,10 +24,10 @@ const SortIcon = ({ direction }) => {
 };
 
 
-export default function Detail({ data, params, book, users, studentsx }) {
-    const allImages = data.Detail.flatMap(lesson => lesson.DetailImage || []);
-    const images = allImages.filter(item => item.type === 'image');
-    const videos = allImages.filter(item => item.type === 'video');
+export default function Detail({ data = [], params, book, users, studentsx }) {
+    const allImages = data.Detail?.flatMap(lesson => lesson.DetailImage || []);
+    const images = allImages?.filter(item => item.type === 'image');
+    const videos = allImages?.filter(item => item.type === 'video');
     const ProductCard = ({ id }) => {
         return (
             <div style={{ border: '1px solid #ddd', borderRadius: 5, backgroundColor: '#fff', textAlign: 'center', aspectRatio: 1, width: '100%', position: 'relative' }}>
@@ -35,7 +36,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
         );
     };
 
-    const lessProductItems = images.map(item => (<ProductCard key={item.id} id={item.id} type={item.type} />));
+    const lessProductItems = images?.map(item => (<ProductCard key={item.id} id={item.id} type={item.type} />));
     const listColumnsConfig = { mobile: 2, tablet: 4, desktop: 5 };
 
 
@@ -118,18 +119,19 @@ export default function Detail({ data, params, book, users, studentsx }) {
             return sorted;
         }
         return enrichedStudents;
-    }, [data, sortConfig]); // Phụ thuộc vào dữ liệu gốc và cấu hình sắp xếp
+    }, [data, sortConfig]);
 
-    // THÊM MỚI: Hàm xử lý khi click vào header để sắp xếp
+    const allDates = data.Detail.map(item => new Date(item.Day));
+    const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];
+
     const handleSort = (key) => {
-        let direction = 'descending'; // Mặc định sắp xếp giảm dần cho các cột số lượng
+        let direction = 'descending';
         if (sortConfig.key === key && sortConfig.direction === 'descending') {
             direction = 'ascending';
         }
         setSortConfig({ key, direction });
     };
 
-    // CHỈNH SỬA: Map qua danh sách đã sắp xếp `sortedStudents`
     const detailcourse = (
         <> {sortedStudents.map(stu => (
             <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
@@ -148,7 +150,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
             </div>
         ))} </>
     )
-    
+
     const detaillesson = (
         <> {data.Student.map(stu => {
             if (!params[1]) return null;
@@ -192,11 +194,12 @@ export default function Detail({ data, params, book, users, studentsx }) {
         router.refresh();
         setLoading(false);
     }
+
     return (
         <div className={styles.container}>
             <div className={styles.box} style={{ padding: 16, gap: 16 }}>
                 <div className={styles.ImageBook}>
-                    <Image priority={true} src={book.Image} fill alt={book.Name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                    <Image priority={true} src={data.Book.Image} fill alt={data.Book.Name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                 </div>
                 <div style={{ flex: 1 }}>
                     <p className="text_4" style={{ marginBottom: 8 }}>Thông tin khóa học</p>
@@ -204,7 +207,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={14} height={14} fill='var(--text-primary)'><path d="M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5l0-377.4c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8L0 454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5l0-370.3c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11L304 456c0 11.4 11.7 19.3 22.4 15.5z" /></svg>
                             <span className='text_6'>Chương trình học :</span>
-                            <span className="text_6_400">{book.Name}</span>
+                            <span className="text_6_400">{data.Book.Name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
@@ -220,7 +223,7 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Svg_Canlendar w={14} h={14} c='var(--text-primary)' />
                             <span className='text_6'>Thời gian học :</span>
-                            <span className="text_6_400">{data.TimeStart} - {data.TimeEnd}</span>
+                            <span className="text_6_400">{dateRange[0] || 'Trống'} - {dateRange[1] || 'Trống'}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Svg_Profile w={14} h={14} c='var(--text-primary)' />
@@ -230,13 +233,13 @@ export default function Detail({ data, params, book, users, studentsx }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Svg_Area w={14} h={14} c='var(--text-primary)' />
                             <span className='text_6'>Khu vực :</span>
-                            <span className="text_6_400">{data.Area}</span>
+                            <span className="text_6_400">{data.Area.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
                                 <path d="M0 24C0 10.7 10.7 0 24 0L360 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-8 0 0 19c0 40.3-16 79-44.5 107.5L225.9 256l81.5 81.5C336 366 352 404.7 352 445l0 19 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24L24 512c-13.3 0-24-10.7-24-24s10.7-24 24-24l8 0 0-19c0-40.3 16-79 44.5-107.5L158.1 256 76.5 174.5C48 146 32 107.3 32 67l0-19-8 0C10.7 48 0 37.3 0 24zM110.5 371.5c-3.9 3.9-7.5 8.1-10.7 12.5l184.4 0c-3.2-4.4-6.8-8.6-10.7-12.5L192 289.9l-81.5 81.5zM284.2 128C297 110.4 304 89 304 67l0-19L80 48l0 19c0 22.1 7 43.4 19.8 61l184.4 0z" /></svg>
                             <span className='text_6'>Tiến độ :</span>
-                            <span className="text_6_400">{td.lessonsDone}/{td.totalLessons} Tiết</span>
+                            <span className="text_6_400">{data.Progress} Tiết</span>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                             <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }} onClick={reload}>
@@ -323,34 +326,54 @@ const title = [
 
 
 function enrichStudents(course, now = new Date()) {
-    if (!course || !course.Detail) return []; // Guard clause
+    // Kiểm tra đầu vào an toàn
+    if (!course || !course.Detail) {
+        return [];
+    }
+
+    // SỬA 1: Lấy đúng _id của các buổi học trong quá khứ
+    // Chuyển từ ID sang _id và dùng toString() để chuẩn hóa
     const pastLessonIds = new Set(
         course.Detail
             .filter(({ Day }) => {
                 if (!Day) return false;
-                // Hỗ trợ cả 2 định dạng ngày
-                if (Day.includes('/')) return parseDMY(Day) <= now;
-                if (Day.includes('-')) return new Date(Day) <= now;
-                return false;
+                return new Date(Day) <= now;
             })
-            .map(({ ID }) => ID)
+            .map(({ _id }) => _id.toString()) // Dùng _id thay vì ID
     );
+
     const totalPastLessons = pastLessonIds.size;
 
-    if (!course.Student) return []; // Guard clause
+    if (!course.Student) {
+        return [];
+    }
+
     return course.Student.map(stu => {
-        const counts = [0, 0, 0, 0]; // 0: chua hoc, 1: co mat, 2: vang ko phep, 3: vang co phep
-        if (stu.Learn) {
-            for (const [lessonId, { Checkin }] of Object.entries(stu.Learn)) {
-                if (!pastLessonIds.has(lessonId)) continue;
+        const counts = [0, 0, 0, 0];
+
+        if (stu.Learn && Array.isArray(stu.Learn)) {
+            for (const learnItem of stu.Learn) {
+                const { Lesson, Checkin } = learnItem;
+                const lessonIdStr = Lesson?.toString();
+
+                // Bỏ qua nếu buổi học chưa diễn ra hoặc không có ID
+                if (!lessonIdStr || !pastLessonIds.has(lessonIdStr)) {
+                    continue;
+                }
+
                 const idx = Number(Checkin);
-                if (idx >= 0 && idx <= 3) counts[idx] += 1;
+                if (!isNaN(idx) && idx >= 0 && idx <= 3) {
+                    counts[idx] += 1;
+                }
             }
         }
         const [f, m, k, c] = counts;
-        let b = (totalPastLessons - m) - k; // Buổi bù có thể tính khác, ở đây là ví dụ
+        let b = totalPastLessons - m - k;
+
+        // Giới hạn giá trị của b từ 0 đến 2
         if (b > 2) b = 2;
         else if (b < 0) b = 0;
+
         return { ...stu, m, k, c, b };
     });
 }

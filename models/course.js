@@ -1,12 +1,12 @@
-import { Schema, isValidObjectId, model, models } from 'mongoose';
+import { Schema, model, models } from 'mongoose';
 
 const DetailSchema = new Schema({
     Topic: { type: Schema.Types.ObjectId, required: true },
     Day: { type: Date, required: true },
     Room: { type: String },
     Time: { type: String },
-    Teacher: { type: Schema.Types.ObjectId },
-    TeachingAs: { type: Schema.Types.ObjectId },
+    Teacher: { type: Schema.Types.ObjectId, ref: 'user' },
+    TeachingAs: { type: Schema.Types.ObjectId, ref: 'user' },
     Image: { type: String },
     DetailImage: { type: Array, default: [] },
     Type: { type: String },
@@ -24,10 +24,8 @@ const LearnDetailSchema = new Schema({
 
 const StudentSchema = new Schema({
     ID: { type: String, required: true },
-    Learn: { type: [LearnDetailSchema] },
-    default: []
+    Learn: { type: [LearnDetailSchema], default: [] },
 });
-
 
 const postCourseSchema = new Schema({
     ID: {

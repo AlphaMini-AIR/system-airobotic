@@ -1,5 +1,9 @@
 import connectDB from '@/config/connectDB';
+import mongoose from 'mongoose';
 import PostCourse from '@/models/course';
+import PostBook from '@/models/book';
+import PostUser from '@/models/users';
+import PostArea from '@/models/area';
 import { NextResponse } from 'next/server';
 import authenticate from '@/utils/authenticate';
 
@@ -10,7 +14,7 @@ export async function GET() {
     try {
         await connectDB();
         const data = await PostCourse.find({ Type: 'AI Robotic' }).populate({ path: 'Book', select: 'Name' })
-            .populate({ path: 'TeacherHR', select: 'name' }).lean();
+            .populate({ path: 'TeacherHR', select: 'name' }).populate({ path: 'Area', select: 'name color' }).lean();
 
         return NextResponse.json(
             { status: 2, mes: 'Lấy dữ liệu thành công.', data },
@@ -29,30 +33,19 @@ export async function POST(request) {
     try {
         const authResult = await authenticate(request);
         if (!authResult?.user) {
-            return NextResponse.json(
-                { status: 0, mes: 'Xác thực không thành công.', data: [] },
-                { status: 401 }
-            );
+            return NextResponse.json({ status: 0, mes: 'Xác thực không thành công.' }, { status: 401 });
         }
 
         const { user, body } = authResult;
-        const isAdminOrAcademic = user.role.includes('Admin') || user.role.includes('Academic');
+        const isAdminOrAcademic = user.role.includes('Admin') || user.role.includes('Acadamic');
         if (!isAdminOrAcademic) {
-            return NextResponse.json(
-                { status: 0, mes: 'Bạn không có quyền thực hiện chức năng này.', data: [] },
-                { status: 403 }
-            );
+            return NextResponse.json({ status: 0, mes: 'Bạn không có quyền thực hiện chức năng này.' }, { status: 403 });
         }
-        const {
-            code, Name, Area, TeacherHR, Status, TimeStart, TimeEnd, Detail,
-            Address = '', Price = 0, Type = '', Student = [],
-        } = body;
 
-        if (!code || !Name || !Area || !TeacherHR || !TimeStart || !TimeEnd || !Array.isArray(Detail)) {
-            return NextResponse.json(
-                { status: 1, mes: 'Thiếu thông tin bắt buộc.', data: [] },
-                { status: 400 }
-            );
+        const { code, Book, Area, TeacherHR, Status = false, Type, Detail } = body;
+
+        if (!code || !Detail || !Array.isArray(Detail)) {
+            return NextResponse.json({ status: 1, mes: 'Thiếu `code` hoặc `Detail` để tạo khóa học.' }, { status: 400 });
         }
 
         await connectDB();
@@ -61,20 +54,17 @@ export async function POST(request) {
         const coursePrefix = `${yearPrefix}${code.trim().toUpperCase()}`;
 
         const lastCourse = await PostCourse.findOne({ ID: { $regex: `^${coursePrefix}` } })
-            .sort({ ID: -1 })
-            .select('ID')
-            .lean();
+            .sort({ ID: -1 }).select('ID').lean();
 
         let newSequence = 1;
         if (lastCourse) {
             const lastSeq = parseInt(lastCourse.ID.slice(coursePrefix.length), 10);
-            newSequence = lastSeq + 1;
+            newSequence = isNaN(lastSeq) ? 1 : lastSeq + 1;
         }
         const newCourseID = `${coursePrefix}${newSequence.toString().padStart(3, '0')}`;
 
-        const topicString = Detail.map((d) => d.Day).join('|');
+        const topicString = Detail.map(d => d.Day).join('|');
         let imageUrls = [];
-
         try {
             const scriptResponse = await fetch(`${APPSCRIPT_URL}?ID=${encodeURIComponent(newCourseID)}&Topic=${encodeURIComponent(topicString)}`);
             if (scriptResponse.ok) {
@@ -87,53 +77,46 @@ export async function POST(request) {
             console.error('[APPSCRIPT_ERROR]', scriptError.message);
         }
 
-        const normalizedDetail = Detail.map((d, i) => ({
-            Day: d.Day || '',
-            Topic: d.Topic || '',
-            Room: d.Room || '',
-            Time: d.Time || '',
-            Lesson: typeof d.Lesson === 'number' ? d.Lesson : 0,
-            ID: d.ID || '',
-            Image: imageUrls[i] || '',
-            Teacher: d.Teacher || '',
-            TeachingAs: d.TeachingAs || '',
-        }));
+        const normalizedDetail = Detail.map((d, i) => {
+            if (!d.Topic || !mongoose.Types.ObjectId.isValid(d.Topic) || !d.Day) {
+                throw new Error(`Buổi học thứ ${i + 1} thiếu Topic hoặc Day, hoặc ID không hợp lệ.`);
+            }
+            return {
+                Topic: d.Topic,
+                Day: new Date(d.Day),
+                Room: d.Room || '',
+                Time: d.Time || '',
+                Teacher: mongoose.Types.ObjectId.isValid(d.Teacher) ? d.Teacher : null,
+                TeachingAs: mongoose.Types.ObjectId.isValid(d.TeachingAs) ? d.TeachingAs : null,
+                Image: imageUrls[i] || '',
+            };
+        });
 
-        const isActive = typeof Status === 'boolean' ? Status : ['true', 'active'].includes(String(Status).toLowerCase().trim());
-
-        const newCourse = {
+        const newCourseData = {
             ID: newCourseID,
-            Name: Name.trim(),
-            Area: Area.trim(),
-            TeacherHR: TeacherHR.trim(),
-            Status: isActive,
-            Type: Type.trim(),
-            Address: Address.trim(),
-            Price: typeof Price === 'number' ? Price : 0,
-            TimeStart,
-            TimeEnd,
             Detail: normalizedDetail,
-            Student: Array.isArray(Student) ? Student : [],
+            Student: [], // Luôn bắt đầu với mảng rỗng
         };
 
-        await PostCourse.create(newCourse);
+        // Chỉ thêm các trường tùy chọn vào object nếu chúng được cung cấp và hợp lệ
+        if (Book && mongoose.Types.ObjectId.isValid(Book)) newCourseData.Book = Book;
+        if (Area && mongoose.Types.ObjectId.isValid(Area)) newCourseData.Area = Area;
+        if (TeacherHR && mongoose.Types.ObjectId.isValid(TeacherHR)) newCourseData.TeacherHR = TeacherHR;
+        if (Type) newCourseData.Type = Type;
+        if (typeof Status === 'boolean') newCourseData.Status = Status;
+
+        const createdCourse = await PostCourse.create(newCourseData);
 
         return NextResponse.json(
-            { status: 2, mes: `Tạo khóa học ${newCourseID} thành công!`, data: [newCourse] }, // Trả về data của khóa học vừa tạo
+            { status: 2, mes: `Tạo khóa học ${newCourseID} thành công!`, data: createdCourse },
             { status: 201 }
         );
 
     } catch (error) {
         console.error('[COURSE_CREATE_ERROR]', error);
         if (error.code === 11000) {
-            return NextResponse.json(
-                { status: 1, mes: 'ID khóa học bị trùng lặp, vui lòng thử lại.', data: [] },
-                { status: 409 }
-            );
+            return NextResponse.json({ status: 1, mes: 'ID khóa học bị trùng lặp, vui lòng thử lại.' }, { status: 409 });
         }
-        return NextResponse.json(
-            { status: 1, mes: 'Lỗi từ máy chủ.', data: [] },
-            { status: 500 }
-        );
+        return NextResponse.json({ status: 1, mes: error.message || 'Lỗi từ máy chủ.' }, { status: 500 });
     }
 }

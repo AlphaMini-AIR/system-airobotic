@@ -1,3 +1,4 @@
+import { formatDate } from '@/function';
 import ExcelJS from 'exceljs';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,7 @@ function jsonRes(obj, status = 200) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { lessons = [], teacherHR, course = '', student } = body;
+        const { lessons = [], teacherHR, course = '', student, summaryStats, date } = body;
 
         if (!lessons.length)
             return jsonRes({ status: 0, mes: 'Thiếu lessons' }, 400);
@@ -30,10 +31,10 @@ export async function POST(request) {
         const ws = wb.addWorksheet('Report');
         let title = `Báo cáo học tập - ${student.Name} - ${course.ID}`;
         ws.addRow(['Mã khóa học:', course.ID, 'Mã học sinh:', student.ID, "", 'Lịch học', '', 'Lịch học bù', '', 'Trạng thái học bù']);
-        ws.addRow(['Tên chương trình:', course.Name, 'Tên học sinh:', student.Name, '', 'Tổng buổi:', lessons.length, 'Số chủ đề bù:', 1, 'Số buổi bù:', 1]);
-        ws.addRow(['Thời gian học', `${course.TimeStart} - ${course.TimeEnd}`, 'Phụ huynh:', student.ParentName, '', 'Đã học:', 1, '', '', 'Đã học bù:', 1]);
-        ws.addRow(['Giáo viên chủ nhiệm:', teacherHR.name, 'Liên Hệ', student.Phone, '', 'Vắng có phép:', 1, '', '', 'Vắng học bù:', 1]);
-        ws.addRow(['Số điện thoại giáo viên chủ nhiệm', teacherHR.phone, '', '', '', 'Vắng không phép:', 0]);
+        ws.addRow(['Tên chương trình:', course.Book.Name, 'Tên học sinh:', student.Name, '', 'Tổng buổi:', summaryStats.official.total, 'Số chủ đề bù:', summaryStats.makeupNeeded.count, 'Số buổi bù:', summaryStats.makeupTaken.total]);
+        ws.addRow(['Thời gian học', `${date[0]} - ${date[1]}`, 'Phụ huynh:', student.ParentName, '', 'Đã học:', summaryStats.official.attended, '', '', 'Đã học bù:', summaryStats.makeupTaken.attended]);
+        ws.addRow(['Giáo viên chủ nhiệm:', course.TeacherHR.name, 'Liên Hệ', student.Phone, '', 'Vắng có phép:', summaryStats.official.excused, '', '', 'Vắng học bù:', summaryStats.makeupTaken.missed]);
+        ws.addRow(['Số điện thoại giáo viên chủ nhiệm', course.TeacherHR.phone, '', '', '', 'Vắng không phép:', summaryStats.official.unexcused]);
         ws.addRow([''])
 
         const header = [
@@ -51,10 +52,10 @@ export async function POST(request) {
         lessons.forEach((l, idx) => {
             ws.addRow([
                 l.Index ?? idx + 1,
-                l.Topic,
-                l.Teacher,
+                l.Topic.Name,
+                l.Teacher.name,
                 l.Status,
-                l.Day,
+                formatDate(new Date(l.Day)),
                 l.Time,
                 l.Attendance,
                 l.Comments ?? '',

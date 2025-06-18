@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 import PostModel from '@/models/student';
+import { Types, isValidObjectId } from 'mongoose';
 
 export async function POST(req) {
     try {
@@ -9,77 +10,106 @@ export async function POST(req) {
 
         if (!courseID || !Array.isArray(students) || students.length === 0) {
             return NextResponse.json(
-                { ok: false, mes: 'Thiếu courseID hoặc danh sách học sinh', data: null },
+                { ok: false, mes: 'Missing course ID or student list is empty.', data: null },
+                { status: 400 }
+            );
+        }
+
+        if (!isValidObjectId(courseID)) {
+            return NextResponse.json(
+                { ok: false, mes: 'Invalid course ID format.', data: null },
                 { status: 400 }
             );
         }
 
         await connectDB();
+
         const course = await PostCourse.findById(
             courseID,
             { Detail: 1, ID: 1, Price: 1, Student: 1 }
-        );
+        ).lean();
+
         if (!course) {
             return NextResponse.json(
-                { ok: false, mes: 'Khóa học không tồn tại', data: null },
+                { ok: false, mes: 'Course not found.', data: null },
                 { status: 404 }
             );
         }
 
-        /* ---------- build Learn template từ Detail ---------- */
-        const learnTemplate = {};
-        course.Detail.forEach((d) => {
-            learnTemplate[d.ID] = { Checkin: 0, Cmt: '', Note: '' , Lesson: d._id.toString() };
-        });
+        // Filter Detail lessons: Only include lessons that have no 'Type' field or an empty 'Type' string
+        const filteredDetailLessons = course.Detail.filter(d =>
+            !d.Type || d.Type === ''
+        );
 
-        /* ---------- id học sinh đã có trong khóa để tránh trùng ---------- */
-        const existedIds = new Set((course.Student || []).map((s) => String(s._id)));
+        const learnEntriesForNewStudent = filteredDetailLessons.map(d => ({
+            Checkin: 0,
+            Cmt: [],
+            CmtFn: '',
+            Note: '',
+            Lesson: d._id,
+            Image: []
+        }));
 
-        const newStudentDocs = [];
+        const existingStudentIDsInCourse = new Set(course.Student.map(s => s.ID));
 
-        /* ---------- xử lý từng id ---------- */
-        for (const stuId of students) {
-            if (existedIds.has(String(stuId))) continue;           // đã có
-            const stuDoc = await PostModel.findById(stuId);
-            if (!stuDoc) continue;                                 // không tồn tại
+        const newStudentIDsToAdd = students.filter(studentIdString =>
+            !existingStudentIDsInCourse.has(studentIdString)
+        );
 
-            /* cập nhật trường Course bên document học sinh */
-            const updatedCourseField = {
-                ...(stuDoc.Course || {}),
-                [course.ID]: { StatusLearn: false, StatusPay: course.Price },
-            };
-
-            const updatedStu = await PostModel.findByIdAndUpdate(
-                stuId,
-                { $set: { Course: updatedCourseField } },
-                { new: true }
+        if (newStudentIDsToAdd.length === 0) {
+            return NextResponse.json(
+                { ok: true, mes: 'No new students to add (all already exist).', data: course },
+                { status: 200 }
             );
+        }
 
-            newStudentDocs.push({
-                _id: updatedStu._id,
-                ID: updatedStu.ID,
-                Name: updatedStu.Name,
-                Learn: learnTemplate,
+        const newStudentDocsToAdd = [];
+        const studentUpdates = [];
+
+        const foundStudents = await PostModel.find({ ID: { $in: newStudentIDsToAdd } }).lean();
+
+        const foundStudentIDs = new Set(foundStudents.map(s => s.ID));
+
+        for (const studentDoc of foundStudents) {
+            newStudentDocsToAdd.push({
+                ID: studentDoc.ID,
+                Learn: learnEntriesForNewStudent
+            });
+
+            const updatedCourseFieldForStudent = {
+                ...(studentDoc.Course || {}),
+                [course.ID]: { StatusLearn: false, StatusPay: course.Price }
+            };
+            studentUpdates.push({
+                updateOne: {
+                    filter: { _id: studentDoc._id },
+                    update: { $set: { Course: updatedCourseFieldForStudent } }
+                }
             });
         }
 
-        /* ---------- ghép vào mảng Student của khóa ---------- */
-        const mergedStudentList = course.Student
-            ? [...newStudentDocs, ...course.Student]
-            : newStudentDocs;
+        const notFoundStudentIDs = newStudentIDsToAdd.filter(id => !foundStudentIDs.has(id));
+        if (notFoundStudentIDs.length > 0) {
+            console.warn(`Students not found in collection: ${notFoundStudentIDs.join(', ')}`);
+        }
 
-        const updatedCourse = await PostCourse.findByIdAndUpdate(
+        if (studentUpdates.length > 0) {
+            await PostModel.bulkWrite(studentUpdates);
+        }
+
+        const updatedCourseResult = await PostCourse.findByIdAndUpdate(
             courseID,
-            { $set: { Student: mergedStudentList } },
+            { $push: { Student: { $each: newStudentDocsToAdd } } },
             { new: true }
         );
 
         return NextResponse.json(
-            { ok: true, mes: 'Đã thêm học sinh', data: updatedCourse },
+            { ok: true, mes: `Added ${newStudentDocsToAdd.length} new student(s) to course.`, data: updatedCourseResult },
             { status: 200 }
         );
+
     } catch (err) {
-        console.error('[ADD_STUDENT_API]', err);
+        console.error('[ADD_STUDENT_API] Top-level error:', err);
         return NextResponse.json(
             { ok: false, mes: err.message || 'Server error', data: null },
             { status: 500 }
