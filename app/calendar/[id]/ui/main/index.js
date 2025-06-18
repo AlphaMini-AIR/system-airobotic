@@ -38,7 +38,7 @@ export default function Main({ data }) {
 
     const router = useRouter();
 
-    const roll = (students || []).map(stu => {              
+    const roll = (students || []).map(stu => {
         const rawCheckin = stu.attendance?.Checkin;
         const check = (rawCheckin === 0 || rawCheckin === '0') ? '0' : (rawCheckin === 2 || rawCheckin === '2') ? '2' : '1';
 
@@ -146,8 +146,11 @@ export default function Main({ data }) {
                 <div className={styles.content}>
                     <aside className={styles.sidebar}>
                         <p className="text_4">Tài liệu buổi học</p>
-                        <ImageUploader session={session} courseId={course.ID} />
-                        {session.LessonDetails?.Slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={session.LessonDetails.Slide} />}
+                        {course.Version == 0 ? <>
+                            {console.log('session', session)}
+                            <BoxFile type="Image" name="Hình ảnh buổi học" href={`https://drive.google.com/drive/folders/${session.Image}`} />
+                        </> : <ImageUploader session={session} courseId={course.ID} />}
+                        {session.Topic?.Slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={session.Topic.Slide} />}
                     </aside>
 
                     <main className={styles.main}>
@@ -184,7 +187,7 @@ export default function Main({ data }) {
                             {roll.length ? (
                                 <>
                                     <div className={`${styles.row} ${styles.headerRow}`}>
-                                        {['ID', 'Học sinh', 'Có mặt', 'Vắng mặt', 'Có phép', 'Nhận xét', 'Hình ảnh'].map((t, i) => (
+                                        {['ID', 'Học sinh', 'Có mặt', 'Vắng mặt', 'Có phép', 'Nhận xét'].map((t, i) => (
                                             <div key={t} className="text_6_400"
                                                 style={{
                                                     flex: i === 1 ? 3 : 1, color: '#fff',
@@ -194,6 +197,17 @@ export default function Main({ data }) {
                                                 {t}
                                             </div>
                                         ))}
+                                        {course.Version != 0 && (
+                                            <div className="text_6_400"
+                                                style={{
+                                                    flex: 1,
+                                                    color: '#fff',
+                                                    padding: '8px 0',
+                                                    textAlign: 'center'
+                                                }}>
+                                                Hình ảnh
+                                            </div>
+                                        )}
                                     </div>
 
                                     {roll.map(stu => {
@@ -227,7 +241,9 @@ export default function Main({ data }) {
                                                     </svg>
                                                 </button>
 
-                                                <StudentCourseImageManager courseInfo={data.session} studentInfo={stu} course={data.course} />
+                                                {course.Version != 0 && (
+                                                    <StudentCourseImageManager courseInfo={data.session} studentInfo={stu} course={data.course} />
+                                                )}
                                             </div>
                                         );
                                     })}

@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
 
         const courseData = await PostCourse.findOne(
             { 'Detail._id': id },
-            { 'Detail.$': 1, ID: 1, Book: 1, Student: 1 }
+            { 'Detail.$': 1, ID: 1, Book: 1, Student: 1, Version: 1 }
         ).lean();
 
         if (!courseData || !courseData.Detail?.length) {
@@ -69,6 +69,7 @@ export async function GET(request, { params }) {
             course: {
                 _id: courseData._id,
                 ID: courseData.ID,
+                Version: courseData.Version
             },
             session: session,
             students: studentsWithAttendance,

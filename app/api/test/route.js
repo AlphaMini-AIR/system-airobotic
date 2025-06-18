@@ -1,144 +1,48 @@
-import { NextResponse } from 'next/server';
-import PostCourse from '@/models/course';
-import connectDB from '@/config/connectDB';
+// app/api/update-course-version/route.js
+import dbConnect from '@/config/connectDB'; // Đảm bảo đường dẫn đúng đến file kết nối DB
+import PostCourse from '@/models/course';   // Đảm bảo đường dẫn đúng đến Mongoose model của bạn
 
-function parseDate(value) {
-    // 1. Nếu đã là Date hợp lệ, trả về ngay
-    if (value instanceof Date && !isNaN(value)) {
-        return value;
-    }
+export async function GET(request) {
+    await dbConnect(); // Kết nối đến database
 
-    // 2. Chỉ xử lý chuỗi
-    if (typeof value !== 'string' || value.trim() === '') {
-        return null;
-    }
-
-    // 3. Chuyển đổi trực tiếp. new Date() của JS hỗ trợ rất tốt định dạng này.
-    const directParsedDate = new Date(value);
-    if (!isNaN(directParsedDate)) {
-        return directParsedDate;
-    }
-
-    // Các phương án dự phòng khác có thể thêm ở đây nếu cần
-
-    // 4. Nếu mọi cách đều thất bại
-    return null;
-}
-
-export async function POST(request) {
     try {
-        await connectDB();
-        const body = await request.json().catch(() => ({}));
-        const { courseId } = body;
+        // Cập nhật tất cả các tài liệu PostCourse để thêm hoặc đặt trường 'Version' về 0.
+        // Điều kiện {}: sẽ khớp với TẤT CẢ các tài liệu trong collection.
+        // $set: { Version: 0 }: Đặt giá trị của trường 'Version' là 0.
+        // option { new: true }: Trả về tài liệu đã cập nhật (không cần thiết cho updateMany nhưng là thông lệ).
+        const result = await PostCourse.updateMany(
+            {}, // Điều kiện rỗng để khớp với tất cả các tài liệu
+            { $set: { Version: 0 } } // Cập nhật trường Version thành 0
+        );
 
-        // Chế độ 1: Xử lý một khóa học cụ thể
-        if (courseId) {
-            const course = await PostCourse.findById(courseId).lean();
-            if (!course) {
-                return NextResponse.json(
-                    { success: false, message: 'Không tìm thấy khóa học.' },
-                    { status: 404 }
-                );
+        // Trả về phản hồi thành công
+        return new Response(
+            JSON.stringify({
+                message: `Đã cập nhật thành công trường 'Version' về 0 cho tất cả ${result.modifiedCount} tài liệu Course.`,
+                matchedCount: result.matchedCount,
+                modifiedCount: result.modifiedCount,
+            }),
+            {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             }
-
-            let needsUpdate = false;
-            for (const detailItem of course.Detail) {
-                const originalDay = detailItem.Day;
-                if (typeof originalDay === 'string') {
-                    const newDate = parseDate(originalDay);
-                    if (newDate) {
-                        detailItem.Day = newDate;
-                        needsUpdate = true;
-                    } else if (originalDay) { 
-                        return NextResponse.json(
-                            {
-                                success: false,
-                                message: `Khóa học ID "${course.ID}" chứa định dạng ngày không hợp lệ.`,
-                                errorValue: originalDay,
-                            },
-                            { status: 400 }
-                        );
-                    }
-                }
-            }
-
-            if (needsUpdate) {
-                course.markModified('Detail');
-                await course.save();
-            }
-
-            return NextResponse.json({
-                success: true,
-                message: `Đã kiểm tra và cập nhật thành công cho khóa học ID: ${course.ID}.`,
-                updated: needsUpdate,
-            });
-        }
-
-        // Chế độ 2: Xử lý hàng loạt tất cả các khóa học
-        const coursesToProcess = await PostCourse.find({
-            'Detail.Day': { $type: 'string', $ne: '' },
-        });
-
-        if (coursesToProcess.length === 0) {
-            return NextResponse.json({
-                success: true,
-                message: 'Tất cả các khóa học đều có định dạng ngày hợp lệ.',
-            });
-        }
-
-        const bulkOps = [];
-        const failedCourses = [];
-
-        for (const course of coursesToProcess) {
-            let hasError = false;
-            let needsUpdate = false;
-
-            const newDetail = course.Detail.map(detailItem => {
-                if (typeof detailItem.Day !== 'string' || detailItem.Day === '') {
-                    return detailItem;
-                }
-
-                const newDate = parseDate(detailItem.Day);
-                if (newDate === null) {
-                    hasError = true;
-                    return detailItem;
-                } else {
-                    needsUpdate = true;
-                    return { ...detailItem, Day: newDate };
-                }
-            });
-
-            if (hasError) {
-                failedCourses.push({ id: course._id, ID: course.ID });
-            } else if (needsUpdate) {
-                bulkOps.push({
-                    updateOne: {
-                        filter: { _id: course._id },
-                        update: { $set: { Detail: newDetail } },
-                    },
-                });
-            }
-        }
-
-        if (bulkOps.length > 0) {
-            await PostCourse.bulkWrite(bulkOps);
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: 'Hoàn tất quá trình kiểm tra hàng loạt.',
-            data: {
-                coursesScanned: coursesToProcess.length,
-                coursesUpdated: bulkOps.length,
-                coursesFailed: failedCourses,
-            },
-        });
-
+        );
     } catch (error) {
-        console.error('Lỗi API validate-day:', error);
-        return NextResponse.json(
-            { success: false, error: 'Lỗi máy chủ nội bộ' },
-            { status: 500 }
+        // Xử lý lỗi nếu có
+        console.error('Lỗi khi cập nhật Version cho Course:', error);
+        return new Response(
+            JSON.stringify({
+                message: 'Đã xảy ra lỗi khi cập nhật Version cho Course.',
+                error: error.message,
+            }),
+            {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
         );
     }
 }

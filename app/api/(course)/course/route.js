@@ -43,7 +43,6 @@ export async function POST(request) {
         }
 
         const { code, Book, Area, TeacherHR, Status = false, Type, Detail } = body;
-
         if (!code || !Detail || !Array.isArray(Detail)) {
             return NextResponse.json({ status: 1, mes: 'Thiếu `code` hoặc `Detail` để tạo khóa học.' }, { status: 400 });
         }
@@ -103,6 +102,7 @@ export async function POST(request) {
         if (Area && mongoose.Types.ObjectId.isValid(Area)) newCourseData.Area = Area;
         if (TeacherHR && mongoose.Types.ObjectId.isValid(TeacherHR)) newCourseData.TeacherHR = TeacherHR;
         if (Type) newCourseData.Type = Type;
+        newCourseData.Version = 1
         if (typeof Status === 'boolean') newCourseData.Status = Status;
 
         const createdCourse = await PostCourse.create(newCourseData);

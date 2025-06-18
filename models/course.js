@@ -66,6 +66,9 @@ const postCourseSchema = new Schema({
     },
     TeacherHR: {
         type: Schema.Types.ObjectId, ref: 'user'
+    },
+    Version: {
+        type: Number
     }
 }, { versionKey: false });
 

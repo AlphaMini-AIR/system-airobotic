@@ -392,7 +392,9 @@ const UploadManager = forwardRef(({
 //================================================================
 // 3. COMPONENT CHÍNH ĐIỀU KHIỂN - ĐÃ CẬP NHẬT
 //================================================================
-export default function ImageUploader({ session, courseId }) {
+export default function ImageUploader({ session, courseId, Version }) {
+  
+
     const router = useRouter();
     const [isPopupOpen, setPopupOpen] = useState(false);
     const [isUploaderOpen, setUploaderOpen] = useState(false);
@@ -410,7 +412,7 @@ export default function ImageUploader({ session, courseId }) {
     useEffect(() => {
         setMediaItems(session?.DetailImage || []);
     }, [session?.DetailImage]);
-    
+
     const handleUploadFinish = async () => {
         await Re_course_one(courseId);
         await Re_lesson(session._id);
