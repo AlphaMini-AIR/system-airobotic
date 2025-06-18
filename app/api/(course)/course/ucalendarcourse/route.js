@@ -4,7 +4,7 @@ import PostCourse from '@/models/course';
 import { NextResponse } from 'next/server';
 import { Types, isValidObjectId } from 'mongoose';
 
-const APPSCRIPT = 'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrGXEztuPj1ynKxj-stw/exec';
+const APPSCRIPT = 'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
 const CREATE_LESSON_REQUIRED = ['Day', 'Topic', 'Room', 'Time', 'Teacher'];
 
 // Helper function to format date (e.g., 'YYYY-MM-DD' to 'DD/MM/YYYY')
@@ -61,18 +61,16 @@ export async function POST(request) {
 
             let imageURL = '';
             try {
-                // Assuming APPSCRIPT needs original Day format or a specific topic ID
-                // The provided APPSCRIPT example uses Day, but if Topic is an ID, it's better to use it.
-                // Let's assume for now it uses the Day string for sheet lookup.
-                const formattedDayForAppscript = formatDay(data.Day); // Use the formatted day for the script query
+                const formattedDayForAppscript = formatDay(data.Day);
                 const scriptRes = await fetch(`${APPSCRIPT}?ID=${encodeURIComponent(courseId)}&Topic=${encodeURIComponent(formattedDayForAppscript)}`, { cache: 'no-store' });
                 if (scriptRes.ok) {
                     const c = await scriptRes.json();
                     if (c?.urls) imageURL = c.urls;
                 }
+                console.log(scriptRes);
+
             } catch (err) {
                 console.error('[udetail] APPSCRIPT_ERROR:', err);
-                // Continue execution even if appscript fails, just without an imageURL
             }
 
             // Create a new ObjectId for the new lesson
