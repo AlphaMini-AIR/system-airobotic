@@ -11,6 +11,21 @@
     border-radius: 8px;
 }
 
+.fullscreenOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Nền tối mờ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1500;
+    /* Đảm bảo nằm trên các nội dung khác */
+}
+
 .image {
     width: 100%;
     height: 100%;
@@ -91,7 +106,7 @@
 .popupActions {
     position: absolute;
     top: 20px;
-    right: -20px;
+    right: -35px;
     display: flex;
     flex-direction: column;
     gap: 4px;

@@ -8,7 +8,14 @@ const DetailSchema = new Schema({
     Teacher: { type: Schema.Types.ObjectId, ref: 'user' },
     TeachingAs: { type: Schema.Types.ObjectId, ref: 'user' },
     Image: { type: String },
-    DetailImage: { type: Array, default: [] },
+    DetailImage: {
+        type: [{
+            id: { type: String, required: true, unique: true },
+            type: { type: String },
+            create: { type: Date, default: Date.now }
+        }],
+        default: []
+    },
     Type: { type: String },
     Note: { type: String },
 });
@@ -19,7 +26,14 @@ const LearnDetailSchema = new Schema({
     CmtFn: { type: String, default: '' },
     Note: { type: String, default: '' },
     Lesson: { type: Schema.Types.ObjectId, required: true },
-    Image: { type: Array, default: [] },
+    Image: {
+        type: [{
+            id: { type: String, required: true, unique: true },
+            type: { type: String },
+            create: { type: Date, default: Date.now }
+        }],
+        default: []
+    },
 }, { _id: false });
 
 const StudentSchema = new Schema({
