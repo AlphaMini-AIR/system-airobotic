@@ -25,7 +25,6 @@ const updateAttendance = async (courseId, sessionId, attendanceData) => {
 
 export default function Main({ data }) {
     const { course, session, students } = data;
-
     const [showComment, setShowComment] = useState(false);
     const [selStu, setSelStu] = useState(null);
     const [att, setAtt] = useState({});
@@ -39,14 +38,11 @@ export default function Main({ data }) {
     const router = useRouter();
 
     const roll = (students || []).map(stu => {
-        const rawCheckin = stu.attendance?.Checkin;
-        const check = (rawCheckin === 0 || rawCheckin === '0') ? '0' : (rawCheckin === 2 || rawCheckin === '2') ? '2' : '1';
-
         return {
             ID: stu.ID,
             Name: stu.Name,
             Image: stu.attendance?.Image ?? [],
-            Checkin: check,
+            Checkin: stu.attendance?.Checkin,
             originalComment: stu.attendance?.Cmt ?? [],
         };
     });
@@ -54,9 +50,9 @@ export default function Main({ data }) {
     const cur = s => (att[s.ID] !== undefined ? att[s.ID] : s.Checkin);
 
 
-    const cm = roll.filter(s => cur(s) === '1').length;
-    const vk = roll.filter(s => cur(s) === '2').length;
-    const vc = roll.filter(s => cur(s) === '3').length;
+    const cm = roll.filter(s => cur(s) == '1').length;
+    const vk = roll.filter(s => cur(s) == '2').length;
+    const vc = roll.filter(s => cur(s) == '3').length;
 
     /* handler */
     const changeAtt = (id, v) => setAtt(prev => ({ ...prev, [id]: v }));
@@ -147,7 +143,6 @@ export default function Main({ data }) {
                     <aside className={styles.sidebar}>
                         <p className="text_4">Tài liệu buổi học</p>
                         {course.Version == 0 ? <>
-                            {console.log('session', session)}
                             <BoxFile type="Image" name="Hình ảnh buổi học" href={`https://drive.google.com/drive/folders/${session.Image}`} />
                         </> : <ImageUploader session={session} courseId={course.ID} />}
                         {session.Topic?.Slide && <BoxFile type="Ppt" name="Slide giảng dạy" href={session.Topic.Slide} />}
@@ -211,8 +206,10 @@ export default function Main({ data }) {
                                     </div>
 
                                     {roll.map(stu => {
-
+                                        if (stu.Checkin == '-1') return null; 
                                         const c = cur(stu);
+                                        console.log(c);
+                                        
                                         return (
                                             <div key={stu.ID} className={styles.row}
                                                 style={{ borderBottom: '1px solid #e9ecef', background: '#fff' }}>
@@ -223,7 +220,7 @@ export default function Main({ data }) {
                                                     {['1', '2', '3'].map(v => (
                                                         <label key={v} style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'pointer' }}>
                                                             <input type="radio" name={`att_${stu.ID}`} value={v}
-                                                                checked={c === v}
+                                                                checked={c == v}
                                                                 onChange={() => changeAtt(stu.ID, v)}
                                                                 style={{ transform: 'scale(1.1)', cursor: 'pointer' }} />
                                                         </label>

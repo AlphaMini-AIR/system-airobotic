@@ -61,7 +61,7 @@ export async function GET(request, { params }) {
                 _id: s._id,
                 ID: s.ID,
                 Name: studentNameMap.get(s.ID) || 'Không có tên',
-                attendance: attendance || { Checkin: 0, Cmt: [], Note: '' }
+                attendance: attendance || { Checkin: -1, Cmt: [], Note: '' }
             };
         });
 

@@ -67,8 +67,6 @@ export async function POST(request) {
                     const c = await scriptRes.json();
                     if (c?.urls) imageURL = c.urls;
                 }
-                console.log(scriptRes);
-
             } catch (err) {
                 console.error('[udetail] APPSCRIPT_ERROR:', err);
             }
@@ -95,12 +93,9 @@ export async function POST(request) {
             const updateOperations = {
                 $push: { Detail: newDetailEntry } // Push the new lesson to Detail array
             };
-
-            // Prepare Learn entries for affected students
+            
             const studentLearnUpdates = [];
             if (student.length > 0) {
-                // For each student ID provided, create a $push operation to their Learn array
-                // We will use arrayFilters to target specific students
                 student.forEach(sId => {
                     studentLearnUpdates.push({
                         "Student.$[elem].Learn": {
@@ -108,37 +103,22 @@ export async function POST(request) {
                             Cmt: [],
                             CmtFn: "",
                             Note: "",
-                            Lesson: newLessonObjectId, // Reference the new lesson's _id
+                            Lesson: newLessonObjectId,
                             Image: []
                         }
                     });
                 });
-
-                // Combine all student Learn updates into a single $push operation
-                // Use $push with $each for multiple elements, but here we are pushing one per student element
-                // The current schema structure makes this a bit tricky for a single `updateOne` call
-                // Let's adjust for clarity: find the document, then update students iteratively or use multiple updates
-                // However, a single update with arrayFilters and $push is possible for a nested array.
-                // Given your schema for `Student.Learn` is an array of `LearnDetailSchema`,
-                // we'll push into that array.
             }
 
-            // Use findByIdAndUpdate for the main course document
             const updatedCourse = await PostCourse.findByIdAndUpdate(
                 courseId,
-                updateOperations, // Add the new lesson to Detail
+                updateOperations, 
                 { new: true, projection: { Detail: 1, ID: 1, Student: 1 } }
             );
 
             if (!updatedCourse) {
                 return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học để thêm buổi học' }, { status: 404 });
             }
-
-            // --- Update Learn array for selected students ---
-            // This part needs a separate update because `findByIdAndUpdate` with arrayFilters
-            // on a top-level array and then trying to $set or $push into a nested array within it
-            // directly in the same operation can become very complex or not work as expected
-            // with arrayFilter on the *outer* `Student` array.
 
             if (student.length > 0) {
                 const studentUpdateResult = await PostCourse.updateOne(

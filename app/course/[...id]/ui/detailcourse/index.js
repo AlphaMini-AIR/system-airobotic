@@ -161,11 +161,14 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     {title.map(col => {
                         let learnDetailsArray = Object.values(stu.Learn || {});
                         learnDetailsArray = learnDetailsArray.filter(ld => ld.Lesson.toString() === params[1].toString())[0]
-                        let m = learnDetailsArray.Checkin == '1' ? 1 : 0;
-                        let c = learnDetailsArray.Checkin == '3' ? 1 : 0;
-                        let k = learnDetailsArray.Checkin == '2' ? 1 : 0;
-                        let cmt = learnDetailsArray.Cmt || [];
-                        let cmtfn = learnDetailsArray.CmtFn || '';
+                        if(learnDetailsArray === undefined) {
+                            return null;
+                        }
+                        let m = learnDetailsArray?.Checkin == '1' ? 1 : 0;
+                        let c = learnDetailsArray?.Checkin == '3' ? 1 : 0;
+                        let k = learnDetailsArray?.Checkin == '2' ? 1 : 0;
+                        let cmt = learnDetailsArray?.Cmt || [];
+                        let cmtfn = learnDetailsArray?.CmtFn || '';
                         stu.course = data.ID;
                         stu.lesson = data.Detail.find(lesson => lesson._id === params[1]);
                         stu.m = m;
