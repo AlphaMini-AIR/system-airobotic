@@ -87,7 +87,8 @@ export default function Calendar({ data = [], month, year }) {
                                 const [d, m, y] = dayKey.split('/').map(Number);
                                 const lessonDate = new Date(y, m - 1, d);
                                 const isFuture = lessonDate >= todayDateObj;
-
+                                console.log(item);
+                                
                                 return (
                                     <LessonM
                                         key={item._id}
