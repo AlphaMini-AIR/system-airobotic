@@ -8,6 +8,19 @@
     position: relative;
 }
 
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.9);
+}
+
 .highlight {
     position: absolute;
     top: 0;
@@ -39,6 +52,7 @@
 .navItem:hover {
     background: var(--hover);
 }
+
 .navText {
     color: var(--text-primary);
     font-size: 12px;

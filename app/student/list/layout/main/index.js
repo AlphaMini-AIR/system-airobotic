@@ -2,19 +2,18 @@
 
 import styles from './index.module.css';
 import Nav from '../filter';
-import { Li_l } from '../../ui/li';
+import { Li_l } from '../../ui/itemStudent';
 import { useState } from 'react';
 import Create from '../../ui/create';
 import { Re_Student_All } from '@/data/student';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/(ui)/(loading)/loading';
+import { Svg_Reload } from '@/components/(icon)/svg';
 
 export default function Main({ data_student, data_area }) {
   const [load, setload] = useState(false);
   const route = useRouter()
   const ReLoadData = async () => {
-    console.log('hi');
-    
     setload(true)
     await Re_Student_All()
     await route.refresh()
@@ -43,7 +42,7 @@ export default function Main({ data_student, data_area }) {
         <Nav
           data_student={data_student}
           setFilterStatus={setFilterStatus}
-          currentFilterStatus={filterStatus} // <--- THÊM DÒNG NÀY
+          currentFilterStatus={filterStatus}
         />
       </div>
       <div className={styles.list_wrap}>
@@ -58,7 +57,13 @@ export default function Main({ data_student, data_area }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Create data_area={data_area} reloadData={ReLoadData} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div className='btn' style={{ background: 'var(--main_d)', borderRadius: 5, margin: 0 }} onClick={ReLoadData}>
+              <Svg_Reload w={18} h={18} c={'white'} />
+              <p className='text_6_400' style={{ color: "white" }}>Tải lại dữ liệu</p>
+            </div>
+            <Create data_area={data_area} reloadData={ReLoadData} />
+          </div>
         </div>
         <div className={`${styles.list_main} scroll`}>
           {filteredStudents.map((t, index) => (

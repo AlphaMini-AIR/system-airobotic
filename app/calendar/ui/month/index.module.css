@@ -79,7 +79,7 @@
 
 .today {
     background-color: var(--main_d);
-    color: white;
+    color: white !important;
 }
 
 .buttond {

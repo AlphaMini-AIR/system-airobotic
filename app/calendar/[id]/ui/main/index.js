@@ -12,6 +12,8 @@ import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
 import ImageUploader from '../formimage';
 import StudentCourseImageManager from '../formimages';
+import { Svg_Course, Svg_Detail } from '@/components/(icon)/svg';
+import Link from 'next/link';
 
 const updateAttendance = async (courseId, sessionId, attendanceData) => {
     const r = await fetch('/api/checkin', {
@@ -128,10 +130,17 @@ export default function Main({ data }) {
             <div className={styles.root}>
                 {/* Header */}
                 <header className={styles.header}>
-                    <p className="text_3" style={{ color: '#fff' }}>
-                        {course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}
-                    </p>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <p className="text_3" style={{ color: '#fff' }}>
+                            {course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}
+                        </p>
+                        <Link href={`/course/${course.ID}`} className='btn' style={{ background: 'white', margin: '0' }}>
+                            <Svg_Detail w={16} h={16} c={'var(--main_d)'} />
+                            <p className='text_6_400'>Chi tiết khóa học</p>
+                        </Link>
+                    </div>
                     <div className={styles.statsContainer}>
+
                         <div className={`${styles.statBox} ${styles.present}`}>Có mặt: {cm}</div>
                         <div className={`${styles.statBox} ${styles.absent}`}>Vắng không phép: {vk}</div>
                         <div className={`${styles.statBox} ${styles.excused}`}>Vắng có phép: {vc}</div>
@@ -206,10 +215,10 @@ export default function Main({ data }) {
                                     </div>
 
                                     {roll.map(stu => {
-                                        if (stu.Checkin == '-1') return null; 
+                                        if (stu.Checkin == '-1') return null;
                                         const c = cur(stu);
                                         console.log(c);
-                                        
+
                                         return (
                                             <div key={stu.ID} className={styles.row}
                                                 style={{ borderBottom: '1px solid #e9ecef', background: '#fff' }}>

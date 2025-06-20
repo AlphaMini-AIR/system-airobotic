@@ -7,6 +7,8 @@ import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Co
 import Menu from '../../(ui)/(button)/menu';
 import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
+import { set } from 'mongoose';
+import Loading from '@/components/(ui)/(loading)/loading';
 
 const ITEM_HEIGHT = 82;
 
@@ -88,8 +90,22 @@ export default function Nav() {
       return newTheme;
     });
   };
+  const [load, setload] = useState(false);
+  const logout = async () => {
+    setload(true);
+    try {
+      const res = await fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setload(false);
+      window.location.reload();
+    }
+  }
 
-  // Menu chính
   const menuItems = (
     <div style={{
       listStyle: 'none',
@@ -109,7 +125,7 @@ export default function Nav() {
         </p>
       </div>
 
-      <div style={{ padding: 8, borderTop: 'thin solid var(--border-color)' }}>
+      <div style={{ padding: 8, borderTop: 'thin solid var(--border-color)' }} onClick={logout}>
         <p className={`${air.menu_li} ${air.logout} text_5_400`}>
           <Svg_Logout w={16} h={16} c={'white'} />Đăng xuất
         </p>
@@ -117,7 +133,6 @@ export default function Nav() {
     </div>
   );
 
-  // Menu giao diện (Mode) có chứa Switch chuyển dark mode
   const menuMode = (
     <div style={{
       listStyle: 'none',
@@ -154,50 +169,57 @@ export default function Nav() {
   );
 
   return (
-    <div className='flex_col' style={{ justifyContent: 'space-between', height: '100%', alignItems: 'center' }}>
-      <div style={{ height: 100, width: 100 }} className="flex_center">
-        <p className="text_1">
-          <span style={{ color: 'var(--main_d)' }}> AI</span>
-          <span>R</span>
-        </p>
-      </div>
-      <div className={air.container}>
-        <div
-          className={air.highlight}
-          style={{
-            transform: `translateY(${barOffset}px)`,
-            transition: 'transform .2s .1s ease'
-          }}
-        />
-        {navItems.map(({ href, icon: Icon, content }) => (
+    <>
+      <div className='flex_col' style={{ justifyContent: 'space-between', height: '100%', alignItems: 'center' }}>
+        <div style={{ height: 100, width: 100 }} className="flex_center">
+          <p className="text_1">
+            <span style={{ color: 'var(--main_d)' }}> AI</span>
+            <span>R</span>
+          </p>
+        </div>
+        <div className={air.container}>
           <div
-            key={href}
-            className={air.navItem}
-            onClick={() => startTransition(() => router.push(href))}
-          >
-            {Icon}
-            <p className={air.navText}>{content}</p>
-          </div>
-        ))}
-      </div>
-      <div>
-        <Menu
-          isOpen={isMenuOpen}
-          menuItems={activeMenu === 1 ? menuItems : menuMode}
-          menuPosition="top"
-          customButton={
-            <div className={air.navItem} style={{ marginBottom: 8 }}>
-              <Svg_Menu w={22} h={22} c={'var(--text-primary)'} />
-              <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
+            className={air.highlight}
+            style={{
+              transform: `translateY(${barOffset}px)`,
+              transition: 'transform .2s .1s ease'
+            }}
+          />
+          {navItems.map(({ href, icon: Icon, content }) => (
+            <div
+              key={href}
+              className={air.navItem}
+              onClick={() => startTransition(() => router.push(href))}
+            >
+              {Icon}
+              <p className={air.navText}>{content}</p>
             </div>
-          }
-          style={`display: 'flex'`}
-          onOpenChange={(isOpen) => {
-            setIsMenuOpen(isOpen);
-            if (!isOpen) setActiveMenu(1);
-          }}
-        />
+          ))}
+        </div>
+        <div>
+          <Menu
+            isOpen={isMenuOpen}
+            menuItems={activeMenu === 1 ? menuItems : menuMode}
+            menuPosition="top"
+            customButton={
+              <div className={air.navItem} style={{ marginBottom: 8 }}>
+                <Svg_Menu w={22} h={22} c={'var(--text-primary)'} />
+                <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
+              </div>
+            }
+            style={`display: 'flex'`}
+            onOpenChange={(isOpen) => {
+              setIsMenuOpen(isOpen);
+              if (!isOpen) setActiveMenu(1);
+            }}
+          />
+        </div>
       </div>
-    </div>
+      {load && (
+        <div className={air.loading}>
+          <Loading content={<p className='text_6_400' style={{ color: 'white' }}>Đang đăng xuất...</p>} />
+        </div>
+      )}
+    </>
   );
 }

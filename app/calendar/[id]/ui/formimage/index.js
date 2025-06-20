@@ -8,6 +8,7 @@ import Loading from '@/components/(ui)/(loading)/loading'; // <-- Hãy chắc ch
 import { Re_course_one, Re_lesson } from '@/data/course'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import Noti from '@/components/(features)/(noti)/noti'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import { Svg_Pen } from '@/components/(icon)/svg';
+import Link from 'next/link';
 
 
 // ================================================================
@@ -199,43 +200,51 @@ function Lightbox({ mediaItem, onClose, onUpdateSuccess }) {
     );
 }
 
-function MediaGallery({ mediaItems = [], onAdd, onMediaClick }) {
+function MediaGallery({ session, mediaItems = [], onAdd, onMediaClick }) {
     const getDriveImageUrl = (id) => `https://lh3.googleusercontent.com/d/${id}=w400`;
 
     return (
         <div className={styles.galleryContainer}>
             <div className={styles.galleryHeader}>
                 <p className='text_5'>Thư viện hình ảnh & video</p>
-                <button className={'btn'} onClick={onAdd} style={{ background: 'var(--main_d)' }}>
-                    + Thêm file
-                </button>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <Link href={`https://drive.google.com/drive/folders/${session.Image}`} className='btn' target="_blank" rel="noopener noreferrer">
+                        <p className='text_6_400' style={{ color: 'white' }}> Đi tới Drive</p>
+                    </Link>
+                    <button className={'btn'} onClick={onAdd}>
+                        <p className='text_6_400' style={{ color: 'white' }}> + Thêm file</p>
+                    </button>
+                </div>
             </div>
 
-            {mediaItems.length === 0 ? (
-                <div className={styles.emptyGallery}>
-                    <p>Chưa có hình ảnh hoặc video nào.</p>
-                </div>
-            ) : (
-                <div className={styles.gallerywarp}>
-                    <div className={styles.galleryGrid}>
-                        {mediaItems.map(item => (
-                            <button
-                                key={item.id}
-                                onClick={() => onMediaClick(item)}
-                                className={styles.galleryItem}
-                            >
-                                <img src={getDriveImageUrl(item.id)} alt={`File từ Google Drive`} loading="lazy" />
-                                {item.type === 'video' && (
-                                    <div className={styles.playIconOverlay}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4V20L20 12L7 4Z"></path></svg>
-                                    </div>
-                                )}
-                            </button>
-                        ))}
+            {
+                mediaItems.length === 0 ? (
+                    <div className={styles.emptyGallery}>
+                        <p>Chưa có hình ảnh hoặc video nào.</p>
                     </div>
-                </div>
-            )}
-        </div>
+                ) : (
+                    <div className={styles.gallerywarp}>
+                        <div className={styles.galleryGrid}>
+                            {mediaItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => onMediaClick(item)}
+                                    className={styles.galleryItem}
+                                >
+                                    <img src={getDriveImageUrl(item.id)} alt={`File từ Google Drive`} loading="lazy" />
+                                    {item.type === 'video' && (
+                                        <div className={styles.playIconOverlay}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4V20L20 12L7 4Z"></path></svg>
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 
@@ -393,7 +402,7 @@ const UploadManager = forwardRef(({
 // 3. COMPONENT CHÍNH ĐIỀU KHIỂN - ĐÃ CẬP NHẬT
 //================================================================
 export default function ImageUploader({ session, courseId, Version }) {
-  
+
 
     const router = useRouter();
     const [isPopupOpen, setPopupOpen] = useState(false);
@@ -452,6 +461,7 @@ export default function ImageUploader({ session, courseId, Version }) {
 
     const renderMediaGallery = () => (
         <MediaGallery
+            session={session}
             mediaItems={mediaItems}
             onAdd={() => setUploaderOpen(true)}
             onMediaClick={setLightboxMedia}

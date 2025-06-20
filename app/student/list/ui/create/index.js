@@ -258,11 +258,11 @@ const AddStudentForm = forwardRef(({
             </div>
             <div className={styles.actionsContainer}>
                 <div className={`btn`} style={{ background: 'gray', borderRadius: 5 }} onClick={isSubmitting ? undefined : handleAttemptClose}>
-                    <p className={`text_6_400 ${styles.whiteText}`}>Hủy bỏ</p>
+                    <p className={`text_6_400 `} style={{ color: 'white' }}>Hủy bỏ</p>
                 </div>
                 <div className={`btn ${styles.submitButton}`} onClick={isSubmitting ? undefined : handleSubmit}>
                     <Svg_Add w={18} h={18} c={'white'} />
-                    <p className={`text_6_400 ${styles.whiteText}`}>Tạo học sinh</p>
+                    <p className={`text_6_400`} style={{ color: 'white' }}>Tạo học sinh</p>
                 </div>
             </div>
         </>
@@ -319,13 +319,13 @@ export default function Create({ data_area, onStudentCreated, reloadData }) {
                 onClick={handleOpenPopup}
             >
                 <Svg_Add w={18} h={18} c={'var(--bg-primary)'} />
-                <p className={`text_6_400 ${styles.whiteText}`}>Thêm học sinh mới</p>
+                <p className={`text_6_400`} style={{ color: 'white' }}>Thêm học sinh mới</p>
             </div>
 
             {/* Lớp phủ loading toàn màn hình */}
             {isLoading && (
                 <div className={styles.loadingOverlay}>
-                    <Loading content="Đang thực thi..." />
+                    <Loading content={<p className='text_6_400' style={{ color: 'white' }}>Đang thực thi...</p>} />
                 </div>
             )}
 
@@ -355,7 +355,7 @@ export default function Create({ data_area, onStudentCreated, reloadData }) {
                 onClose={() => setNotification(prev => ({ ...prev, open: false }))}
                 button={
                     <div className={`btn`} style={{ width: 'calc(100% - 24px)', justifyContent: 'center' }} onClick={() => setNotification(prev => ({ ...prev, open: false }))}>
-                        <p className={`text_6_400 ${styles.whiteText}`}>Tắt thông báo</p>
+                        <p className={`text_6_400`} style={{ color: 'white' }}>Tắt thông báo</p>
                     </div>
                 }
             />

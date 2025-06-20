@@ -4,16 +4,12 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
-/**
- * LẤY TẤT CẢ HỌC SINH
- * Endpoint: GET /api/students
- */
 export async function GET(request) {
     try {
         await connectDB();
-        // Sắp xếp để học sinh mới nhất lên đầu
-        const data = await PostStudent.find({}).sort({ _id: -1 });
-
+        const data = await PostStudent.find({}).populate({ path: 'Area' }).lean();
+        console.log(data);
+        
         return NextResponse.json(
             { air: 2, mes: 'Lấy danh sách học sinh thành công', data },
             { status: 200 }
@@ -26,10 +22,7 @@ export async function GET(request) {
     }
 }
 
-/**
- * HELPER: Khởi tạo Google Drive client
- * @returns {drive_v3.Drive}
- */
+
 async function getDriveClient() {
     const auth = new google.auth.GoogleAuth({
         projectId: process.env.GOOGLE_PROJECT_ID,

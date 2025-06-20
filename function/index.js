@@ -33,3 +33,7 @@ export function calculatePastLessons(courseData) {
 
     return pastLessonsCount;
 }
+
+export function srcImage(id){
+    return `https://lh3.googleusercontent.com/d/${id}`
+}
