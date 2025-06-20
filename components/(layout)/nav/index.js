@@ -11,7 +11,7 @@ import WrapIcon from '../../(ui)/(button)/hoveIcon';
 const ITEM_HEIGHT = 82;
 
 const navItems = [
-  { href: '/student/overview', icon: <Svg_Student w={24} h={24} c={'var(--text-secondary)'} />, content: 'Học sinh' },
+  { href: '/student/list', icon: <Svg_Student w={24} h={24} c={'var(--text-secondary)'} />, content: 'Học sinh' },
   {
     href: '/course', icon: <div style={{ marginBottom: 1 }}>
       <Svg_Course w={20} h={19} c={'var(--text-secondary)'} />

@@ -31,7 +31,7 @@ export async function POST(request) {
         }
 
         const { user, body } = authResult;
-        if (!user.role.includes('Admin') && !user.role.includes('Academic')) {
+        if (!user.role.includes('Admin') && !user.role.includes('Acadamic')) {
             return NextResponse.json(
                 { status: 1, mes: 'Bạn không có quyền truy cập vào chức năng này.', data: null },
                 { status: 403 }

@@ -1,25 +1,36 @@
 import { Schema, model, models } from 'mongoose'
 
+const Course = new Schema({
+  course: { type: Schema.Types.ObjectId, required: true },
+  tuition: { type: Number, required: true },
+});
+
+const Status = new Schema({
+  status: { type: String, required: true },
+  date: { type: Date, required: true },
+  note: { type: String, default: '' },
+});
+
 const postSchema = new Schema({
   ID: {
     type: String,
     required: true,
   },
   Uid: {
-    type: Array,
-    default: []
+    type: String
   },
   Name: {
     type: String
   },
   BD: {
-    type: String
+    type: Date
   },
   School: {
     type: String
   },
   Area: {
-    type: String
+    type: Schema.Types.ObjectId,
+    ref: 'area',
   },
   Type: {
     type: String
@@ -40,10 +51,12 @@ const postSchema = new Schema({
     type: String
   },
   Status: {
-    type: String,
+    type: [Status],
+    default: []
   },
   Course: {
-    type: Object
+    type: [Course],
+    default: []
   },
   Profile: {
     type: Object

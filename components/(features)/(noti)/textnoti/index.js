@@ -7,7 +7,7 @@ export default function TextNoti({ mes, title, color }) {
     return (
         <div className={styles.scheduleBox} style={{ borderColor: color.color, background: color.background }}>
             <p className='text_4' style={{ color: color.color, marginBottom: 4 }}>{title}</p>
-            <p className='text_6_400' style={{ color: color.color }}>  {mes}  </p>
+            <div className='text_6_400' style={{ color: color.color }}>  {mes}  </div>
         </div>
     )
 }
