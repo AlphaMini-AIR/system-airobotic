@@ -13,7 +13,7 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
     const [loading, setLoading] = useState(false);
     const [detail, setDetail] = useState(null);
     const [error, setError] = useState(null);
-    
+
     const chipClass =
         (room === 'Lab_B304' || room === 'T&A' || room === 'B304') ? styles.chipBienHoa :
             (room === 'AI Robotic') ? styles.chipLongKhanh :

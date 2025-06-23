@@ -5,11 +5,41 @@ import styles from './index.module.css';
 import Link from 'next/link';
 
 const CalendarCourse = ({ data = {} }) => {
+    let statusLesson = [1, 1, 1];
+    let num = 0
+    data.students.forEach(element => {
+        if (element.Checkin == 0) { statusLesson[0] = 0 }
+        if (element.Checkin == 1) {
+            num++;
+            if (element.Cmt.length == 0) {
+                statusLesson[1] = 0;
+            }
+            if (element.Image.length == 0) {
+                statusLesson[2] = 0;
+            }
+        }
+    });
+    if (num == 0) {
+        statusLesson[1] = 0
+        statusLesson[2] = 0
+    }
+
 
     return (
         <Link href={`/calendar/${data._id}`} className={styles.calendarCourse} >
             <div className={styles.dot} />
             <div className={styles.content}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <p className="Chip text_7_400" style={{ background: statusLesson[0] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                        Điểm danh
+                    </p>
+                    <p className="Chip text_7_400" style={{ background: statusLesson[1] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                        Nhận xét
+                    </p>
+                    <p className="Chip text_7_400" style={{ background: statusLesson[2] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                        Minh chứng
+                    </p>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={16} height={16} fill="var(--text-primary)" >

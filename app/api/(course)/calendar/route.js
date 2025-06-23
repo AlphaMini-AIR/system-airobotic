@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import PostCourse from '@/models/course';
 import connectDB from '@/config/connectDB';
+import mongoose from 'mongoose';
+
 
 export async function GET(request) {
   try {
@@ -27,6 +29,7 @@ export async function GET(request) {
 
     const events = await PostCourse.aggregate([
       { $unwind: '$Detail' },
+      
       {
         $match: {
           'Detail.Day': {
@@ -36,24 +39,80 @@ export async function GET(request) {
         },
       },
 
-      // === BẮT ĐẦU CHUỖI XỬ LÝ TOPIC PHỨC TẠP ===
+      // BƯỚC 1: Lọc ra danh sách student có tham gia buổi học này
+      {
+        $addFields: {
+          attendingStudents: {
+            $filter: {
+              input: '$Student',
+              as: 'student',
+              cond: {
+                $anyElementTrue: [
+                  {
+                    $map: {
+                      input: '$$student.Learn',
+                      as: 'learnItem',
+                      in: {
+                        $eq: ['$$learnItem.Lesson', '$Detail._id'],
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
 
-      // 1. Join với collection 'books' để lấy document book tương ứng
+      // *** BƯỚC MỚI: LỌC MẢNG "LEARN" BÊN TRONG MỖI STUDENT ĐÃ TÌM THẤY ***
+      {
+        $addFields: {
+          // Ghi đè lại trường attendingStudents với phiên bản đã được biến đổi
+          attendingStudents: {
+            // Dùng $map để duyệt qua từng student trong danh sách vừa lọc
+            $map: {
+              input: '$attendingStudents',
+              as: 'student',
+              // "in" định nghĩa cấu trúc object mới cho mỗi student
+              in: {
+                // Dùng $mergeObjects để giữ lại các trường gốc của student (như ID)...
+                $mergeObjects: [
+                  '$$student',
+                  // ...và ghi đè lại trường "Learn"
+                  {
+                    Learn: {
+                      // Lọc mảng Learn của student để chỉ lấy duy nhất learnItem khớp với Detail._id
+                      $filter: {
+                        input: '$$student.Learn',
+                        as: 'learnItem',
+                        cond: {
+                          $eq: ['$$learnItem.Lesson', '$Detail._id'],
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      // *** KẾT THÚC BƯỚC MỚI ***
+
+      // === BẮT ĐẦU CHUỖI XỬ LÝ TOPIC (giữ nguyên) ===
       {
         $lookup: {
-          from: 'books', // Tên collection của model Book
+          from: 'books',
           localField: 'Book',
           foreignField: '_id',
           as: 'bookInfo',
         },
       },
-      // Lấy document book ra khỏi mảng bookInfo (vì kết quả lookup luôn là mảng)
       {
         $addFields: {
           bookDoc: { $arrayElemAt: ['$bookInfo', 0] },
         },
       },
-      // 2. Lọc mảng 'Topics' bên trong bookDoc để tìm đúng topic
       {
         $addFields: {
           matchedTopic: {
@@ -65,15 +124,14 @@ export async function GET(request) {
           },
         },
       },
-      // 3. Lấy object topic ra khỏi mảng kết quả sau khi lọc
       {
         $addFields: {
           topic: { $arrayElemAt: ['$matchedTopic', 0] },
         },
       },
-
       // === KẾT THÚC CHUỖI XỬ LÝ TOPIC ===
 
+      // Các bước lookup thông tin giáo viên (giữ nguyên)
       {
         $lookup: {
           from: 'users',
@@ -90,7 +148,9 @@ export async function GET(request) {
           as: 'teachingAsInfo',
         },
       },
+
       { $sort: { 'Detail.Day': 1 } },
+      
       {
         $project: {
           _id: '$Detail._id',
@@ -106,6 +166,7 @@ export async function GET(request) {
           topic: '$topic',
           teacher: { $arrayElemAt: ['$teacherInfo', 0] },
           teachingAs: { $arrayElemAt: ['$teachingAsInfo', 0] },
+          students: '$attendingStudents',
         },
       },
     ]);
