@@ -22,12 +22,14 @@ export default function Student({ course }) {
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState('');
+    // CHỈNH SỬA 1: Đổi tên state 'search' để làm rõ mục đích
+    const [courseStudentSearch, setCourseStudentSearch] = useState('');
     const [openAdd, setOpenAdd] = useState(false);
     const [allStudents, setAllStudents] = useState([]);
     const [loadingAll, setLoadingAll] = useState(false);
     const [selectMenuOpen, setSelectMenuOpen] = useState(false);
-    const [selectSearch, setSelectSearch] = useState('');
+    // CHỈNH SỬA 2: Đổi tên state 'selectSearch' để làm rõ mục đích
+    const [addStudentSearch, setAddStudentSearch] = useState('');
     const [selected, setSelected] = useState([]);
     const [saving, setSaving] = useState(false);
     const [globalLoading, setGlobalLoading] = useState(false);
@@ -35,7 +37,6 @@ export default function Student({ course }) {
     const [notiStatus, setNotiStatus] = useState(false);
     const [notiMes, setNotiMes] = useState('');
 
-    // CHỈNH SỬA 1: Tải danh sách TẤT CẢ học sinh khi một trong hai popup được mở
     useEffect(() => {
         if ((!open && !openAdd) || allStudents.length > 0) return;
 
@@ -61,7 +62,8 @@ export default function Student({ course }) {
         setOpenAdd(false);
         setSelected([]);
         setSelectMenuOpen(false);
-        setSelectSearch('');
+        // Đảm bảo reset đúng state tìm kiếm
+        setAddStudentSearch('');
     };
 
     const handleSaveStudents = () => {
@@ -98,90 +100,97 @@ export default function Student({ course }) {
             });
     };
 
-    // CHỈNH SỬA 2: Hàm render danh sách học sinh của khóa học
-    const renderStudentList = (listInCourse) => {
-        if (loadingAll) {
-            return <Loading content="Đang tải dữ liệu học sinh..." />;
-        }
+const renderStudentList = (listInCourse) => {
+    if (loadingAll) {
+        return <Loading content="Đang tải dữ liệu học sinh..." />;
+    }
 
-        const key = search.trim().toLowerCase();
+    const key = courseStudentSearch.trim().toLowerCase();
+    const studentNameMap = new Map(allStudents.map(s => [s.ID, s.Name]));
 
-        // Tạo một map để tra cứu tên học sinh nhanh hơn
-        const studentNameMap = new Map(allStudents.map(s => [s.ID, s.Name]));
+    const show = key
+        ? listInCourse.filter((s) => {
+              const name = studentNameMap.get(s.ID) || '';
+              return (`${name} ${s.ID ?? ''}`).toLowerCase().includes(key);
+          })
+        : listInCourse;
 
-        const show = key
-            ? listInCourse.filter((s) => {
-                const name = studentNameMap.get(s.ID) || '';
-                return (`${name} ${s.ID ?? ''}`).toLowerCase().includes(key);
-            })
-            : listInCourse;
+    // Tạo một bản sao mới của mảng 'show' và đảo ngược nó
+    // để không làm thay đổi dữ liệu gốc (props).
+    const reversedShow = [...show].reverse();
 
-        return (
-            <>
-                <div className={styles.box}>
-                    <input
-                        className="input"
-                        style={{ flex: 1, borderRadius: 3 }}
-                        placeholder="Nhập tên hoặc mã học sinh..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <div className="btn" style={{ borderRadius: 3, margin: 0, padding: 10 }} onClick={() => Re_course_one(course.ID).finally(() => router.refresh())}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={18} height={18} fill="white"><path d="M142.9 142.9c-17.5 17.5-30.1 38-37.8 59.8c-5.9 16.7-24.2 25.4-40.8 19.5s-25.4-24.2-19.5-40.8C55.6 150.7 73.2 122 97.6 97.6c87.2-87.2 228.3-87.5 315.8-1L455 55c6.9-6.9 17.2-8.9 26.2-5.2s14.8 12.5 14.8 22.2l0 128c0 13.3-10.7 24-24 24l-8.4 0c0 0 0 0 0 0L344 224c-9.7 0-18.5-5.8-22.2-14.8s-1.7-19.3 5.2-26.2l41.1-41.1c-62.6-61.5-163.1-61.2-225.3 1zM16 312c0-13.3 10.7-24 24-24l7.6 0 .7 0L168 288c9.7 0 18.5 5.8 22.2 14.8s1.7 19.3-5.2 26.2l-41.1 41.1c62.6 61.5 163.1 61.2 225.3-1c17.5-17.5 30.1-38 37.8-59.8c5.9-16.7 24.2-25.4 40.8-19.5s25.4 24.2 19.5 40.8c-10.8 30.6-28.4 59.3-52.9 83.8c-87.2 87.2-228.3 87.5-315.8 1L57 457c-6.9 6.9-17.2 8.9-26.2 5.2S16 449.7 16 440l0-119.6 0-.7 0-7.6z" /></svg>
-                    </div>
-                    <div className="btn" style={{ borderRadius: 3, margin: 0, padding: 10 }} onClick={() => setOpenAdd(true)}>
-                        <Svg_Add w={18} h={18} c="white" />
-                    </div>
+    return (
+        <>
+            <div className={styles.box}>
+                <input
+                    className="input"
+                    style={{ flex: 1, borderRadius: 3 }}
+                    placeholder="Nhập tên hoặc mã học sinh..."
+                    value={courseStudentSearch}
+                    onChange={(e) => setCourseStudentSearch(e.target.value)}
+                />
+                <div className="btn" style={{ borderRadius: 3, margin: 0, padding: 10 }} onClick={() => Re_course_one(course.ID).finally(() => router.refresh())}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={18} height={18} fill="white"><path d="M142.9 142.9c-17.5 17.5-30.1 38-37.8 59.8c-5.9 16.7-24.2 25.4-40.8 19.5s-25.4-24.2-19.5-40.8C55.6 150.7 73.2 122 97.6 97.6c87.2-87.2 228.3-87.5 315.8-1L455 55c6.9-6.9 17.2-8.9 26.2-5.2s14.8 12.5 14.8 22.2l0 128c0 13.3-10.7 24-24 24l-8.4 0c0 0 0 0 0 0L344 224c-9.7 0-18.5-5.8-22.2-14.8s-1.7-19.3 5.2-26.2l41.1-41.1c-62.6-61.5-163.1-61.2-225.3 1zM16 312c0-13.3 10.7-24 24-24l7.6 0 .7 0L168 288c9.7 0 18.5 5.8 22.2 14.8s1.7 19.3-5.2 26.2l-41.1 41.1c62.6 61.5 163.1 61.2 225.3-1c17.5-17.5 30.1-38 37.8-59.8c5.9-16.7 24.2-25.4 40.8-19.5s25.4 24.2 19.5 40.8c-10.8 30.6-28.4 59.3-52.9 83.8c-87.2 87.2-228.3 87.5-315.8 1L57 457c-6.9 6.9-17.2 8.9-26.2 5.2S16 449.7 16 440l0-119.6 0-.7 0-7.6z" /></svg>
                 </div>
-                {show.length === 0 ? (
-                    <p className="text_4" style={{ padding: 16 }}>Không tìm thấy học sinh phù hợp</p>
-                ) : (
-                    <div style={{ padding: 16 }} >
-                        <div style={{ display: 'flex', background: 'var(--border-color)', borderRadius: 3 }}>
-                            <p className="text_6" style={{ flex: 1, padding: 8 }}>ID</p>
-                            <p className="text_6" style={{ flex: 3, padding: 8 }}>Họ và Tên</p>
-                            <p className="text_6" style={{ flex: 1, padding: 8 }}>Hành động</p>
-                        </div>
-                        {show.reverse().map((s, index) => {
-                            // CHỈNH SỬA 3: Tìm tên học sinh từ danh sách đầy đủ
-                            const studentName = studentNameMap.get(s.ID) || 'Không có tên';
-                            return (
-                                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} key={index}>
-                                    <p className="text_6" style={{ flex: 1, padding: 8 }}>{s.ID}</p>
-                                    <p className="text_6" style={{ flex: 3, padding: 8 }}>{studentName}</p>
-                                    <div className="text_6" style={{ padding: 8, flex: 1, display: 'flex', justifyContent: 'start' }}>
-                                        <WrapIcon
-                                            icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width={16} height={16} fill="white"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></svg>}
-                                            content='Xóa khỏi khóa học'
-                                            style={{ background: 'var(--red)' }}
-                                            placement='bottom'
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
+                <div className="btn" style={{ borderRadius: 3, margin: 0, padding: 10 }} onClick={() => setOpenAdd(true)}>
+                    <Svg_Add w={18} h={18} c="white" />
+                </div>
+            </div>
+            {reversedShow.length === 0 ? (
+                <p className="text_4" style={{ padding: 16 }}>Không tìm thấy học sinh phù hợp</p>
+            ) : (
+                <div style={{ padding: 16 }} >
+                    <div style={{ display: 'flex', background: 'var(--border-color)', borderRadius: 3 }}>
+                        <p className="text_6" style={{ flex: 1, padding: 8 }}>ID</p>
+                        <p className="text_6" style={{ flex: 3, padding: 8 }}>Họ và Tên</p>
+                        <p className="text_6" style={{ flex: 1, padding: 8 }}>Hành động</p>
                     </div>
-                )}
-            </>
-        );
-    };
+                    {reversedShow.map((s, index) => {
+                        const studentName = studentNameMap.get(s.ID) || 'Không có tên';
+                        return (
+                            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} key={index}>
+                                <p className="text_6" style={{ flex: 1, padding: 8 }}>{s.ID}</p>
+                                <p className="text_6" style={{ flex: 3, padding: 8 }}>{studentName}</p>
+                                <div className="text_6" style={{ padding: 8, flex: 1, display: 'flex', justifyContent: 'start' }}>
+                                    <WrapIcon
+                                        icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width={16} height={16} fill="white"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></svg>}
+                                        content='Xóa khỏi khóa học'
+                                        style={{ background: 'var(--red)' }}
+                                        placement='bottom'
+                                    />
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </>
+    );
+};
 
-    const available = allStudents.filter((s) => !selected.find((sel) => sel._id === s._id));
-    const filterAvail = selectSearch.trim()
-        ? available.filter((s) => (`${s.Name ?? ''} ${s.ID ?? ''}`).toLowerCase().includes(selectSearch.trim().toLowerCase()))
-        : available;
+    // CHỈNH SỬA 4: Cập nhật logic lọc cho popup "Thêm học sinh" để sử dụng state 'addStudentSearch'
+    const availableStudents = allStudents.filter((s) => !selected.find((sel) => sel._id === s._id));
+    const filteredAvailableStudents = addStudentSearch.trim()
+        ? availableStudents.filter((s) => (`${s.Name ?? ''} ${s.ID ?? ''}`).toLowerCase().includes(addStudentSearch.trim().toLowerCase()))
+        : availableStudents;
 
     const studentMenu = (
         <div className={styles.menuWrap}>
             <div style={{ padding: 8 }}>
-                <input className="input" placeholder="Tìm học sinh..." value={selectSearch} onChange={(e) => setSelectSearch(e.target.value)} style={{ width: 'calc(100% - 24px)', marginBottom: 8 }} />
+                <input
+                    className="input"
+                    placeholder="Tìm học sinh..."
+                    value={addStudentSearch}
+                    onChange={(e) => setAddStudentSearch(e.target.value)}
+                    style={{ width: 'calc(100% - 24px)', marginBottom: 8 }}
+                />
                 <div className="flex_col" style={{ gap: 3, maxHeight: 200, overflowY: 'auto' }}>
-                    {filterAvail.map((s) => (
-                        <p key={s._id} onClick={() => { handlePickStudent(s); setSelectMenuOpen(false); setSelectSearch(''); }} className={`${styles.listItem} text_6_400`}>
+                    {filteredAvailableStudents.map((s) => (
+                        <p key={s._id} onClick={() => { handlePickStudent(s); setSelectMenuOpen(false); setAddStudentSearch(''); }} className={`${styles.listItem} text_6_400`}>
                             {s.Name} ({s.ID})
                         </p>
                     ))}
-                    {filterAvail.length === 0 && <p className={styles.noItem}>Không tìm thấy</p>}
+                    {filteredAvailableStudents.length === 0 && <p className={styles.noItem}>Không tìm thấy</p>}
                 </div>
             </div>
         </div>
@@ -196,7 +205,7 @@ export default function Student({ course }) {
 
             <FlexiblePopup
                 open={open}
-                onClose={() => { setOpen(false); setSearch(''); }}
+                onClose={() => { setOpen(false); setCourseStudentSearch(''); }} // Reset đúng state tìm kiếm
                 title="Danh sách học sinh"
                 width={600}
                 globalZIndex={1500}
