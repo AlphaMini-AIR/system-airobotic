@@ -3,6 +3,11 @@ import Dot from "./dot"
 import { formatDate } from "@/function";
 
 export default function Timeline({ data = [], props }) {
+    data.Detail.sort((a, b) => {
+        const dateA = new Date(a.Day);
+        const dateB = new Date(b.Day);
+        return dateA - dateB;
+    });
     const allDates = data.Detail?.map(item => new Date(item.Day));
     let dateRange = ['Chưa có dữ liệu', 'Chưa có dữ liệu'];
     if (allDates && allDates.length > 0) {
@@ -24,12 +29,19 @@ export default function Timeline({ data = [], props }) {
 
 
             <div style={{ flex: 1, overflow: 'hidden', overflowY: 'scroll' }}>
-                {data.Detail?.map((e, i) => (
-                    i == data.Detail.length - 1 ?
-                        <Dot key={i} props={props} course={data.ID} type="end" index={i} data={e} /> :
-                        i == 0 ? <Dot key={i} props={props} course={data.ID} type="center" index={i} data={e} /> :
-                            <Dot key={i} props={props} course={data.ID} type="main" index={i} data={e} />
-                ))}
+                {data.Detail?.map((e, i) => {
+                    let datalesson = e
+                    datalesson.Student = data.Student.flatMap((s) => {
+                        let g = s.Learn.filter(t => t.Lesson == e._id)
+                        return g
+                    })
+                    return (
+                        i == data.Detail.length - 1 ?
+                            <Dot key={i} props={props} course={data.ID} type="end" index={i} data={datalesson} /> :
+                            i == 0 ? <Dot key={i} props={props} course={data.ID} type="center" index={i} data={datalesson} /> :
+                                <Dot key={i} props={props} course={data.ID} type="main" index={i} data={datalesson} />
+                    )
+                })}
             </div>
         </div>
     )

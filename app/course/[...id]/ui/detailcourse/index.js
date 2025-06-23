@@ -7,7 +7,7 @@ import styles from './index.module.css';
 import Student from '../student';
 import Calendar from '../calendarcourse';
 import Image from 'next/image';
-import { Svg_Area, Svg_Canlendar, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
+import { Svg_Area, Svg_Canlendar, Svg_Course, Svg_Map, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
 import AnnounceStudent from '../bell';
 import Report from '../Report';
 import { Re_course_one } from '@/data/course';
@@ -161,7 +161,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     {title.map(col => {
                         let learnDetailsArray = Object.values(stu.Learn || {});
                         learnDetailsArray = learnDetailsArray.filter(ld => ld.Lesson.toString() === params[1].toString())[0]
-                        if(learnDetailsArray === undefined) {
+                        if (learnDetailsArray === undefined) {
                             return null;
                         }
                         let m = learnDetailsArray?.Checkin == '1' ? 1 : 0;
@@ -199,6 +199,34 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
         router.refresh();
         setLoading(false);
     }
+    let lesson;
+    let statusLesson = [1, 1, 1];
+    if (params.length > 1) {
+        lesson = data.Detail.find(lesson => lesson._id === params[1]);
+        lesson.Student = data.Student.flatMap((s) => {
+            let g = s.Learn.filter(t => t.Lesson == lesson._id)
+            return g
+        })
+
+        let num = 0
+        lesson.Student.forEach(element => {
+            if (element.Checkin == 0) { statusLesson[0] = 0 }
+            if (element.Checkin == 1) {
+                num++;
+                if (element.Cmt.length == 0) {
+                    statusLesson[1] = 0;
+                }
+                if (element.Image.length == 0) {
+                    statusLesson[2] = 0;
+                }
+            }
+        });
+        if (num == 0) {
+            statusLesson[1] = 0
+            statusLesson[2] = 0
+        }
+
+    }
 
     return (
         <div className={styles.container}>
@@ -207,45 +235,81 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     <Image priority={true} src={data.Book.Image} fill alt={data.Book.Name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                 </div>
                 <div style={{ flex: 1 }}>
-                    <p className="text_4" style={{ marginBottom: 8 }}>Thông tin khóa học</p>
+                    <p className="text_4" style={{ marginBottom: 8 }}>{params.length == 1 ? 'Thông tin khóa học' : `Thông tin buổi học (${lesson.Type || 'Chính thức'})`}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={14} height={14} fill='var(--text-primary)'><path d="M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5l0-377.4c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8L0 454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5l0-370.3c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11L304 456c0 11.4 11.7 19.3 22.4 15.5z" /></svg>
-                            <span className='text_6'>Chương trình học :</span>
-                            <span className="text_6_400">{data.Book.Name}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
-                                <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" /></svg>
-                            <span className='text_6'>Tên khóa học :</span>
-                            <span className="text_6_400">{data.ID}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Svg_Student w={15} h={15} c='var(--text-primary)' />
-                            <span className='text_6'>Sỉ số khóa :</span>
-                            <span className="text_6_400">{data.Student.length} học sinh</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Svg_Canlendar w={14} h={14} c='var(--text-primary)' />
-                            <span className='text_6'>Thời gian học :</span>
-                            <span className="text_6_400">{dateRange[0] || 'Trống'} - {dateRange[1] || 'Trống'}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Svg_Profile w={14} h={14} c='var(--text-primary)' />
-                            <span className='text_6'>Giáo viên chủ nhiệm :</span>
-                            <span className="text_6_400">{data.TeacherHR.name}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Svg_Area w={14} h={14} c='var(--text-primary)' />
-                            <span className='text_6'>Khu vực :</span>
-                            <span className="text_6_400">{data.Area.name}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
-                                <path d="M0 24C0 10.7 10.7 0 24 0L360 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-8 0 0 19c0 40.3-16 79-44.5 107.5L225.9 256l81.5 81.5C336 366 352 404.7 352 445l0 19 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24L24 512c-13.3 0-24-10.7-24-24s10.7-24 24-24l8 0 0-19c0-40.3 16-79 44.5-107.5L158.1 256 76.5 174.5C48 146 32 107.3 32 67l0-19-8 0C10.7 48 0 37.3 0 24zM110.5 371.5c-3.9 3.9-7.5 8.1-10.7 12.5l184.4 0c-3.2-4.4-6.8-8.6-10.7-12.5L192 289.9l-81.5 81.5zM284.2 128C297 110.4 304 89 304 67l0-19L80 48l0 19c0 22.1 7 43.4 19.8 61l184.4 0z" /></svg>
-                            <span className='text_6'>Tiến độ :</span>
-                            <span className="text_6_400">{data.Progress} Tiết</span>
-                        </div>
+                        {params.length == 1 ?
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={14} height={14} fill='var(--text-primary)'><path d="M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5l0-377.4c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8L0 454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5l0-370.3c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11L304 456c0 11.4 11.7 19.3 22.4 15.5z" /></svg>
+                                    <span className='text_6'>Chương trình học :</span>
+                                    <span className="text_6_400">{data.Book.Name}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
+                                        <path d="M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z" /></svg>
+                                    <span className='text_6'>Tên khóa học :</span>
+                                    <span className="text_6_400">{data.ID}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Student w={15} h={15} c='var(--text-primary)' />
+                                    <span className='text_6'>Sỉ số khóa :</span>
+                                    <span className="text_6_400">{data.Student.length} học sinh</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Canlendar w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Thời gian học :</span>
+                                    <span className="text_6_400">{dateRange[0] || 'Trống'} - {dateRange[1] || 'Trống'}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Profile w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Giáo viên chủ nhiệm :</span>
+                                    <span className="text_6_400">{data.TeacherHR.name}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Area w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Khu vực :</span>
+                                    <span className="text_6_400">{data.Area.name}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={14} height={14} fill='var(--text-primary)'>
+                                        <path d="M0 24C0 10.7 10.7 0 24 0L360 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-8 0 0 19c0 40.3-16 79-44.5 107.5L225.9 256l81.5 81.5C336 366 352 404.7 352 445l0 19 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24L24 512c-13.3 0-24-10.7-24-24s10.7-24 24-24l8 0 0-19c0-40.3 16-79 44.5-107.5L158.1 256 76.5 174.5C48 146 32 107.3 32 67l0-19-8 0C10.7 48 0 37.3 0 24zM110.5 371.5c-3.9 3.9-7.5 8.1-10.7 12.5l184.4 0c-3.2-4.4-6.8-8.6-10.7-12.5L192 289.9l-81.5 81.5zM284.2 128C297 110.4 304 89 304 67l0-19L80 48l0 19c0 22.1 7 43.4 19.8 61l184.4 0z" /></svg>
+                                    <span className='text_6'>Tiến độ :</span>
+                                    <span className="text_6_400">{data.Progress} Tiết</span>
+                                </div>
+                            </> :
+                            <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Course w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Chủ đề học :</span>
+                                    <span className="text_6_400">{lesson.LessonDetails.Name || 'Trống'}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Canlendar w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Thời gian học :</span>
+                                    <span className="text_6_400">{lesson.Time || 'Trống'} - {formatDate(new Date(lesson.Day)) || 'Trống'}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Svg_Map w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Địa điểm học :</span>
+                                    <span className="text_6_400"> {lesson.Room || 'Trống'} - {data.Area.name || 'Trống'}</span>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                    <Svg_Map w={14} h={14} c='var(--text-primary)' />
+                                    <span className='text_6'>Trạng thái lớp học :</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <p className="Chip text_7_400" style={{ background: statusLesson[0] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '4px 12px', borderRadius: 12, width: 'max-content' }}>
+                                        Điểm danh
+                                    </p>
+                                    <p className="Chip text_7_400" style={{ background: statusLesson[1] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '4px 12px', borderRadius: 12, width: 'max-content' }}>
+                                        Nhận xét
+                                    </p>
+                                    <p className="Chip text_7_400" style={{ background: statusLesson[2] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '4px 12px', borderRadius: 12, width: 'max-content' }}>
+                                        Minh chứng
+                                    </p>
+                                </div>
+                            </>}
                         <div style={{ display: 'flex', gap: 8 }}>
                             <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }} onClick={reload}>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={16} height={16} fill='white'>
@@ -258,12 +322,14 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                         <path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 48 0c26.5 0 48 21.5 48 48l0 48L0 160l0-48C0 85.5 21.5 64 48 64l48 0 0-32c0-17.7 14.3-32 32-32zM0 192l448 0 0 272c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 192zM312 376c13.3 0 24-10.7 24-24s-10.7-24-24-24l-176 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l176 0z" /></svg>
                                     <p className='text_6_400' style={{ color: 'white' }}>Điểm danh bù</p>
                                 </a>}
-                            <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: td.percent == 100 ? 'var(--main_d)' : 'var(--border-color)' }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
-                                    <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
-                                </svg>
-                                <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
-                            </div>
+                            {params.length == 1 &&
+                                <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: td.percent == 100 ? 'var(--main_d)' : 'var(--border-color)' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
+                                        <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
+                                    </svg>
+                                    <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
