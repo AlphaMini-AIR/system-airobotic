@@ -9,7 +9,7 @@
 .dot {
     height: 100%;
     width: 3px;
-    background-color: #e67300;
+    background-color: var(--main_b);
     position: absolute;
     top: 0;
     left: 0;
@@ -38,9 +38,11 @@
     border-radius: 0 8px 8px 0;
     z-index: 0;
 }
-.icon{
+
+.icon {
     transition: all 0.3s linear;
 }
+
 .calendarCourse:hover svg {
     fill: white;
 }
@@ -49,4 +51,33 @@
 .calendarCourse:hover .contentH {
     color: #fff;
     margin-right: 16px;
+}
+
+.Chipgreen {
+    color: #fff;
+    border: thin solid var(--green);
+}
+
+.Chipred {
+    color: #fff;
+    border: thin solid var(--red);
+}
+
+.calendarCourse:hover .Chipgreen {
+    border: 1px solid var(--green);
+    color: var(--green);
+}
+
+.calendarCourse:hover .Chipred {
+    border: 1px solid var(--red);
+    color: var(--red);
+}
+
+.Chip {
+    transition: all .2s linear;
+
+}
+
+.calendarCourse:hover .Chip {
+    background: white !important;
 }

@@ -30,13 +30,13 @@ const CalendarCourse = ({ data = {} }) => {
             <div className={styles.dot} />
             <div className={styles.content}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <p className="Chip text_7_400" style={{ background: statusLesson[0] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                    <p className={`${styles.Chip} Chip text_7 ${statusLesson[0] == 1 ? styles.Chipgreen : styles.Chipred}`} style={{ background: statusLesson[0] == 1 ? 'var(--green)' : 'var(--red)', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
                         Điểm danh
                     </p>
-                    <p className="Chip text_7_400" style={{ background: statusLesson[1] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                    <p className={`${styles.Chip} Chip text_7 ${statusLesson[1] == 1 ? styles.Chipgreen : styles.Chipred}`} style={{ background: statusLesson[1] == 1 ? 'var(--green)' : 'var(--red)', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
                         Nhận xét
                     </p>
-                    <p className="Chip text_7_400" style={{ background: statusLesson[2] == 1 ? 'var(--green)' : 'var(--red)', color: 'white', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
+                    <p className={`${styles.Chip} Chip text_7 ${statusLesson[2] == 1 ? styles.Chipgreen : styles.Chipred}`} style={{ background: statusLesson[2] == 1 ? 'var(--green)' : 'var(--red)', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
                         Minh chứng
                     </p>
                 </div>
