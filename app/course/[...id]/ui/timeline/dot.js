@@ -5,11 +5,14 @@ import { Svg_Detail } from '@/components/(icon)/svg';
 
 const getEventStatus = (data) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(7, 0, 0, 0);
     const eventDate = new Date(data.Day);
+    console.log();
 
     if (eventDate < today) {
         return { text: 'Đã diễn ra', color: 'var(--green)' };
+    } else if (eventDate.getDate() == today.getDate() && eventDate.getMonth() == today.getMonth() && eventDate.getFullYear() == today.getFullYear()) {
+        return { text: 'Đang diễn ra', color: 'var(--main_d)' };
     } else {
         return { text: 'Chưa diễn ra', color: 'gray' };
     }
