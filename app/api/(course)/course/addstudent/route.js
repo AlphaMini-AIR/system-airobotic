@@ -104,7 +104,7 @@ export async function POST(req) {
         );
 
         return NextResponse.json(
-            { ok: true, mes: `Added ${newStudentDocsToAdd.length} new student(s) to course.`, data: updatedCourseResult },
+            { ok: true, mes: `Thêm ${newStudentDocsToAdd.length} học sinh mới vào khóa học.`, data: updatedCourseResult },
             { status: 200 }
         );
 

@@ -142,7 +142,7 @@ export default function Student({ course }) {
                             <p className="text_6" style={{ flex: 3, padding: 8 }}>Họ và Tên</p>
                             <p className="text_6" style={{ flex: 1, padding: 8 }}>Hành động</p>
                         </div>
-                        {show.map((s, index) => {
+                        {show.reverse().map((s, index) => {
                             // CHỈNH SỬA 3: Tìm tên học sinh từ danh sách đầy đủ
                             const studentName = studentNameMap.get(s.ID) || 'Không có tên';
                             return (
