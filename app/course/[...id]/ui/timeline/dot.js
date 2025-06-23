@@ -7,7 +7,6 @@ const getEventStatus = (data) => {
     const today = new Date();
     today.setHours(7, 0, 0, 0);
     const eventDate = new Date(data.Day);
-    console.log();
 
     if (eventDate < today) {
         return { text: 'Đã diễn ra', color: 'var(--green)' };

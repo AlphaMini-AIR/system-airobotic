@@ -14,6 +14,7 @@ import ImageUploader from '../formimage';
 import StudentCourseImageManager from '../formimages';
 import { Svg_Course, Svg_Detail } from '@/components/(icon)/svg';
 import Link from 'next/link';
+import { set } from 'mongoose';
 
 const updateAttendance = async (courseId, sessionId, attendanceData) => {
     const r = await fetch('/api/checkin', {
@@ -116,6 +117,14 @@ export default function Main({ data }) {
         </button>
     );
 
+    const reloadData = async () => {
+        setSaving(true);
+        await Re_lesson(data.session._id);
+        router.refresh();
+        setSaving(false);
+    }
+
+
     return (
         <>
             {saving && (
@@ -171,21 +180,38 @@ export default function Main({ data }) {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                                 <p className="text_4">Sổ điểm danh</p>
-                                <button
-                                    onClick={saveAll}
-                                    disabled={saving}
-                                    className="text_6_400"
-                                    style={{
-                                        padding: '8px 16px',
-                                        background: saving ? 'var(--text-disabled)' : 'var(--green)',
-                                        color: '#fff', border: 'none', borderRadius: 5,
-                                        cursor: saving ? 'not-allowed' : 'pointer',
-                                        display: 'flex', alignItems: 'center', gap: 8
-                                    }}
-                                >
-                                    {saving && <span className={styles.spinner} />}
-                                    {saving ? 'Đang lưu…' : 'Lưu tất cả thay đổi'}
-                                </button>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                        onClick={reloadData}
+                                        disabled={saving}
+                                        className="text_6_400"
+                                        style={{
+                                            padding: '8px 16px',
+                                            background: saving ? 'var(--text-disabled)' : 'var(--green)',
+                                            color: '#fff', border: 'none', borderRadius: 5,
+                                            cursor: saving ? 'not-allowed' : 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: 8
+                                        }}
+                                    >
+                                        {saving && <span className={styles.spinner} />}
+                                        {saving ? 'Đang tải lại…' : 'Tải lại dữ liệu '}
+                                    </button>
+                                    <button
+                                        onClick={saveAll}
+                                        disabled={saving}
+                                        className="text_6_400"
+                                        style={{
+                                            padding: '8px 16px',
+                                            background: saving ? 'var(--text-disabled)' : 'var(--green)',
+                                            color: '#fff', border: 'none', borderRadius: 5,
+                                            cursor: saving ? 'not-allowed' : 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: 8
+                                        }}
+                                    >
+                                        {saving && <span className={styles.spinner} />}
+                                        {saving ? 'Đang lưu…' : 'Lưu tất cả thay đổi'}
+                                    </button>
+                                </div>
                             </div>
 
                             {roll.length ? (
