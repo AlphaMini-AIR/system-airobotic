@@ -1,7 +1,7 @@
 import { Schema, model, models } from 'mongoose'
 
 const Course = new Schema({
-  course: { type: Schema.Types.ObjectId, required: true },
+  course: { type: Schema.Types.ObjectId, required: true,ref: 'course' },
   tuition: { type: Schema.Types.ObjectId,default: null },
 });
 

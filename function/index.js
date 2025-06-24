@@ -34,6 +34,14 @@ export function calculatePastLessons(courseData) {
     return pastLessonsCount;
 }
 
-export function srcImage(id){
+export function srcImage(id) {
     return `https://lh3.googleusercontent.com/d/${id}`
+}
+
+export function formatCurrencyVN(number) {
+  if (typeof number !== 'number' || isNaN(number)) {
+    return '0 VNĐ'; 
+  }
+  const formattedNumber = number.toLocaleString('vi-VN');
+  return `${formattedNumber} VNĐ`;
 }

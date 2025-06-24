@@ -10,8 +10,11 @@ export default function Menu({
     isOpen: controlledIsOpen,
     onOpenChange,
     customButton,
-    style = ''
+    style
 }) {
+    if(style && typeof style !== 'object') {
+        style = {};
+    }
 
     const [internalIsOpen, setInternalIsOpen] = useState(false);
 
@@ -109,7 +112,7 @@ export default function Menu({
 
     return (
 
-        <div className={air.menuButtonContainer} ref={containerRef}>
+        <div className={air.menuButtonContainer} ref={containerRef} style={style}>
 
             {renderButton}
 

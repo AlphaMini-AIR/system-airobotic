@@ -1,5 +1,7 @@
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
+import '@/models/course';
+import '@/models/book';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
@@ -7,21 +9,36 @@ import { Readable } from 'stream';
 export async function GET(request) {
     try {
         await connectDB();
-        const data = await PostStudent.find({}).populate({ path: 'Area' }).lean();
-        console.log(data);
-        
+
+        const data = await PostStudent.find({})
+            .populate({
+                path: 'Area' 
+            })
+            .populate({
+                path: 'Course.course', 
+                model: 'course',
+                select: 'ID Status Book',
+                populate: {
+                    path: 'Book',
+                    model: 'book',
+                    select: 'Name Price'
+                }
+            })
+            .lean();
+
         return NextResponse.json(
             { air: 2, mes: 'Lấy danh sách học sinh thành công', data },
             { status: 200 }
         );
     } catch (error) {
+        // Log lỗi ra console server để dễ dàng debug
+        console.error("Lỗi API lấy danh sách học sinh:", error);
         return NextResponse.json(
             { air: 0, mes: error.message, data: null },
             { status: 500 }
         );
     }
 }
-
 
 async function getDriveClient() {
     const auth = new google.auth.GoogleAuth({

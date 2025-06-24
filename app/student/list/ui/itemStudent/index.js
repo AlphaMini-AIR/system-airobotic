@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { Svg_Bill, Svg_Detail, Svg_Pen, Svg_Profile } from "@/components/(icon)/svg";
-import Image from "next/image"; 
+import Image from "next/image";
 import styles from './index.module.css'
 import Tooltip from "@/components/(ui)/(button)/tooltip";
 import WrapIcon from "@/components/(ui)/(button)/hoveIcon";
 import Link from "next/link";
 import { srcImage } from "@/function";
+import Update from "../update";
+import Pay from "../pay";
 
 
 const ImageWithFallback = (props) => {
@@ -27,9 +29,9 @@ const ImageWithFallback = (props) => {
     );
 };
 
-export function Li_l({ data }) {
+export function Li_l({ data, dataArea, ReLoadData }) {
     const initialSrc = data.Avt ? srcImage(data.Avt) : 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG';
-    const fallbackSrc = 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG' 
+    const fallbackSrc = 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'
 
     return (
         <div>
@@ -64,18 +66,8 @@ export function Li_l({ data }) {
                     </div>
                 </div>
                 <div style={{ flex: 1, gap: 2, borderLeft: 'thin solid var(--border-color)' }} className="flex_center">
-                    <Tooltip tooltipContent="Hồ sơ điện tử" position="bottom" offset={10}>
-                        <WrapIcon icon={<Svg_Profile w={18} h={18} c={'var(--text-secondary)'} />} w={'32px'} />
-                    </Tooltip>
-                    <Tooltip tooltipContent="Chi tiết" position="bottom" offset={10}>
-                        <WrapIcon icon={<Svg_Detail w={19} h={19} c={'var(--text-secondary)'} />} w={'32px'} />
-                    </Tooltip>
-                    <Tooltip tooltipContent="Sửa thông tin" position="bottom" offset={10}>
-                        <WrapIcon icon={<Svg_Pen w={19} h={19} c={'var(--text-secondary)'} />} w={'32px'} />
-                    </Tooltip>
-                    <Tooltip tooltipContent="Học phí" position="bottom" offset={10}>
-                        <WrapIcon icon={<Svg_Bill w={19} h={19} c={'var(--text-secondary)'} />} w={'32px'} />
-                    </Tooltip>
+                    <Update data={data} data_area={dataArea} reloadData={ReLoadData} />
+                    <Pay data={data} />
                 </div>
             </div>
         </div>
@@ -84,10 +76,10 @@ export function Li_l({ data }) {
 
 export function Li_g({ data, handleUserClick, handleEditRole, handleOpenReport, open_noti }) {
     const initialSrc = data.Avt ? srcImage(data.Avt) : 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG';
-    const fallbackSrc = 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG' 
+    const fallbackSrc = 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'
 
     return (
-        <div 
+        <div
             style={{
                 border: "1px solid #ddd",
                 borderRadius: 3,

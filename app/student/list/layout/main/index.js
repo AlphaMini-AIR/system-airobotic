@@ -14,6 +14,7 @@ export default function Main({ data_student, data_area }) {
   const [load, setload] = useState(false);
   const route = useRouter()
   const ReLoadData = async () => {
+    console.log('hi');
     setload(true)
     await Re_Student_All()
     await route.refresh()
@@ -67,7 +68,7 @@ export default function Main({ data_student, data_area }) {
         </div>
         <div className={`${styles.list_main} scroll`}>
           {filteredStudents.map((t, index) => (
-            <Li_l key={index} data={t} />
+            <Li_l key={index} data={t} dataArea={data_area} reloadData={ReLoadData} />
           ))}
         </div>
       </div>

@@ -1,0 +1,34 @@
+.custom_menu_button {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+    text-align: left;
+}
+
+.menu_item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu_item:hover {
+    background-color: var(--hover);
+}
+
+.menu_item:last-child {
+    border-bottom: none;
+}
+
+.menu_container {
+    background: var(--bg-primary);
+    overflow: hidden;
+    box-shadow: var(--boxshaw2);
+    border-radius: 8px;
+}
