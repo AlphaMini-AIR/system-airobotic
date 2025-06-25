@@ -8,7 +8,7 @@ const postInvoices = new Schema({
     paymentMethod: { type: Number, enum: [1, 2, 3], default: 1 },
     discount: { type: Number, default: 0 },
     createBy: { type: Schema.Types.ObjectId, required: true, ref: 'user' },
-})
+}, { timestamps: true })
 
 const invoices = models.invoice || model('invoice', postInvoices)
 

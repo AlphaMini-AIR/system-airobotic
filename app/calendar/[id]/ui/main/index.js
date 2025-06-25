@@ -8,13 +8,12 @@ import CommentForm from '../formcmt';
 import BoxFile from '@/components/(ui)/(box)/file';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
-
+import Image from 'next/image';
 import styles from './index.module.css';
 import ImageUploader from '../formimage';
 import StudentCourseImageManager from '../formimages';
-import { Svg_Course, Svg_Detail } from '@/components/(icon)/svg';
+import { Svg_Detail } from '@/components/(icon)/svg';
 import Link from 'next/link';
-import { set } from 'mongoose';
 
 const updateAttendance = async (courseId, sessionId, attendanceData) => {
     const r = await fetch('/api/checkin', {
@@ -38,26 +37,26 @@ export default function Main({ data }) {
     const [notiOK, setNotiOK] = useState(false);
     const [notiMsg, setNotiMsg] = useState('');
 
+    const [showImagePopup, setShowImagePopup] = useState(false);
+    const [popupImageUrl, setPopupImageUrl] = useState('');
+
     const router = useRouter();
 
-    const roll = (students || []).map(stu => {
-        return {
-            ID: stu.ID,
-            Name: stu.Name,
-            Image: stu.attendance?.Image ?? [],
-            Checkin: stu.attendance?.Checkin,
-            originalComment: stu.attendance?.Cmt ?? [],
-        };
-    });
+    const roll = (students || []).map(stu => ({
+        ID: stu.ID,
+        Name: stu.Name,
+        Image: stu.attendance?.Image ?? [],
+        Checkin: stu.attendance?.Checkin,
+        originalComment: stu.attendance?.Cmt ?? [],
+        Avt: stu.Avt ? `https://lh3.googleusercontent.com/d/${stu.Avt}` : 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'
+    }));
 
     const cur = s => (att[s.ID] !== undefined ? att[s.ID] : s.Checkin);
-
 
     const cm = roll.filter(s => cur(s) == '1').length;
     const vk = roll.filter(s => cur(s) == '2').length;
     const vc = roll.filter(s => cur(s) == '3').length;
 
-    /* handler */
     const changeAtt = (id, v) => setAtt(prev => ({ ...prev, [id]: v }));
 
     const saveComment = arr => {
@@ -124,6 +123,12 @@ export default function Main({ data }) {
         setSaving(false);
     }
 
+    const handleImageClick = (imageUrl) => {
+        console.log(imageUrl);
+        
+        setPopupImageUrl(imageUrl);
+        setShowImagePopup(true);
+    };
 
     return (
         <>
@@ -136,8 +141,33 @@ export default function Main({ data }) {
             <Noti open={notiOpen} onClose={() => setNotiOpen(false)}
                 status={notiOK} mes={notiMsg} button={notiBtn} />
 
+            {showImagePopup && (
+                <div
+                    style={{
+                        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex',
+                        justifyContent: 'center', alignItems: 'center', zIndex: 1050, cursor: 'pointer'
+                    }}
+                    onClick={() => setShowImagePopup(false)}
+                >
+                    <div
+                        style={{
+                            position: 'relative', width: '60vh', height: '60vh',
+                            backgroundColor: 'white', overflow: 'hidden', borderRadius: '8px'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Image
+                            src={popupImageUrl}
+                            alt="Student Avatar Popup"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                        />
+                    </div>
+                </div>
+            )}
+
             <div className={styles.root}>
-                {/* Header */}
                 <header className={styles.header}>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                         <p className="text_3" style={{ color: '#fff' }}>
@@ -149,14 +179,12 @@ export default function Main({ data }) {
                         </Link>
                     </div>
                     <div className={styles.statsContainer}>
-
                         <div className={`${styles.statBox} ${styles.present}`}>Có mặt: {cm}</div>
                         <div className={`${styles.statBox} ${styles.absent}`}>Vắng không phép: {vk}</div>
                         <div className={`${styles.statBox} ${styles.excused}`}>Vắng có phép: {vc}</div>
                     </div>
                 </header>
 
-                {/* Body */}
                 <div className={styles.content}>
                     <aside className={styles.sidebar}>
                         <p className="text_4">Tài liệu buổi học</p>
@@ -230,10 +258,8 @@ export default function Main({ data }) {
                                         {course.Version != 0 && (
                                             <div className="text_6_400"
                                                 style={{
-                                                    flex: 1,
-                                                    color: '#fff',
-                                                    padding: '8px 0',
-                                                    textAlign: 'center'
+                                                    flex: 1, color: '#fff',
+                                                    padding: '8px 0', textAlign: 'center'
                                                 }}>
                                                 Hình ảnh
                                             </div>
@@ -243,13 +269,23 @@ export default function Main({ data }) {
                                     {roll.map(stu => {
                                         if (stu.Checkin == '-1') return null;
                                         const c = cur(stu);
-                                        console.log(c);
-
+                                        console.log(stu);
+                                        
                                         return (
                                             <div key={stu.ID} className={styles.row}
                                                 style={{ borderBottom: '1px solid #e9ecef', background: '#fff' }}>
                                                 <div className="text_6_400" style={{ flex: 1, padding: '12px 8px', fontWeight: 500 }}>{stu.ID}</div>
-                                                <div className="text_6_400" style={{ flex: 3, padding: '12px 8px', fontWeight: 500 }}>{stu.Name}</div>
+                                                <div className="text_6_400" style={{ flex: 3, padding: '0 8px', fontWeight: 500, display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <Image
+                                                        onClick={() => handleImageClick(stu.Avt)}
+                                                        style={{ objectFit: 'cover', borderRadius: 5, cursor: 'pointer' }}
+                                                        src={stu.Avt}
+                                                        alt={stu.Name}
+                                                        width={35}
+                                                        height={35}
+                                                    />
+                                                    {stu.Name}
+                                                </div>
 
                                                 <div style={{ flex: 3, display: 'flex', alignItems: 'center' }}>
                                                     {['1', '2', '3'].map(v => (

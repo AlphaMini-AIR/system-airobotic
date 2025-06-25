@@ -60,6 +60,9 @@ export async function Data_Course_One(id) {
     }
 }
 
+
+
+
 export async function Re_course_one(id) {
     revalidateTag(`data_course_${id}`);
 }

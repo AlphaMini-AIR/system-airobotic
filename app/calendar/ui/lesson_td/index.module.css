@@ -54,23 +54,23 @@
 }
 
 .Chipgreen {
-    color: #fff;
+    color: #fff !important;
     border: thin solid var(--green);
 }
 
 .Chipred {
-    color: #fff;
+    color: #fff !important;
     border: thin solid var(--red);
 }
 
 .calendarCourse:hover .Chipgreen {
     border: 1px solid var(--green);
-    color: var(--green);
+    color: var(--green) !important;
 }
 
 .calendarCourse:hover .Chipred {
     border: 1px solid var(--red);
-    color: var(--red);
+    color: var(--red) !important;
 }
 
 .Chip {

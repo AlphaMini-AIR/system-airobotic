@@ -1,39 +1,67 @@
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
+import Invoice from '@/models/invoices';
 import '@/models/course';
 import '@/models/book';
+import '@/models/users';
 import { NextResponse } from 'next/server';
 import authenticate from '@/utils/authenticate';
+import { revalidateTag } from 'next/cache';
 
-export async function GET(request) {
+export async function GET(request, { params }) {
     try {
+        const { searchParams } = new URL(request.url);
+        const _id = searchParams.get('_id');
+
+        if (!_id) {
+            return NextResponse.json(
+                { status: 1, mes: 'Vui lòng cung cấp ID của hóa đơn.', data: [] },
+                { status: 400 }
+            );
+        }
+
         await connectDB();
 
-        const data = await PostStudent.find({})
+        const invoice = await Invoice.findById(_id)
             .populate({
-                path: 'Area'
+                path: 'studentId',
+                select: 'ID Name Phone Email BD Address'
             })
             .populate({
-                path: 'Course.course',
-                model: 'course',
-                select: 'ID Status Book',
+                path: 'courseId',
+                select: 'ID Book',
                 populate: {
                     path: 'Book',
                     model: 'book',
                     select: 'Name Price'
                 }
             })
+            .populate({
+                path: 'createBy',
+                select: 'name phone',
+            })
             .lean();
-
+        if (!invoice) {
+            return NextResponse.json(
+                { status: 1, mes: `Không tìm thấy hóa đơn với ID: ${_id}`, data: [] },
+                { status: 404 }
+            );
+        }
         return NextResponse.json(
-            { air: 2, mes: 'Lấy danh sách học sinh thành công', data },
+            { status: 2, mes: 'Lấy thông tin hóa đơn thành công.', data: [invoice] },
             { status: 200 }
         );
+
     } catch (error) {
-        // Log lỗi ra console server để dễ dàng debug
-        console.error("Lỗi API lấy danh sách học sinh:", error);
+        console.error(error);
+        if (error.kind === 'ObjectId') {
+            return NextResponse.json(
+                { status: 1, mes: 'ID hóa đơn không hợp lệ.', data: [] },
+                { status: 400 }
+            );
+        }
         return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
+            { status: 0, mes: 'Lỗi máy chủ khi lấy thông tin hóa đơn.', data: [] },
             { status: 500 }
         );
     }
@@ -42,61 +70,68 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const authResult = await authenticate(request);
-        if (!authResult || !authResult.user) {
-            return NextResponse.json({ status: 1, mes: 'Xác thực không thành công.', data: null }, { status: 401 });
+        if (!authResult?.user) {
+            return NextResponse.json(
+                { status: 1, mes: 'Xác thực không thành công.', data: [] },
+                { status: 401 }
+            );
         }
 
         const { user, body } = authResult;
-
         if (!user.role.includes('Admin')) {
-            return NextResponse.json({ status: 1, mes: 'Bạn không có quyền truy cập chức năng này.', data: null }, { status: 403 });
+            return NextResponse.json(
+                { status: 1, mes: 'Không có quyền truy cập chức năng này.', data: [] },
+                { status: 403 }
+            );
         }
 
         await connectDB();
-
         const { studentId, courseId, amountInitial, amountPaid, paymentMethod, discount } = body;
 
-        if (!studentId || !courseId || !user.id || amountInitial === undefined || amountPaid === undefined) {
+        if (!studentId || !courseId || amountInitial === undefined || amountPaid === undefined) {
             return NextResponse.json(
-                { success: false, message: 'Vui lòng cung cấp đủ các trường bắt buộc: studentId, courseId, createBy, amountInitial, amountPaid.' },
+                { status: 1, mes: 'Vui lòng cung cấp đủ thông tin bắt buộc.', data: [] },
                 { status: 400 }
             );
         }
 
         const newInvoice = new Invoice({
-            studentId,
-            courseId,
-            amountInitial,
-            amountPaid,
-            paymentMethod,
-            discount,
-            createBy: user.id,
+            studentId, courseId, amountInitial, amountPaid, paymentMethod, discount, createBy: user.id,
         });
-        console.log("ID được tạo trước khi lưu:", newInvoice._id);
-        
-        
-
         const savedInvoice = await newInvoice.save();
+
+        const updatedStudent = await PostStudent.findOneAndUpdate(
+            { _id: studentId, 'Course.course': courseId },
+            { $set: { 'Course.$.tuition': savedInvoice._id } },
+            { new: true }
+        );
+
+        if (!updatedStudent) {
+            console.warn(`Invoice ${savedInvoice._id} created, but student ${studentId} with course ${courseId} not found for update.`);
+            return NextResponse.json(
+                { status: 1, mes: `Tạo hóa đơn thành công, nhưng không tìm thấy khóa học của học sinh để cập nhật.`, data: [savedInvoice] },
+                { status: 200 }
+            );
+        }
+        revalidateTag('student');
         return NextResponse.json(
-            { success: true, message: 'Hóa đơn đã được tạo thành công.', data: savedInvoice },
+            { status: 2, mes: 'Tạo hóa đơn và cập nhật học sinh thành công.', data: [savedInvoice] },
             { status: 201 }
         );
 
     } catch (error) {
-        console.error('Lỗi khi tạo hóa đơn:', error);
-
-        // Xử lý lỗi validation từ Mongoose
+        console.error('API POST Error:', error);
         if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(e => e.message).join(' ');
             return NextResponse.json(
-                { success: false, message: 'Lỗi xác thực dữ liệu.', errors: error.errors },
-                { status: 400 } // Bad Request
+                { status: 1, mes: `Lỗi xác thực dữ liệu: ${messages}`, data: [] },
+                { status: 400 }
             );
         }
 
-        // Các lỗi khác
         return NextResponse.json(
-            { success: false, message: 'Lỗi từ máy chủ.', error: error.message },
-            { status: 500 } // Internal Server Error
+            { status: 0, mes: 'Lỗi từ máy chủ, không thể xử lý yêu cầu.', data: [] },
+            { status: 500 }
         );
     }
 }

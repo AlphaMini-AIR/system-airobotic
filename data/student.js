@@ -17,6 +17,15 @@ export async function Read_Student_ById(id) {
     if (!data) data = []
     return data.data
 }
+
+export async function Data_Invoices(id) {
+    let data;
+    try { data = await fetchApi(`/pay?_id=${id}`, { method: 'GET' }) }
+    catch (error) { data = [] }
+    if (!data) data = []
+    return data.data
+}
+
 export async function Re_Student_ById() {
     revalidateTag(`student${id}`);
 }

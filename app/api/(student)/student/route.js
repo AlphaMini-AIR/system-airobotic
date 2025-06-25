@@ -1,5 +1,6 @@
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
+import '@/models/area';
 import '@/models/course';
 import '@/models/book';
 import { NextResponse } from 'next/server';

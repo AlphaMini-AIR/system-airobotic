@@ -45,11 +45,14 @@ export async function GET(request, { params }) {
         const [users, book, students] = await Promise.all([
             User.find({ _id: { $in: userIdsToPopulate } }).select('name').lean(),
             PostBook.findOne({ 'Topics._id': session.Topic }).select({ 'Topics.$': 1 }).lean(),
-            PostStudent.find({ ID: { $in: studentStringIds } }).select('ID Name').lean()
+            // THAY ĐỔI 1: Yêu cầu lấy thêm trường 'Avt'
+            PostStudent.find({ ID: { $in: studentStringIds } }).select('ID Name Avt').lean()
         ]);
 
         const userMap = new Map(users.map(u => [u._id.toString(), u]));
-        const studentNameMap = new Map(students.map(s => [s.ID, s.Name]));
+
+        // THAY ĐỔI 2: Đổi tên và lưu trữ toàn bộ thông tin học sinh (bao gồm cả Avt)
+        const studentInfoMap = new Map(students.map(s => [s.ID, s]));
 
         session.Teacher = userMap.get(session.Teacher?.toString()) || null;
         session.TeachingAs = userMap.get(session.TeachingAs?.toString()) || null;
@@ -57,10 +60,16 @@ export async function GET(request, { params }) {
 
         const studentsWithAttendance = courseData.Student.map(s => {
             const attendance = s.Learn.find(learnItem => learnItem.Lesson.equals(session._id));
+
+            // Lấy thông tin đầy đủ của học sinh từ map
+            const studentInfo = studentInfoMap.get(s.ID);
+
+            // THAY ĐỔI 3: Thêm 'Name' và 'Avt' vào đối tượng trả về
             return {
                 _id: s._id,
                 ID: s.ID,
-                Name: studentNameMap.get(s.ID) || 'Không có tên',
+                Name: studentInfo?.Name || 'Không có tên',
+                Avt: studentInfo?.Avt || null, // Thêm trường Avt, fallback là null nếu không có
                 attendance: attendance || { Checkin: -1, Cmt: [], Note: '' }
             };
         });
