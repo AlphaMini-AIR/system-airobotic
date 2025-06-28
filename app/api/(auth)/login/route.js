@@ -21,14 +21,10 @@ export async function POST(req) {
       process.env.JWT_SECRET,
       { expiresIn: jwtLife }
     );
-
-    const origin = req.headers.get('origin') || '';
-    const domain = new URL(origin).hostname;
     const opts = {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
-      domain: domain === 'localhost' ? undefined : domain,
     };
     if (re) opts.maxAge = 60 * 60 * 24 * 30;
 
