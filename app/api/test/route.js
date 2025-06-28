@@ -1,58 +1,79 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/config/connectDB';
-import PostStudent from '@/models/student';
+import mongoose from 'mongoose';
+import dbConnect from '@/config/connectDB'; // Thay đổi đường dẫn nếu cần
+import PostStudent from '@/models/student';   // Thay đổi đường dẫn nếu cần
+import PostCourse from '@/models/course';     // Thay đổi đường dẫn nếu cần
 
 /**
- * API Route to bulk update all student documents.
- * Action 1: Removes the 'Type' field from all documents.
- * Action 2: Resets the 'Status' field to a default value for all documents.
+ * API để reset trạng thái của tất cả học sinh và đánh dấu những ai không có khóa học active.
+ * Đây là một tác vụ nặng, chỉ nên được gọi khi cần thiết.
  */
 export async function POST(request) {
-    try {
-        // Connect to the database
-        await dbConnect();
+    await dbConnect();
 
-        // 1. Define the new default value for the 'Status' field.
-        // This value conforms to the 'Status' sub-schema (status is a String).
-        const newDefaultStatus = [{
-            status: 2, // Assuming 'active' is the default status
-            act: 'tạo', // Using 'create' as a string to match the Schema type
+    try {
+        console.log('Bắt đầu quá trình reset trạng thái học sinh...');
+
+        // === BƯỚC 1: Reset Status của TẤT CẢ học sinh về giá trị mặc định ===
+        const defaultStatus = [{
+            status: 2,
+            act: 'tạo',
             date: new Date(),
-            note: 'Tạo học sinh thành công' // Note for the action
+            note: 'Thêm học sinh thành công',
         }];
 
-        // 2. Use `updateMany` to apply changes to all documents in the collection.
-        // - Filter `{}`: An empty filter selects ALL documents.
-        // - Update operations:
-        //   - `$unset: { Type: "" }`: This operator deletes the 'Type' field completely.
-        //   - `$set: { Status: newDefaultStatus }`: This operator overwrites the existing 'Status' field with the new default value.
-        const result = await PostStudent.updateMany(
-            {}, // Empty filter to match all documents
-            {
-                $unset: { Type: "" }, // Remove the 'Type' field
-                $set: { Status: newDefaultStatus } // Set the 'Status' field to the new default
+        await PostStudent.updateMany({}, {
+            $set: {
+                Status: defaultStatus,
+                Leave: false // Reset cả cờ "Leave" nếu cần
             }
-        );
+        });
+        console.log('Bước 1/3: Đã reset trạng thái cho tất cả học sinh.');
 
-        // 3. Return a successful response with statistics about the update operation.
+        // === BƯỚC 2: Tìm tất cả các học sinh đang có trong một khóa học ACTIVE ===
+        // Lấy ra tất cả ID (string) của học sinh từ các khóa học có Status = false
+        const activeCourses = await PostCourse.find({ Status: false }, 'Student.ID');
+
+        // Dùng Set để lưu trữ các ID không trùng lặp
+        const activeStudentIDs = new Set();
+        activeCourses.forEach(course => {
+            course.Student.forEach(student => {
+                activeStudentIDs.add(student.ID);
+            });
+        });
+
+        const activeStudentIDsArray = Array.from(activeStudentIDs);
+        console.log(`Bước 2/3: Tìm thấy ${activeStudentIDsArray.length} học sinh đang tham gia khóa học active.`);
+
+        // === BƯỚC 3: Cập nhật trạng thái "Nghỉ" cho những học sinh KHÔNG CÓ trong danh sách active ===
+        const inactiveStatus = {
+            status: 0,
+            act: 'nghỉ',
+            date: new Date(),
+            note: 'Hiện không tham gia khóa học nào',
+        };
+
+        const result = await PostStudent.updateMany(
+            // Điều kiện: Tìm những học sinh có ID (string) KHÔNG NẰM TRONG danh sách active
+            { ID: { $nin: activeStudentIDsArray } },
+            // Hành động: Thêm trạng thái "nghỉ" vào mảng Status
+            { $push: { Status: inactiveStatus } }
+        );
+        console.log(`Bước 3/3: Đã cập nhật trạng thái "nghỉ" cho ${result.modifiedCount} học sinh.`);
+
         return NextResponse.json({
             success: true,
-            message: 'Đã xóa trường "Type" và reset "Status" cho tất cả học sinh thành công.',
-            data: {
-                matchedCount: result.matchedCount, // Number of documents that matched the filter
-                modifiedCount: result.modifiedCount, // Number of documents that were actually modified
+            message: 'Quá trình reset trạng thái học sinh hoàn tất.',
+            details: {
+                studentsReset: await PostStudent.countDocuments(),
+                studentsMarkedAsInactive: result.modifiedCount,
             }
         }, { status: 200 });
 
     } catch (error) {
-        // Handle any errors that occur during the process
-        console.error('Lỗi API - Không thể cập nhật hàng loạt cho học sinh:', error);
+        console.error('API Error - Reset Student Statuses:', error);
         return NextResponse.json(
-            {
-                success: false,
-                message: 'Lỗi máy chủ nội bộ. Không thể hoàn thành yêu cầu.',
-                error: error.message
-            },
+            { success: false, message: 'Lỗi máy chủ nội bộ trong quá trình reset.', error: error.message },
             { status: 500 }
         );
     }

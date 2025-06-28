@@ -6,159 +6,161 @@ import PostCourse from '@/models/course';
 import { revalidateTag } from 'next/cache';
 
 export async function PATCH(request, { params }) {
-    const { id: studentId } = params;
+    const { id: studentId } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
-        return NextResponse.json(
-            { success: false, message: 'ID học sinh không hợp lệ.' },
-            { status: 400 }
-        );
+        return NextResponse.json({ success: false, message: 'ID học sinh không hợp lệ.' }, { status: 400 });
     }
 
     let body;
     try {
         body = await request.json();
     } catch (error) {
-        return NextResponse.json(
-            { success: false, message: 'Request body không phải là JSON hợp lệ.' },
-            { status: 400 }
-        );
+        return NextResponse.json({ success: false, message: 'Request body không phải là JSON hợp lệ.' }, { status: 400 });
     }
 
     const { action, note, courseId } = body;
+
+    if (!action || !note) {
+        return NextResponse.json({ success: false, message: 'Action và lý do (note) là bắt buộc.' }, { status: 400 });
+    }
 
     await dbConnect();
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        let updatedStudent;
+        const student = await PostStudent.findById(studentId).session(session);
+        if (!student) {
+            throw new Error('Không tìm thấy học sinh.');
+        }
 
         switch (action) {
-            case 'leave_permanently':
-                if (!note) {
-                    await session.abortTransaction();
-                    session.endSession();
-                    return NextResponse.json(
-                        { success: false, message: 'Lý do nghỉ học là bắt buộc.' },
-                        { status: 400 }
-                    );
-                }
+            case 'leave_permanently': {
+                // 1. Tìm tất cả các khóa học ACTIVE mà học sinh đang tham gia.
+                const studentCourseIds = student.Course.map(c => c.course);
+                const activeCourses = await PostCourse.find({
+                    _id: { $in: studentCourseIds },
+                    Status: false,
+                    'Student.ID': student.ID
+                }, '_id').session(session).lean(); // Chỉ lấy _id để tối ưu
 
-                const studentToLeave = await PostStudent.findById(studentId, 'ID Course').session(session);
-                if (!studentToLeave) {
-                    throw new Error('Không tìm thấy học sinh.');
-                }
+                const activeCourseIds = activeCourses.map(c => c._id);
 
-                const studentCourseIds = studentToLeave.Course.map(c => c.course);
-                if (studentCourseIds.length > 0) {
+                // 2. [SỬA LỖI] Cập nhật các khóa học:
+                // KHÔNG xóa học sinh, chỉ xóa các buổi học chưa check-in trong mảng Learn của học sinh đó.
+                if (activeCourseIds.length > 0) {
                     await PostCourse.updateMany(
-                        { _id: { $in: studentCourseIds } },
-                        { $pull: { Student: { ID: studentToLeave.ID } } }
+                        {
+                            _id: { $in: activeCourseIds },
+                            'Student.ID': student.ID // Điều kiện để xác định đúng phần tử trong mảng Student
+                        },
+                        {
+                            // $pull sẽ xóa các phần tử trong mảng 'Learn' của học sinh được tìm thấy ('Student.$')
+                            $pull: { 'Student.$.Learn': { Checkin: 0 } }
+                        }
                     ).session(session);
                 }
 
-                const permanentLeaveStatus = {
+                // 3. Cập nhật document của học sinh để bảo toàn dữ liệu.
+                const leaveStatus = {
                     status: 0,
                     act: 'nghỉ',
                     date: new Date(),
                     note: note,
                 };
 
-                updatedStudent = await PostStudent.findByIdAndUpdate(
-                    studentId,
+                await PostStudent.updateOne(
+                    { _id: studentId },
                     {
-                        $set: { Leave: true, Course: [] },
-                        $push: { Status: permanentLeaveStatus }
+                        $push: { Status: leaveStatus },
+                        $set: { 'Course.$[elem].status': 1 }
                     },
-                    { new: true, session }
+                    {
+                        arrayFilters: [{ 'elem.course': { $in: activeCourseIds } }],
+                        session
+                    }
                 );
+
                 break;
+            }
 
-            case 'leave_course':
+            case 'leave_course': {
                 if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
-                    await session.abortTransaction();
-                    session.endSession();
-                    return NextResponse.json(
-                        { success: false, message: 'ID khóa học không hợp lệ hoặc bị thiếu.' },
-                        { status: 400 }
-                    );
+                    throw new Error('ID khóa học không hợp lệ hoặc bị thiếu.');
                 }
-
-                const studentForCourseCheck = await PostStudent.findById(studentId, 'ID').session(session);
-                if (!studentForCourseCheck) {
-                    throw new Error('Không tìm thấy học sinh.');
-                }
-
                 await PostCourse.updateOne(
-                    { _id: courseId },
-                    { $pull: { Student: { ID: studentForCourseCheck.ID } } }
+                    {
+                        _id: courseId,
+                        'Student.ID': student.ID
+                    },
+                    {
+                        $pull: { 'Student.$.Learn': { Checkin: 0 } }
+                    }
                 ).session(session);
+                const studentUpdateOps = {
+                    $set: { 'Course.$[elem].status': 1 }
+                };
+                const studentUpdateOptions = {
+                    arrayFilters: [{ 'elem.course': new mongoose.Types.ObjectId(courseId) }],
+                    session,
+                    new: true
+                };
 
-                const studentAfterLeaveCourse = await PostStudent.findByIdAndUpdate(
-                    studentId,
-                    { $pull: { Course: { course: new mongoose.Types.ObjectId(courseId) } } },
-                    { new: true, session }
-                );
+                // 3. Kiểm tra các khóa học active còn lại.
+                const otherCourseIds = student.Course
+                    .filter(c => c.course.toString() !== courseId)
+                    .map(c => c.course);
 
-                const remainingCourseIds = studentAfterLeaveCourse.Course.map(c => c.course);
-                let activeCoursesCount = 0;
-                if (remainingCourseIds.length > 0) {
-                    activeCoursesCount = await PostCourse.countDocuments({
-                        _id: { $in: remainingCourseIds },
+                let otherActiveCoursesCount = 0;
+                if (otherCourseIds.length > 0) {
+                    otherActiveCoursesCount = await PostCourse.countDocuments({
+                        _id: { $in: otherCourseIds },
                         Status: false
                     }).session(session);
                 }
 
-                if (activeCoursesCount === 0) {
-                    const waitingStatus = {
-                        status: 1,
-                        act: 'chờ',
+                // 4. Nếu không còn khóa active nào, thêm trạng thái "nghỉ".
+                if (otherActiveCoursesCount === 0) {
+                    const leaveStatus = {
+                        status: 0,
+                        act: 'nghỉ',
                         date: new Date(),
-                        note: '',
+                        note: note,
                     };
-                    updatedStudent = await PostStudent.findByIdAndUpdate(
-                        studentId,
-                        { $push: { Status: waitingStatus } },
-                        { new: true, session }
-                    );
-                } else {
-                    updatedStudent = studentAfterLeaveCourse;
+                    studentUpdateOps.$push = { Status: leaveStatus };
                 }
 
+                await PostStudent.findByIdAndUpdate(
+                    studentId,
+                    studentUpdateOps,
+                    studentUpdateOptions
+                );
+
                 break;
+            }
 
             default:
-                await session.abortTransaction();
-                session.endSession();
-                return NextResponse.json(
-                    { success: false, message: 'Hành động không hợp lệ.' },
-                    { status: 400 }
-                );
-        }
-
-        if (!updatedStudent) {
-            throw new Error('Cập nhật học sinh thất bại.');
+                throw new Error('Hành động không hợp lệ.');
         }
 
         await session.commitTransaction();
         session.endSession();
         revalidateTag('student');
-        return NextResponse.json({ success: true, data: updatedStudent }, { status: 200 });
+        revalidateTag('course');
+
+        const finalStudentData = await PostStudent.findById(studentId);
+
+        return NextResponse.json({ success: true, message: "Cập nhật thành công và bảo toàn dữ liệu.", data: finalStudentData }, { status: 200 });
 
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
         console.error('API Error:', error);
 
-        const errorMessage = error.message === 'Không tìm thấy học sinh.'
-            ? error.message
-            : 'Lỗi máy chủ nội bộ.';
-        const statusCode = error.message === 'Không tìm thấy học sinh.' ? 404 : 500;
+        const errorMessage = error.message || 'Lỗi máy chủ nội bộ.';
+        const statusCode = error.message.includes('Không tìm thấy') ? 404 : 500;
 
-        return NextResponse.json(
-            { success: false, message: errorMessage, error: error.message },
-            { status: statusCode }
-        );
+        return NextResponse.json({ success: false, message: errorMessage, error: error.message }, { status: statusCode });
     }
 }

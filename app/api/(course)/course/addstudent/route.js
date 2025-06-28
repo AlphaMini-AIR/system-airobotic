@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
 import PostModel from '@/models/student';
-import { Types, isValidObjectId } from 'mongoose';
+import { isValidObjectId } from 'mongoose';
+import { revalidateTag } from 'next/cache';
 
 export async function POST(req) {
     try {
@@ -26,7 +27,7 @@ export async function POST(req) {
 
         const course = await PostCourse.findById(
             courseID,
-            { Detail: 1, ID: 1, Price: 1, Student: 1 }
+            { Detail: 1, ID: 1, Student: 1 }
         ).lean();
 
         if (!course) {
@@ -36,7 +37,6 @@ export async function POST(req) {
             );
         }
 
-        // Filter Detail lessons: Only include lessons that have no 'Type' field or an empty 'Type' string
         const filteredDetailLessons = course.Detail.filter(d =>
             !d.Type || d.Type === ''
         );
@@ -70,20 +70,39 @@ export async function POST(req) {
 
         const foundStudentIDs = new Set(foundStudents.map(s => s.ID));
 
+        // --- BẮT ĐẦU PHẦN LOGIC CẬP NHẬT MỚI NHẤT ---
         for (const studentDoc of foundStudents) {
+            // Phần cập nhật cho Course vẫn giữ nguyên
             newStudentDocsToAdd.push({
                 ID: studentDoc.ID,
                 Learn: learnEntriesForNewStudent
             });
 
-            const updatedCourseFieldForStudent = {
-                ...(studentDoc.Course || {}),
-                [course.ID]: { StatusLearn: false, StatusPay: course.Price }
+            // Chuẩn bị các hành động $push
+            const newCourseEntry = {
+                course: course._id,
+                tuition: null,
+                status: 0,
             };
+            const pushOperations = {
+                Course: newCourseEntry
+            };
+
+            const latestStatus = studentDoc.Status?.[studentDoc.Status.length - 1];
+            if (latestStatus && latestStatus.status !== 2) {
+                const newLearningStatus = {
+                    status: 2,
+                    act: 'học',
+                    note: '',
+                    date: new Date(),
+                };
+                pushOperations.Status = newLearningStatus;
+            }
+
             studentUpdates.push({
                 updateOne: {
                     filter: { _id: studentDoc._id },
-                    update: { $set: { Course: updatedCourseFieldForStudent } }
+                    update: { $push: pushOperations }
                 }
             });
         }
@@ -102,7 +121,7 @@ export async function POST(req) {
             { $push: { Student: { $each: newStudentDocsToAdd } } },
             { new: true }
         );
-
+        revalidateTag('student');
         return NextResponse.json(
             { ok: true, mes: `Thêm ${newStudentDocsToAdd.length} học sinh mới vào khóa học.`, data: updatedCourseResult },
             { status: 200 }

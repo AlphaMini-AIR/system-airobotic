@@ -7,8 +7,10 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
+import { useRouter } from 'next/navigation';
 
 export default function Out({ onStudentUpdated, reloadData, data }) {
+    const router = useRouter();
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [reason, setReason] = useState('');
@@ -67,7 +69,7 @@ export default function Out({ onStudentUpdated, reloadData, data }) {
             if (!response.ok) {
                 throw new Error(result.message || 'Đã có lỗi xảy ra từ máy chủ.');
             }
-
+            router.refresh();
             setIsLoading(false);
             setNotification({
                 open: true,
