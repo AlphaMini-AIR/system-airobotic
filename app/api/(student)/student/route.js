@@ -13,10 +13,10 @@ export async function GET(request) {
 
         const data = await PostStudent.find({})
             .populate({
-                path: 'Area' 
+                path: 'Area'
             })
             .populate({
-                path: 'Course.course', 
+                path: 'Course.course',
                 model: 'course',
                 select: 'ID Status Book',
                 populate: {
@@ -123,7 +123,8 @@ export async function POST(request) {
         };
 
         const initialStatus = {
-            status: 'create',
+            status: 2,
+            act: 'tạo',
             date: new Date(),
             note: 'Tạo học sinh thành công',
         };
