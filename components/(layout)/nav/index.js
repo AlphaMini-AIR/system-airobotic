@@ -102,7 +102,7 @@ export default function Nav() {
       console.error('Logout error:', error);
     } finally {
       setload(false);
-      window.location.reload();
+      // window.location.reload();
     }
   }
 
