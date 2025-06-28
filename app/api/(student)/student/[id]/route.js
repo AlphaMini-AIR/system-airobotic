@@ -1,10 +1,12 @@
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
+import PostCourse from '@/models/course';
 import { revalidateTag } from 'next/cache';
 import PostArea from '@/models/area';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import mongoose from 'mongoose';
 
 export async function GET(request, { params }) {
     const { id } = await params;
@@ -138,6 +140,78 @@ export async function PUT(request, { params }) {
                 console.error(`Lỗi dọn dẹp file mới ${newUploadedFileId} trên Drive:`, cleanupError);
             }
         }
+        return NextResponse.json({ air: 0, mes: error.message, data: null }, { status: 500 });
+    }
+}
+
+export async function DELETE(request, { params }) {
+    const { id } = params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json({ air: 1, mes: 'ID học sinh không hợp lệ' }, { status: 400 });
+    }
+
+    try {
+        const body = await request.json();
+        const { mes } = body; // Lấy lý do nghỉ học từ client
+
+        if (!mes) {
+            return NextResponse.json({ air: 1, mes: 'Cần cung cấp lý do báo nghỉ' }, { status: 400 });
+        }
+
+        await connectDB();
+
+        // 1. Tìm học sinh để kiểm tra trạng thái
+        const student = await PostStudent.findById(id);
+        if (!student) {
+            return NextResponse.json({ air: 1, mes: 'Không tìm thấy học sinh' }, { status: 404 });
+        }
+
+        // 2. Kiểm tra nếu học sinh đã nghỉ rồi
+        if (student.Leave === true) {
+            return NextResponse.json({ air: 1, mes: 'Học sinh này đã được báo nghỉ trước đó' }, { status: 400 });
+        }
+
+        // 3. Xử lý dọn dẹp các khóa học nếu Type = true
+        if (student.Type === true) {
+            // Lấy danh sách ObjectId các khóa học học sinh tham gia
+            const courseIds = student.Course.map(c => c.course);
+
+            // Cập nhật tất cả các khóa học đang hoạt động (Status=false) mà học sinh này tham gia
+            // Sử dụng $pull để xóa các buổi học trong mảng Learn có Checkin = 0
+            await PostCourse.updateMany(
+                {
+                    _id: { $in: courseIds },
+                    Status: false,
+                    'Student.ID': student.ID
+                },
+                {
+                    $pull: { 'Student.$.Learn': { Checkin: 0 } }
+                }
+            );
+        }
+
+        // 4. Cập nhật trạng thái cho học sinh
+        const updatedStudent = await PostStudent.findByIdAndUpdate(
+            id,
+            {
+                $set: { Leave: true },
+                $push: {
+                    Status: {
+                        status: 'leave',
+                        date: new Date(),
+                        note: mes,
+                    }
+                }
+            },
+            { new: true } // Trả về document sau khi đã cập nhật
+        );
+
+        revalidateTag('student');
+
+        return NextResponse.json({ air: 2, mes: 'Đã cập nhật trạng thái nghỉ học cho học sinh thành công', data: updatedStudent }, { status: 200 });
+
+    } catch (error) {
+        console.error("Lỗi khi xử lý báo nghỉ cho học sinh:", error);
         return NextResponse.json({ air: 0, mes: error.message, data: null }, { status: 500 });
     }
 }

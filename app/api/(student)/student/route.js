@@ -125,7 +125,7 @@ export async function POST(request) {
         const initialStatus = {
             status: 'create',
             date: new Date(),
-            note: 'Hồ sơ được tạo tự động',
+            note: 'Tạo học sinh thành công',
         };
 
         // === BƯỚC 4: TẠO VÀ LƯU HỌC SINH MỚI VÀO DATABASE ===

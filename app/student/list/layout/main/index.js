@@ -14,10 +14,9 @@ export default function Main({ data_student, data_area }) {
   const [load, setload] = useState(false);
   const route = useRouter()
   const ReLoadData = async () => {
-    console.log('hi');
     setload(true)
     await Re_Student_All()
-    await route.refresh()
+    route.refresh()
     setload(false)
   };
 
@@ -27,13 +26,38 @@ export default function Main({ data_student, data_area }) {
 
   const filteredStudents = data_student.filter(student => {
     const matchArea = filterArea === "Tất cả" ? true : student.Area === filterArea;
-    const matchStatus = filterStatus === "Tất cả" ? true : student.Status === filterStatus;
+
+    // --- LOGIC LỌC THEO TRẠNG THÁI ĐÃ SỬA ---
+    const matchStatus = (() => {
+      if (filterStatus === "Tất cả") return true;
+
+      // Lấy trạng thái mới nhất của học sinh (phần tử cuối cùng trong mảng Status)
+      const latestStatus = student.Status?.[student.Status.length - 1];
+
+      // Nếu không có trạng thái nào, không khớp
+      if (!latestStatus) return false;
+
+      // So sánh dựa trên giá trị số của trạng thái
+      switch (filterStatus) {
+        case "Đang học":
+          return latestStatus.status === 2;
+        case "Đã nghỉ":
+          return latestStatus.status === 0;
+        case "Chờ lên khóa":
+          return latestStatus.status === 1;
+        default:
+          return false;
+      }
+    })();
+    // --- KẾT THÚC LOGIC SỬA ---
+
     const search = searchTerm.trim().toLowerCase();
     const matchSearch =
       search === ""
         ? true
         : (student.Name && student.Name.toLowerCase().includes(search)) ||
         (student.ID && student.ID.toLowerCase().includes(search));
+
     return matchArea && matchSearch && matchStatus;
   });
 
@@ -52,7 +76,7 @@ export default function Main({ data_student, data_area }) {
             <input
               className='input'
               name="username"
-              placeholder="Nhập tên..."
+              placeholder="Nhập tên hoặc ID học sinh..."
               style={{ width: 300 }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

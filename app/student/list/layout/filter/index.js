@@ -3,11 +3,9 @@ import { useState } from 'react';
 
 export default function Nav({ data_student, setFilterStatus, currentFilterStatus }) {
     const totalStudents = data_student.length;
-    const activeStudents = data_student.filter(student => student.Status === "Đang học").length;
-    const inactiveStudents = data_student.filter(student => student.Status === "Đã nghỉ").length;
-    const pendingStudents = data_student.filter(student => {
-        return student.Course && student.Status !== "Đang học" && student.Status !== "Đã nghỉ";
-    }).length;
+    const activeStudents = data_student.filter(student => student.Status[student.Status.length - 1].status === 2).length;
+    const inactiveStudents = data_student.filter(student => student.Status[student.Status.length - 1].status === 0).length;
+    const pendingStudents = data_student.filter(student => student.Status[student.Status.length - 1].status === 1).length;
 
     return (
         <>

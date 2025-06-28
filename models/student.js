@@ -1,12 +1,13 @@
 import { Schema, model, models } from 'mongoose'
 
 const Course = new Schema({
-  course: { type: Schema.Types.ObjectId, required: true,ref: 'course' },
-  tuition: { type: Schema.Types.ObjectId,default: null },
+  course: { type: Schema.Types.ObjectId, required: true, ref: 'course' },
+  tuition: { type: Schema.Types.ObjectId, default: null },
 });
 
 const Status = new Schema({
-  status: { type: String, required: true },
+  status: { type: Number, required: true },
+  act: { type: String, required: true, enum: ['tạo', 'học', 'chờ', 'nghỉ'] },
   date: { type: Date, required: true },
   note: { type: String, default: '' },
 });
@@ -33,7 +34,7 @@ const postSchema = new Schema({
     ref: 'area',
   },
   Type: {
-    type: String
+    type: Boolean
   },
   Address: {
     type: String
@@ -52,7 +53,12 @@ const postSchema = new Schema({
   },
   Status: {
     type: [Status],
-    default: []
+    default: () => ([{
+      status: 2,
+      act: 'tạo',
+      date: new Date(),
+      note: 'Thêm học sinh thành công',
+    }])
   },
   Course: {
     type: [Course],
@@ -60,7 +66,8 @@ const postSchema = new Schema({
   },
   Profile: {
     type: Object
-  }
+  },
+  Leave: { type: Boolean, default: false },
 }, { versionKey: false })
 
 const PostStudent = models.student || model('student', postSchema)
