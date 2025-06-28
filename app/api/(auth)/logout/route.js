@@ -4,8 +4,6 @@ import { cookies } from 'next/headers';
 export async function POST() {
     const cookieStore = await cookies();
     const u = cookieStore.get(process.env.token)?.value;
-    console.log(u);
-
     if (!u) { return new Response(JSON.stringify({ error: 'No refresh token found' }), { status: 401 }) }
     const domain = new URL(origin).hostname;
     cookieStore.set(process.env.token, '', {
@@ -14,7 +12,5 @@ export async function POST() {
         maxAge: 0,
         domain: domain === 'localhost' ? undefined : domain,
     });
-    console.log(cookieStore.get(process.env.token)?.value);
-
     return new Response(JSON.stringify({ message: 'Logged out successfully' }), { status: 200 });
 }
