@@ -17,11 +17,8 @@ import { Data_Invoices } from '@/data/student';
 import { useRouter } from 'next/navigation';
 
 const PopupContent = React.memo(({ data, onConfirmClick, onDetailClick }) => {
-    console.log(data);
-    
-    const tuition = data.Course.filter(course => course.tuition === null);
-    
-    const tuitiondone = data.Course.filter(course => course.tuition !== null);
+    const tuition = data?.Course?.filter(course => course.tuition === null) || [];
+    const tuitiondone = data?.Course?.filter(course => course.tuition !== null) || [];
 
     return (
         <>

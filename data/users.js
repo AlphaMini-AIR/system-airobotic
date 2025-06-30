@@ -18,6 +18,15 @@ export async function Data_user() {
     }
 }
 
+export async function Data_user_report() {
+    try {
+        const res = await fetchApi(`/reportuser`, { method: 'GET' });
+        return res.data || [];
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
 export async function Re_user() {
     revalidateTag(`data_user`);
 }

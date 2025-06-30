@@ -17,11 +17,8 @@ export default function Menu({
     }
 
     const [internalIsOpen, setInternalIsOpen] = useState(false);
-
     const isControlled = controlledIsOpen !== undefined;
-
     const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
-
     const toggleMenu = () => {
 
         if (isControlled) {

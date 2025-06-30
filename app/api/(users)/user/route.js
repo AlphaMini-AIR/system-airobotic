@@ -5,12 +5,10 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
     try {
         await connectDB();
-
-        // Tìm tất cả user có trường uid (không null hoặc undefined)
         const data = await users
             .find(
                 { uid: { $exists: true, $ne: null } },
-                { uid: 0 } // Loại bỏ trường uid khỏi kết quả
+                { uid: 0 } 
             )
             .lean()
             .exec();
