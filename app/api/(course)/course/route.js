@@ -60,8 +60,6 @@ export async function GET() {
                     delete detail.TeachingAs;
                 }
             });
-            console.log(course);
-            
             return course;
         });
 

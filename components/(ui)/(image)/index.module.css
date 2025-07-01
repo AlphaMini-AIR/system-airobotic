@@ -74,6 +74,20 @@
     position: relative;
 }
 
+.popupImages {
+    background: white;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    height: 80vh;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    position: relative;
+}
+
+
 .closeButton {
     position: absolute;
     top: 10px;
@@ -115,6 +129,7 @@
 }
 
 .popupImage {
+    width: 100%;
     max-width: 100%;
     max-height: 100%;
     object-fit: cover;

@@ -38,6 +38,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     const videos = allImages?.filter(item => item.type === 'video');
 
     const lessProductItems = images?.map((item, index) => (<ImageComponent key={index} width={'100%'} imageInfo={item} refreshData={() => reload()} />));
+    const lessProductVideos = videos?.map((item, index) => (<ImageComponent key={index} width={'100%'} imageInfo={item} refreshData={() => reload()} />));
 
     const listColumnsConfig = { mobile: 2, tablet: 4, desktop: 5 };
 
@@ -390,7 +391,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <p style={{ padding: 16, borderBottom: 'thin solid var(--border-color)' }} className='text_4'>Video thuyết trình</p>
                     {videos.length > 0 ? (
-                        <ResponsiveGrid items={lessProductItems} columns={listColumnsConfig} type="list" />
+                        <ResponsiveGrid items={lessProductVideos} columns={listColumnsConfig} type="list" />
                     ) : (
                         <div style={{ padding: 16, textAlign: 'center' }} className='text_6_400'>Không có video nào.</div>
                     )}

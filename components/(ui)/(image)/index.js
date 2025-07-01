@@ -1,20 +1,17 @@
 'use client';
+
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import styles from './index.module.css';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import { Svg_Delete, Svg_Pen, Svg_Download } from '@/components/(icon)/svg';
-
 import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
 import AlertPopup from '@/components/(features)/(noti)/alert';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
 import { Re_lesson } from '@/data/course';
 
-// FileUploadModal không còn được sử dụng trong component này nữa,
-// nhưng tôi giữ nguyên định nghĩa của nó nếu nó được sử dụng ở các nơi khác
 const FileUploadModal = ({ isOpen, onClose, onFileSelect, imageId }) => {
     const fileInputRef = useRef(null);
-
     if (!isOpen) return null;
 
     const handleFileChange = (event) => {
@@ -47,12 +44,9 @@ const FileUploadModal = ({ isOpen, onClose, onFileSelect, imageId }) => {
 };
 
 const ImageComponent = ({ width, imageInfo, refreshData }) => {
-    // Sửa URL Googleusercontent: "0" -> "1" để nó hoạt động đúng.
-    // Nếu bạn muốn dùng ảnh thật từ Googleusercontent.com thì URL thường có định dạng khác,
-    // ví dụ: https://lh3.googleusercontent.com/d/YOUR_FILE_ID=s220
-    // Hoặc nếu bạn đang tự host ảnh từ Google Drive thì có thể dùng API của Drive.
-    // Hiện tại tôi giữ theo cấu trúc bạn đang dùng và giả định "1" là tiền tố hợp lệ.
-    const src = `https://lh3.googleusercontent.com/d/${imageInfo.id}`;
+    const imageSrc = `https://lh3.googleusercontent.com/d/${imageInfo.id}`;
+    const videoThumbSrc = `https://drive.google.com/thumbnail?id=${imageInfo.id}`;
+    const videoEmbedSrc = `https://drive.google.com/file/d/${imageInfo.id}/preview`;
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -60,41 +54,39 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
     const [noti, setNoti] = useState({ open: false, status: false, mes: '', button: null });
     const [alertPopup, setAlertPopup] = useState({ open: false, title: '', content: '', type: 'warning', actions: null });
 
-    // Tạo một ref cho input file ẩn
     const hiddenFileInput = useRef(null);
 
-    const handleImageClick = useCallback(() => {
-        setIsPopupOpen(true);
-    }, []);
+    const handleImageClick = useCallback(() => setIsPopupOpen(true), []);
+    const handleClosePopup = useCallback(() => setIsPopupOpen(false), []);
 
-    const handleClosePopup = useCallback(() => {
-        setIsPopupOpen(false);
-    }, []);
-
-    const showLoading = (content) => {
+    const showLoading = useCallback((content) => {
         setLoadingContent(content);
         setIsLoading(true);
-    };
+    }, []);
 
-    const hideLoading = () => {
+    const hideLoading = useCallback(() => {
         setIsLoading(false);
         setLoadingContent('');
-    };
+    }, []);
 
-    const showNoti = (status, mes) => {
+    const closeNoti = useCallback(() => {
+        setNoti(prev => ({ ...prev, open: false }));
+    }, []);
+
+    const showNoti = useCallback((status, mes) => {
         setNoti({
             open: true,
             status: status,
             mes: mes,
-            button: <div className='btn' style={{ background: 'var(--main_d)', width: 'calc(100% - 24px)', justifyContent: 'center' }} onClick={() => setNoti({ ...noti, open: false })}>Tắt thông báo</div>,
+            button: <div className='btn' style={{ background: 'var(--main_d)', width: 'calc(100% - 24px)', justifyContent: 'center' }} onClick={closeNoti}>Tắt thông báo</div>,
         });
-    };
+    }, [closeNoti]);
 
-    const closeNoti = () => {
-        setNoti({ ...noti, open: false });
-    };
+    const closeAlertPopup = useCallback(() => {
+        setAlertPopup(prev => ({ ...prev, open: false }));
+    }, []);
 
-    const showAlertPopup = (title, content, onConfirm) => {
+    const showAlertPopup = useCallback((title, content, onConfirm) => {
         setAlertPopup({
             open: true,
             title: title,
@@ -102,18 +94,13 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
             type: 'warning',
             actions: (
                 <>
-                    <div onClick={() => setAlertPopup({ ...alertPopup, open: false })}
-                        style={{ background: 'gray', color: 'white' }} className='btn' > Hủy </div>
-                    <div className='btn' style={{ background: 'var(--red)', color: 'white' }}
-                        onClick={() => { onConfirm(); setAlertPopup({ ...alertPopup, open: false }); }}  >  Xác nhận </div>
+                    <div onClick={closeAlertPopup} style={{ background: 'gray', color: 'white' }} className='btn'>Hủy</div>
+                    <div className='btn' style={{ background: 'var(--red)', color: 'white' }} onClick={() => { onConfirm(); closeAlertPopup(); }}>Xác nhận</div>
                 </>
             ),
         });
-    };
+    }, [closeAlertPopup]);
 
-    const closeAlertPopup = () => {
-        setAlertPopup({ ...alertPopup, open: false });
-    };
     const handleReplaceImage = useCallback(async (newImageFile, idToUpdate) => {
         showLoading('Đang cập nhật hình ảnh...');
         try {
@@ -121,15 +108,11 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
             formData.append('id', idToUpdate);
             formData.append('newImage', newImageFile);
 
-            const response = await fetch('/api/image', {
-                method: 'PUT',
-                body: formData,
-            });
-
+            const response = await fetch('/api/image', { method: 'PUT', body: formData });
             const result = await response.json();
-            result.data.forEach(element => {
-                Re_lesson(element)
-            });
+
+            result.data.forEach(element => Re_lesson(element));
+
             if (response.ok && result.status === 2) {
                 showNoti(true, result.mes);
             } else {
@@ -142,45 +125,36 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
             await refreshData();
             hideLoading();
         }
-    }, [refreshData]);
-    // Hàm mới để xử lý việc chọn tệp từ input ẩn
+    }, [refreshData, showLoading, hideLoading, showNoti]);
+
     const handleFileChangeForUpdate = useCallback(async (event) => {
         const file = event.target.files[0];
         if (file) {
             await handleReplaceImage(file, imageInfo.id);
-            // Quan trọng: Đặt lại giá trị của input để cho phép chọn lại cùng một tệp
             event.target.value = '';
         }
-        handleClosePopup(); // Đóng popup sau khi chọn tệp và bắt đầu cập nhật
+        handleClosePopup();
     }, [handleReplaceImage, imageInfo.id, handleClosePopup]);
 
-    // Thay đổi duy nhất ở đây: Kích hoạt click vào input file ẩn
     const handleEdit = useCallback(() => {
-        if (hiddenFileInput.current) {
-            hiddenFileInput.current.click();
-        }
+        hiddenFileInput.current?.click();
     }, []);
-
-
 
     const handleDelete = useCallback(() => {
         showAlertPopup(
             'Xác nhận xóa',
             <>
                 <TextNoti mes='Việc xóa hình ảnh lớp học cũng sẽ đồng thời xóa hình ảnh này khỏi phần hình ảnh riêng cho các học sinh.' title='Xóa hình ảnh lớp học' color={'yellow'} />
-                <p className='text_6_400' style={{ marginTop: 8 }}> Bạn có chắc chắn muốn xóa hình ảnh này không? Hành động này không thể hoàn tác.</p>
+                <p className='text_6_400' style={{ marginTop: 8 }}>Bạn có chắc chắn muốn xóa hình ảnh này không? Hành động này không thể hoàn tác.</p>
             </>,
             async () => {
                 showLoading('Đang xóa hình ảnh...');
                 try {
-                    const response = await fetch(`/api/image?id=${imageInfo.id}`, {
-                        method: 'DELETE',
-                    });
-
+                    const response = await fetch(`/api/image?id=${imageInfo.id}`, { method: 'DELETE' });
                     const result = await response.json();
-                    result.data.forEach(element => {
-                        Re_lesson(element)
-                    });
+
+                    result.data.forEach(element => Re_lesson(element));
+
                     if (response.ok && result.status === 2) {
                         showNoti(true, result.mes);
                     } else {
@@ -196,35 +170,31 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
                 }
             }
         );
-    }, [imageInfo.id, handleClosePopup, refreshData]);
+    }, [imageInfo.id, refreshData, showAlertPopup, showLoading, hideLoading, showNoti, handleClosePopup]);
 
     const handleDownload = useCallback(() => {
         const downloadUrl = `https://drive.google.com/uc?export=download&id=${imageInfo.id}`;
-
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = `file_${imageInfo.id}.${imageInfo.type === 'image' ? 'png' : imageInfo.type === 'video' ? 'mp4' : 'bin'}`;
-
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }, [imageInfo.id, imageInfo.type]);
 
-    const containerStyle = useMemo(() => {
-        const parsedWidth = typeof width === 'number' ? `${width}px` : width;
-        return {
-            width: parsedWidth,
-            aspectRatio: '1 / 1',
-        };
-    }, [width]);
+    const containerStyle = useMemo(() => ({
+        width: typeof width === 'number' ? `${width}px` : width,
+        aspectRatio: '1 / 1',
+        cursor: 'pointer'
+    }), [width]);
 
     return (
         <>
             <div className={styles.imageContainer} style={containerStyle} onClick={handleImageClick}>
                 {imageInfo.type === 'image' ? (
-                    <img src={src} alt={`Image ${imageInfo.id}`} className={styles.image} />
+                    <img src={imageSrc} alt={`Image ${imageInfo.id}`} className={styles.image} />
                 ) : imageInfo.type === 'video' ? (
-                    <video src={src} controls className={styles.image} />
+                    <img src={videoThumbSrc} alt={`Video thumbnail ${imageInfo.id}`} className={styles.image} />
                 ) : (
                     <div className={styles.filePlaceholder}>
                         File: {imageInfo.type} (ID: {imageInfo.id})
@@ -234,59 +204,38 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
 
             {isPopupOpen && (
                 <div className={styles.popupOverlay} onClick={handleClosePopup}>
-                    <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
+                    <div className={imageInfo.type === 'image' ? styles.popupContent : styles.popupImages} onClick={(e) => e.stopPropagation()}>
                         {imageInfo.type === 'image' ? (
-                            <img src={src} alt={`Detail ${imageInfo.id}`} className={styles.popupImage} />
+                            <img src={imageSrc} alt={`Detail ${imageInfo.id}`} className={styles.popupImage} />
                         ) : imageInfo.type === 'video' ? (
-                            <video src={src} controls className={styles.popupImage} />
+                            <iframe
+                                src={videoEmbedSrc}
+                                className={styles.popupImage}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title={`Video ${imageInfo.id}`}
+                            ></iframe>
                         ) : (
                             <div className={styles.popupFileContent}>
                                 <h3>File: {imageInfo.type}</h3>
                                 <p>ID: {imageInfo.id}</p>
-                                <a href={src} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>Mở File</a>
+                                <a href={videoEmbedSrc} target="_blank" rel="noopener noreferrer" className={styles.downloadLink}>Mở File</a>
                             </div>
                         )}
 
                         <div className={styles.popupActions}>
-                            <WrapIcon
-                                icon={<Svg_Pen w={17} h={17} c="white" />}
-                                content={'Cập nhật'}
-                                placement={'right'}
-                                style={{ background: 'var(--yellow)', color: 'white', cursor: 'pointer' }}
-                                click={handleEdit} // Gọi hàm handleEdit mới
-                            />
-
-                            <WrapIcon
-                                icon={<Svg_Delete w={16} h={16} c="white" />}
-                                content={'Xóa'}
-                                placement={'right'}
-                                style={{ background: 'var(--red)', color: 'white', cursor: 'pointer' }}
-                                click={handleDelete}
-                            />
-
-                            {imageInfo.type === 'image' || imageInfo.type === 'video' ? (
-                                <WrapIcon
-                                    icon={<Svg_Download w={16} h={16} c="white" />}
-                                    content={'Tải xuống'}
-                                    placement={'right'}
-                                    style={{ background: 'var(--green)', color: 'white', cursor: 'pointer' }}
-                                    click={handleDownload}
-                                />
-                            ) : null}
+                            <WrapIcon icon={<Svg_Pen w={17} h={17} c="white" />} content={'Cập nhật'} placement={'right'} style={{ background: 'var(--yellow)', color: 'white', cursor: 'pointer' }} click={handleEdit} />
+                            <WrapIcon icon={<Svg_Delete w={16} h={16} c="white" />} content={'Xóa'} placement={'right'} style={{ background: 'var(--red)', color: 'white', cursor: 'pointer' }} click={handleDelete} />
+                            {(imageInfo.type === 'image' || imageInfo.type === 'video') && (
+                                <WrapIcon icon={<Svg_Download w={16} h={16} c="white" />} content={'Tải xuống'} placement={'right'} style={{ background: 'var(--green)', color: 'white', cursor: 'pointer' }} click={handleDownload} />
+                            )}
                         </div>
                         <button className={styles.closeButton} onClick={handleClosePopup}>×</button>
                     </div>
                 </div>
             )}
 
-            {/* Input file ẩn, chỉ dùng để kích hoạt chọn tệp */}
-            <input
-                type="file"
-                ref={hiddenFileInput}
-                onChange={handleFileChangeForUpdate}
-                accept="image/*" // Chỉ chấp nhận hình ảnh
-                style={{ display: 'none' }} // Ẩn khỏi giao diện người dùng
-            />
+            <input type="file" ref={hiddenFileInput} onChange={handleFileChangeForUpdate} accept="image/*" style={{ display: 'none' }} />
 
             {isLoading && (
                 <div className={styles.fullscreenOverlay}>
@@ -294,22 +243,9 @@ const ImageComponent = ({ width, imageInfo, refreshData }) => {
                 </div>
             )}
 
-            <Noti
-                open={noti.open}
-                onClose={closeNoti}
-                status={noti.status}
-                mes={noti.mes}
-                button={noti.button}
-            />
+            <Noti open={noti.open} onClose={closeNoti} status={noti.status} mes={noti.mes} button={noti.button} />
 
-            <AlertPopup
-                open={alertPopup.open}
-                onClose={closeAlertPopup}
-                title={alertPopup.title}
-                content={alertPopup.content}
-                type={alertPopup.type}
-                actions={alertPopup.actions}
-            />
+            <AlertPopup open={alertPopup.open} onClose={closeAlertPopup} title={alertPopup.title} content={alertPopup.content} type={alertPopup.type} actions={alertPopup.actions} />
         </>
     );
 };
