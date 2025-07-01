@@ -27,6 +27,7 @@ function BookIcon({ active }) {
 }
 
 export default function Navbar({ data = [], book = [], user }) {
+    
     const router = useRouter()
     const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);

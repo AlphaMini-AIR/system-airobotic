@@ -13,22 +13,70 @@ const APPSCRIPT_URL =
 export async function GET() {
     try {
         await connectDB();
-        const data = await PostCourse.find({ Type: 'AI Robotic' }).populate({ path: 'Book', select: 'Name' })
-            .populate({ path: 'TeacherHR', select: 'name' }).populate({ path: 'Area', select: 'name color' }).lean();
+
+        /* 1. Lấy danh sách khoá học – KHÔNG populate TeachingAs */
+        const courses = await PostCourse.find({ Type: 'AI Robotic' })
+            .populate({ path: 'Book', select: 'Name' })
+            .populate({ path: 'TeacherHR', select: 'name' })
+            .populate({ path: 'Area', select: 'name color' })
+            .populate({
+                path: 'Detail',
+                populate: [{ path: 'Teacher', select: 'name phone' }],
+            })
+            .lean();
+
+        /* 2. Thu thập toàn bộ TeachingAs hợp lệ */
+        const idSet = new Set();
+        courses.forEach(course => {
+            (course.Detail || []).forEach(detail => {
+                const raw = detail.TeachingAs;
+                const id = typeof raw === 'string' ? raw : raw?._id;
+                if (mongoose.Types.ObjectId.isValid(id)) idSet.add(id);
+            });
+        });
+
+
+        /* 3. Tra cứu user theo các id hợp lệ */
+        const idList = Array.from(idSet);
+        const userMap = {};
+        if (idList.length) {
+            const users = await PostUser.find(
+                { _id: { $in: idList } },
+                'name phone',
+            ).lean();
+
+
+            users.forEach(u => { userMap[String(u._id)] = u; });
+
+        }
+
+        const cleaned = courses.map(course => {
+            (course.Detail || []).forEach(detail => {
+                const raw = detail.TeachingAs;
+                const id = typeof raw === 'string' ? raw : raw?._id;
+                if (userMap[id]) {
+                    detail.TeachingAs = userMap[id];
+                } else {
+                    delete detail.TeachingAs;
+                }
+            });
+            console.log(course);
+            
+            return course;
+        });
 
         return NextResponse.json(
-            { status: 2, mes: 'Lấy dữ liệu thành công.', data },
-            { status: 200 }
+            { status: 2, mes: 'Lấy dữ liệu thành công.', data: cleaned },
+            { status: 200 },
         );
-    } catch (error) {
-        console.error('[COURSES_GET_ERROR]', error);
+    } catch (err) {
+        console.error('[COURSES_GET_ERROR]', err);
         return NextResponse.json(
             { status: 1, mes: 'Lỗi máy chủ.', data: [] },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
-
 export async function POST(request) {
     try {
         const authResult = await authenticate(request);

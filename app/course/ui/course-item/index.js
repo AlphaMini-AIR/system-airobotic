@@ -4,6 +4,20 @@ import styles from './index.module.css';
 import { calculatePastLessons, formatDate } from '@/function';
 
 export default function CourseItem({ data = {} }) {
+    const teacherMap = new Map();
+    const teachingAsMap = new Map();
+
+    data.Detail.forEach(item => {
+        if (item.Teacher && item.Teacher._id) {
+            teacherMap.set(item.Teacher._id, item.Teacher);
+        }
+        if (item.TeachingAs && item.TeachingAs._id) {
+            teachingAsMap.set(item.TeachingAs._id, item.TeachingAs);
+        }
+    });
+    const uniqueTeachers = Array.from(teacherMap.values());
+    const uniqueTeachingAs = Array.from(teachingAsMap.values());
+
     const pastLessonsCount = calculatePastLessons(data);
     const { ID = '', Area = {}, Detail = [], Student = [], Book = { Name: 'Trống' } } = data;
     const allDates = data.Detail.map(item => new Date(item.Day));
@@ -88,6 +102,18 @@ export default function CourseItem({ data = {} }) {
                 <span className={styles.label}>Giáo viên chủ nhiệm:</span>
                 <span className={styles.value}>
                     {data.TeacherHR.name}
+                </span>
+            </div>
+            <div className={styles.infoRow}>
+                <span className={styles.label}>Giáo viên giảng dạy:</span>
+                <span className={styles.value}>
+                    {uniqueTeachers.length > 0 ? uniqueTeachers.map(teacher => teacher.name).join(', ') : 'Chưa có giáo viên'}
+                </span>
+            </div>
+            <div className={styles.infoRow}>
+                <span className={styles.label}>Giáo viên trợ giảng:</span>
+                <span className={styles.value}>
+                    {uniqueTeachingAs.length > 0 ? uniqueTeachingAs.map(ta => ta.name).join(', ') : 'Chưa có giáo viên'}
                 </span>
             </div>
             <div className={styles.infoRow} style={{ marginBottom: 8 }}>
