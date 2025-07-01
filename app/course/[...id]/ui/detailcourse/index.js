@@ -16,6 +16,7 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import CommentPopup from '../cmt';
 import { formatDate } from '@/function';
 import ImageComponent from '@/components/(ui)/(image)';
+import BoxFile from '@/components/(ui)/(box)/file';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -202,8 +203,10 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     }
     let lesson;
     let statusLesson = [1, 1, 1];
+    let slide = ''
     if (params.length > 1) {
         lesson = data.Detail.find(lesson => lesson._id === params[1]);
+        slide = lesson.LessonDetails.Slide || '';
         lesson.Student = data.Student.flatMap((s) => {
             let g = s.Learn.filter(t => t.Lesson == lesson._id)
             return g
@@ -228,6 +231,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
         }
 
     }
+    console.log(slide);
 
     return (
         <div className={styles.container}>
@@ -401,6 +405,18 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     </div>
                 </div>
             </div>
+            {params.length > 1 &&
+                <div className={styles.box}>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                        <p style={{ padding: 16, borderBottom: 'thin solid var(--border-color)' }} className='text_4'>Tài nguyên giảng dạy</p>
+                        <div style={{ padding: 8 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                                <BoxFile type='Ppt' name='Slide giảng dạy' href={slide} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
             {loading && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                 <Loading />
             </div>}
