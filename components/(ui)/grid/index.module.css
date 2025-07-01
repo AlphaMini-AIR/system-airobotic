@@ -1,9 +1,6 @@
-/* app/components/ResponsiveGrid/ResponsiveGrid.module.css */
-
 .gridContainer {
     display: grid;
     gap: 16px;
-    padding: 16px;
     grid-template-columns: repeat(var(--mobile-cols, 1), 1fr);
 }
 
@@ -34,8 +31,7 @@
     cursor: pointer;
     background-color: #f8f9fa;
     transition: background-color 0.2s, border-color 0.2s;
-    min-height: 150px;
-    /* Đảm bảo chiều cao tối thiểu */
+
 }
 
 .showMore:hover {
@@ -71,19 +67,17 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    padding: 1rem;
 }
 
 .popupContent {
     background: white;
-    padding: 2rem;
+    padding: 16px;
     border-radius: 8px;
     max-width: 90vw;
-    max-height: 90vh;
-    overflow-y: auto;
+    height: 80vh;
     position: relative;
+    overflow: hidden;
     width: 1200px;
-    /* Chiều rộng tối đa cho popup */
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 

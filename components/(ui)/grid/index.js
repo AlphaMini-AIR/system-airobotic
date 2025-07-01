@@ -42,16 +42,14 @@ const ResponsiveGrid = ({ items = [], columns, type = 'grid', style = {} }) => {
             {isPopupOpen && (
                 <div className={styles.popupOverlay} onClick={handleClosePopup}>
                     <div className={styles.popupContent} onClick={(e) => e.stopPropagation()}>
-                        <button className={styles.closeButton} onClick={handleClosePopup}>
-                            &times;
-                        </button>
-                        <h3 className={styles.popupTitle}>Tất cả sản phẩm</h3>
-                        <div className={styles.gridContainer} style={gridStyles}>
-                            {items.map((item, index) => (
-                                <div key={`popup-item-${index}`} className={styles.gridItem}>
-                                    {item}
-                                </div>
-                            ))}
+                        <div style={{ width: '100%', height: '100%', overflow: 'hidden', overflowY: 'auto' }}>
+                            <div className={styles.gridContainer} style={gridStyles}>
+                                {items.map((item, index) => (
+                                    <div key={`popup-item-${index}`} className={styles.gridItem}>
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
