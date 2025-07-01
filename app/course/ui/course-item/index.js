@@ -71,64 +71,68 @@ export default function CourseItem({ data = {} }) {
 
     return (
         <Link href={`/course/${ID}`} className={styles.wrap}>
-            <div className={styles.title}>
-                <div className={styles.courseAvt}>
-                    {ID.length >= 5 ? ID.slice(2, 5) : ''}
-                </div>
-                <div className={styles.titleInfo}>
-                    <div className={styles.titleText1}>
-                        {ID}
-                        {Area && <span className={`chip text_7_400`} style={{
-                            background: Area.color, borderRadius: 16,
-                            padding: '4px 16px', color: 'white'
-                        }}>{Area.name}</span>}
+            <div>
+                <div className={styles.title}>
+                    <div className={styles.courseAvt}>
+                        {ID.length >= 5 ? ID.slice(2, 5) : ''}
                     </div>
-                    <p className={styles.courseName}>{Book.Name}</p>
+                    <div className={styles.titleInfo}>
+                        <div className={styles.titleText1}>
+                            {ID}
+                            {Area && <span className={`chip text_7_400`} style={{
+                                background: Area.color, borderRadius: 16,
+                                padding: '4px 16px', color: 'white'
+                            }}>{Area.name}</span>}
+                        </div>
+                        <p className={styles.courseName}>{Book.Name}</p>
+                    </div>
+                </div>
+
+                <div className={styles.infoRow}>
+                    <span className={styles.label}>Thời gian:</span>
+                    <span className={styles.value}>
+                        {dateRange[0] && dateRange[1] ? `${dateRange[0]} - ${dateRange[1]}` : 'Chưa có thời gian'}
+                    </span>
+                </div>
+
+                <div className={styles.infoRow}>
+                    <span className={styles.label}>Số lượng học sinh:</span>
+                    <span className={styles.value}>{studentCount} Học sinh</span>
+                </div>
+                <div className={styles.infoRow}>
+                    <span className={styles.label}>Giáo viên chủ nhiệm:</span>
+                    <span className={styles.value}>
+                        {data.TeacherHR.name}
+                    </span>
+                </div>
+                <div className={styles.infoRow} style={{ display: 'block' }}>
+                    <span className={styles.label}>Giáo viên giảng dạy: <span className={styles.value}>
+                        {uniqueTeachers.length > 0 ? uniqueTeachers.map(teacher => teacher.name).join(', ') : 'Chưa có giáo viên'}
+                    </span></span>
+
+                </div>
+                <div className={styles.infoRow} style={{ display: 'block' }}>
+                    <p className={styles.label}>Giáo viên trợ giảng: <span className={styles.value}>
+                        {uniqueTeachingAs.length > 0 ? uniqueTeachingAs.map(ta => ta.name).join(', ') : 'Chưa có giáo viên'}
+                    </span></p>
+
                 </div>
             </div>
+            <div>
+                <div className={styles.infoRow} style={{ marginBottom: 8, marginTop: 'auto' }}>
+                    <span className={styles.label}>Tiến độ học:</span>
+                    <span className={styles.value}>
+                        {pastLessonsCount}/{data.Detail.length} Buổi
+                    </span>
+                </div>
 
-            <div className={styles.infoRow}>
-                <span className={styles.label}>Thời gian:</span>
-                <span className={styles.value}>
-                    {dateRange[0] && dateRange[1] ? `${dateRange[0]} - ${dateRange[1]}` : 'Chưa có thời gian'}
-                </span>
-            </div>
-
-            <div className={styles.infoRow}>
-                <span className={styles.label}>Số lượng học sinh:</span>
-                <span className={styles.value}>{studentCount} Học sinh</span>
-            </div>
-            <div className={styles.infoRow}>
-                <span className={styles.label}>Giáo viên chủ nhiệm:</span>
-                <span className={styles.value}>
-                    {data.TeacherHR.name}
-                </span>
-            </div>
-            <div className={styles.infoRow}>
-                <span className={styles.label}>Giáo viên giảng dạy:</span>
-                <span className={styles.value}>
-                    {uniqueTeachers.length > 0 ? uniqueTeachers.map(teacher => teacher.name).join(', ') : 'Chưa có giáo viên'}
-                </span>
-            </div>
-            <div className={styles.infoRow}>
-                <span className={styles.label}>Giáo viên trợ giảng:</span>
-                <span className={styles.value}>
-                    {uniqueTeachingAs.length > 0 ? uniqueTeachingAs.map(ta => ta.name).join(', ') : 'Chưa có giáo viên'}
-                </span>
-            </div>
-            <div className={styles.infoRow} style={{ marginBottom: 8 }}>
-                <span className={styles.label}>Tiến độ học:</span>
-                <span className={styles.value}>
-                    {pastLessonsCount}/{data.Detail.length} Buổi
-                </span>
-            </div>
-
-            <div className={styles.progressBar} >
-                <div
-                    className={styles.progress}
-                    style={{ width: `${Number(pastLessonsCount) / data.Detail.length * 100}%` }}
-                    aria-label="progress"
-                />
+                <div className={styles.progressBar} >
+                    <div
+                        className={styles.progress}
+                        style={{ width: `${Number(pastLessonsCount) / data.Detail.length * 100}%` }}
+                        aria-label="progress"
+                    />
+                </div>
             </div>
         </Link>
     );

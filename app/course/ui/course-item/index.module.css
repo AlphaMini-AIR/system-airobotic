@@ -6,7 +6,9 @@
     width: calc(25% - (16px * 3 / 4) - 32px);
     box-shadow: var(--boxshaw2);
     transition: box-shadow 0.3s linear;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     text-decoration: none;
 }
 
