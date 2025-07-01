@@ -23,5 +23,6 @@
     width: 100px;
     border-right: thin solid var(--border-color);
     background-color: var(--bg-primary);
+    z-index: 99;
 }
 

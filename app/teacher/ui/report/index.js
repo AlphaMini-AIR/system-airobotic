@@ -152,6 +152,8 @@ const getCurrentMonthDateRange = () => {
 // THÀNH PHẦN CHÍNH (Main Component)
 // ====================================================================
 const EnhancedViolationsReport = ({ initialReports }) => {
+    console.log(initialReports);
+    
     const [visibleTeacher, setVisibleTeacher] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [startDate, setStartDate] = useState(getCurrentMonthDateRange().start);

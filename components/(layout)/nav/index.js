@@ -3,12 +3,13 @@
 import { useState, useEffect, useMemo, startTransition } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import air from './index.module.css';
-import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar } from '../../(icon)/svg';
+import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting } from '../../(icon)/svg';
 import Menu from '../../(ui)/(button)/menu';
 import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
 import { set } from 'mongoose';
 import Loading from '@/components/(ui)/(loading)/loading';
+import Link from 'next/link';
 
 const ITEM_HEIGHT = 82;
 
@@ -121,9 +122,9 @@ export default function Nav() {
       marginBottom: 8
     }}>
       <div style={{ padding: 8, gap: 3 }} className='flex_col'>
-        <p className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
-          <Svg_Mode w={16} h={16} c={'var(--text-secondary)'} />Giao diện
-        </p>
+        <Link href={'/setting'} className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
+          <Svg_Setting w={16} h={16} c={'var(--text-secondary)'} />Cài đặt
+        </Link>
         <p className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
           <Svg_Mode w={16} h={16} c={'var(--text-secondary)'} />Giao diện
         </p>
