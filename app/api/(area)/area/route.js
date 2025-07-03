@@ -1,25 +1,71 @@
 import connectDB from '@/config/connectDB';
+import { Re_Area } from '@/data/area';
 import PostArea from '@/models/area';
-import authenticate from '@/utils/authenticate';
 import { NextResponse } from 'next/server';
+
+export async function GET(request) {
+    try {
+        await connectDB();
+        const data = await PostArea.find({}).sort({ createdAt: -1 });
+        return NextResponse.json({
+            status: 2, // Thay vì 'air'
+            mes: 'Lấy dữ liệu thành công',
+            data: data
+        }, { status: 200 });
+
+    } catch (error) {
+        console.log(error);
+        return NextResponse.json({
+            status: 0,
+            mes: error.message,
+            data: []
+        }, {
+            status: error.message === 'Authentication failed' ? 401 : 500
+        });
+    }
+}
 
 export async function POST(request) {
     try {
-        const { user } = await authenticate(request);
-        let data;
-        let message = 'Lấy dữ liệu thành công';
-        let status = 200;
         await connectDB();
-        data = await PostArea.find({})
-        return NextResponse.json(
-            { air: status === 200 ? 2 : 1, mes: message, data },
-            { status }
-        );
+
+        const body = await request.json();
+        const { name, room, color } = body;
+
+        if (!name || !room || !color) {
+            return NextResponse.json({
+                status: 0,
+                mes: "Vui lòng cung cấp đầy đủ các trường: name, room, và color.",
+                data: []
+            }, { status: 400 });
+        }
+
+        const existingArea = await PostArea.findOne({ name });
+        if (existingArea) {
+            return NextResponse.json({
+                status: 0,
+                mes: `Khu vực với tên "${name}" đã tồn tại.`,
+                data: []
+            }, { status: 409 });
+        }
+
+        const newArea = new PostArea({ name, room, color });
+        await newArea.save();
+        await Re_Area();
+        return NextResponse.json({
+            status: 2,
+            mes: "Tạo khu vực mới thành công!",
+            data: newArea,
+        }, { status: 201 });
+
     } catch (error) {
-        console.log(error);
-        return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
-            { status: error.message === 'Authentication failed' ? 401 : 500 }
-        );
+        console.error("Lỗi khi tạo khu vực:", error);
+        return NextResponse.json({
+            status: 0,
+            mes: error.message || "Đã xảy ra lỗi từ máy chủ.",
+            data: []
+        }, {
+            status: error.message === 'Authentication failed' ? 401 : 500
+        });
     }
 }

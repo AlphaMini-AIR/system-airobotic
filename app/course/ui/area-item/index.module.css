@@ -1,0 +1,142 @@
+/* --- CÁC CLASS ĐƯỢC GIỮ LẠI VÀ SỬ DỤNG --- */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.card {
+    display: flex;
+    flex-direction: row;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: var(--boxshaw2);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: calc(25% - (16px * 3 / 4));
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--boxshaw);
+}
+
+.content {
+    flex: 2;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+/* --- CÁC CLASS MỚI ĐƯỢC THÊM VÀO TỪ JAVASCRIPT --- */
+
+/* Các class dùng chung trong popup */
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--main, #4f46e5);
+}
+
+.button_primary {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--main, #4f46e5);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.button_primary:hover {
+    background-color: var(--main_d, #4338ca);
+}
+
+
+.colorInputWrapper {
+    display: flex;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0px 8px;
+    gap: 10px;
+    transition: border-color 0.2s ease;
+}
+
+.colorInputWrapper:focus-within {
+    border-color: var(--main, var(--main_b));
+}
+
+.colorSwatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #e0e0e0;
+}
+
+.hiddenColorInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    border: none;
+    padding: 0;
+}
+
+.textInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 10px 0;
+    font-size: 14px;
+    background: transparent;
+    color: #1a202c;
+}
+
+.tagContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-radius: 4px;
+}
+
+.tag {
+    display: flex;
+    align-items: center;
+    background-color: #e0e0e0;
+    padding: 6px 16px;
+    border-radius: 8px;
+}
+
+.deleteTagButton {
+    background: none;
+    border: none;
+    color: #333;
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+}
+
+.deleteTagButton:hover {
+    color: #ff0000;
+}

@@ -35,7 +35,6 @@ const ProgramList = ({ programs }) => {
     if (!programs || programs.length === 0) {
         return <div>Không có chương trình nào để hiển thị.</div>;
     }
-    console.log(programs);
     
     return (
         <div className={styles.container}>
