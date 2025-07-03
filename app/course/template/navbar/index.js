@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Nav from '../../ui/nav-item';
 import CourseItem from '../../ui/course-item';
 import Create from '../../ui/create';
@@ -30,26 +30,75 @@ function BookIcon({ active }) {
     );
 }
 
+// Hàm tiện ích để lấy chuỗi ngày ở định dạng ISO (YYYY-MM-DD)
+const getIsoDateString = (date) => {
+    return date.toISOString().split('T')[0];
+};
+
 export default function Navbar({ data = [], book = [], user, areas = [] }) {
-    const router = useRouter()
+    const router = useRouter();
     const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);
     const [search, setSearch] = useState('');
     const [area, setArea] = useState('');
+    const [timeRange, setTimeRange] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    useEffect(() => {
+        const now = new Date();
+        let start = new Date();
+        let end = new Date();
+
+        switch (timeRange) {
+            case 'currentWeek':
+                start.setDate(now.getDate() - now.getDay());
+                end.setDate(now.getDate() + (6 - now.getDay()));
+                break;
+            case 'lastWeek':
+                start.setDate(now.getDate() - now.getDay() - 7);
+                end.setDate(now.getDate() - now.getDay() - 1);
+                break;
+            case 'currentMonth':
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                break;
+            case 'lastMonth':
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0);
+                break;
+            case 'currentYear':
+                start = new Date(now.getFullYear(), 0, 1);
+                end = new Date(now.getFullYear(), 11, 31);
+                break;
+            case 'lastYear':
+                start = new Date(now.getFullYear() - 1, 0, 1);
+                end = new Date(now.getFullYear() - 1, 11, 31);
+                break;
+            default:
+                setStartDate('');
+                setEndDate('');
+                return;
+        }
+
+        setStartDate(getIsoDateString(start));
+        setEndDate(getIsoDateString(end));
+    }, [timeRange]);
+
 
     const reloadData = useCallback(async () => {
         setIsReloading(true)
         await Re_course_all()
         router.refresh()
         setIsReloading(false)
-    }, []);
+    }, [router]);
 
     const reloadDatabook = useCallback(async () => {
         setIsReloading(true)
         await Re_book()
         router.refresh()
         setIsReloading(false)
-    }, []);
+    }, [router]);
 
     const { counts, groups, areaOptions } = useMemo(() => {
         const result = {
@@ -73,22 +122,41 @@ export default function Navbar({ data = [], book = [], user, areas = [] }) {
             groups: result.groups,
             areaOptions: Array.from(result.areaMap.values()),
         };
-    }, [data, book]);
-
-    counts.book = book.length;
+    }, [data, book, areas]);
 
     const courseFilter = useCallback(
         (c) => {
             if (area && c.Area._id !== area) return false;
-            if (!search) return true;
+
             const q = search.trim().toLowerCase();
-            return (
-                c.ID.toLowerCase().includes(q) ||
-                (c.TeacherHR && c.TeacherHR.name.toLowerCase().includes(q))
-            );
+            const hasMatch = !q || c.ID.toLowerCase().includes(q) || (c.TeacherHR && c.TeacherHR.name.toLowerCase().includes(q));
+            if (!hasMatch) return false;
+
+            if (startDate && endDate) {
+                if (!c.Detail || c.Detail.length === 0) return false;
+
+                const courseDates = c.Detail.map(d => new Date(d.Day)).sort((a, b) => a - b);
+                const courseStart = courseDates[0];
+                const courseEnd = courseDates[courseDates.length - 1];
+
+                const filterStart = new Date(startDate);
+                const filterEnd = new Date(endDate);
+
+                // Đặt giờ về 0 để so sánh chỉ dựa trên ngày
+                courseStart.setHours(0, 0, 0, 0);
+                courseEnd.setHours(0, 0, 0, 0);
+                filterStart.setHours(0, 0, 0, 0);
+                filterEnd.setHours(0, 0, 0, 0);
+
+                // Khóa học giao với khoảng thời gian đã chọn
+                return courseStart <= filterEnd && courseEnd >= filterStart;
+            }
+
+            return true;
         },
-        [search, area]
+        [search, area, startDate, endDate]
     );
+
 
     const listForTab = useMemo(() => {
         switch (tab) {
@@ -99,9 +167,10 @@ export default function Navbar({ data = [], book = [], user, areas = [] }) {
             case 2:
                 return groups.trial.filter(courseFilter);
             default:
+                // Giả sử lọc sách theo một trường ngày khác nếu cần
                 return book.filter(courseFilter);
         }
-    }, [tab, groups, courseFilter]);
+    }, [tab, groups, book, courseFilter]);
 
     const TABS = [
         { label: 'Khóa học đang học', count: counts.inProgress, icon: <BookIcon active={tab === 0} /> },
@@ -131,31 +200,69 @@ export default function Navbar({ data = [], book = [], user, areas = [] }) {
                 </div>
 
                 <div className={styles.searchBar}>
-                    <div style={{ display: 'flex', gap: 16, flex: 1 }}>
-                        {tab !== 3 && tab !== 2 ? <>
-                            <input
-                                className={`${styles.searchInput} text_6_400`}
-                                placeholder="Nhập ID khóa học hoặc tên GVCN"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
+                    <div style={{ display: 'flex', gap: 16, flex: 1, alignItems: 'center' }}>
+                        {tab !== 3 && tab !== 2 ? (
+                            <>
+                                <input
+                                    className={`${styles.searchInput} text_6_400`}
+                                    placeholder="Nhập ID khóa học hoặc tên GVCN"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
 
-                            <select
-                                className={styles.areaSelect}
-                                style={{ color: 'var(--text-primary)' }}
-                                value={area}
-                                onChange={(e) => setArea(e.target.value)}
-                            >
-                                <option value="" className='text_6_400'>Tất cả khu vực</option>
-                                {areaOptions.map((a, index) =>
-                                    a && (
-                                        <option key={index} value={a._id} className='text_6_400'>
-                                            {a.name}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </> : null}
+                                <select
+                                    className={styles.areaSelect}
+                                    style={{ color: 'var(--text-primary)' }}
+                                    value={area}
+                                    onChange={(e) => setArea(e.target.value)}
+                                >
+                                    <option value="" className='text_6_400'>Tất cả khu vực</option>
+                                    {areaOptions.map((a, index) =>
+                                        a && (
+                                            <option key={index} value={a._id} className='text_6_400'>
+                                                {a.name}
+                                            </option>
+                                        )
+                                    )}
+                                </select>
+
+                                {/* BỘ LỌC THỜI GIAN MỚI */}
+                                <select
+                                    className={styles.areaSelect}
+                                    value={timeRange}
+                                    onChange={(e) => setTimeRange(e.target.value)}
+                                >
+                                    <option value="">Tùy chọn thời gian</option>
+                                    <option value="currentWeek">Tuần này</option>
+                                    <option value="lastWeek">Tuần trước</option>
+                                    <option value="currentMonth">Tháng này</option>
+                                    <option value="lastMonth">Tháng trước</option>
+                                    <option value="currentYear">Năm này</option>
+                                    <option value="lastYear">Năm trước</option>
+                                </select>
+
+                                <input
+                                    type="date"
+                                    className='input'
+                                    value={startDate}
+                                    onChange={(e) => {
+                                        setStartDate(e.target.value);
+                                        setTimeRange(''); // Reset bộ chọn nếu chọn ngày tùy chỉnh
+                                    }}
+                                />
+
+                                <input
+                                    type="date"
+                                    className='input'
+                                    value={endDate}
+                                    onChange={(e) => {
+                                        setEndDate(e.target.value);
+                                        setTimeRange(''); // Reset bộ chọn nếu chọn ngày tùy chỉnh
+                                    }}
+                                />
+
+                            </>
+                        ) : null}
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                         {tab != 2 &&
