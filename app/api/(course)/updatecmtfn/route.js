@@ -1,54 +1,38 @@
-import { NextResponse } from 'next/server';
-import PostCourse from '@/models/course';
-import connectDB from '@/config/connectDB';
+import { NextResponse } from 'next/server'
+import PostCourse from '@/models/course'
+import connectDB from '@/config/connectDB'
+import mongoose from 'mongoose'
+import jsonRes, { corsHeaders } from '@/utils/response'
 
-const CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+const CORS_HEADERS = corsHeaders
 
 export async function POST(req) {
     try {
-        const { courseId, studentId, lessonId, commentText } = await req.json();
-
+        const { courseId, studentId, lessonId, commentText } = await req.json()
         if (!courseId || !studentId || !lessonId || commentText === undefined) {
-            return NextResponse.json({ error: "Request body must include 'courseId', 'studentId', 'lessonId', and 'commentText'." }, { status: 400, headers: CORS_HEADERS });
+            return jsonRes(400, { status: false, mes: "Request body must include 'courseId', 'studentId', 'lessonId', and 'commentText'.", data: null })
         }
 
-        await connectDB();
+        await connectDB()
 
-        const course = await PostCourse.findById(courseId);
-        if (!course) {
-            return NextResponse.json({ error: `Course with _id ${courseId} not found.` }, { status: 404, headers: CORS_HEADERS });
-        }
-
-        const student = course.Student.find(s => s.ID === studentId);
-        if (!student) {
-            return NextResponse.json({ error: `Student with ID ${studentId} not found in course ${courseId}.` }, { status: 404, headers: CORS_HEADERS });
-        }
-
-        let lessonFound = false;
-        for (const learnDetail of student.Learn.values()) {
-            if (learnDetail.Lesson.toString() === lessonId) {
-                learnDetail.CmtFn = commentText;
-                lessonFound = true;
-                break;
+        const result = await PostCourse.updateOne(
+            { _id: courseId },
+            { $set: { 'Student.$[stu].Learn.$[les].CmtFn': commentText } },
+            {
+                arrayFilters: [
+                    { 'stu.ID': studentId },
+                    { 'les.Lesson': new mongoose.Types.ObjectId(lessonId) }
+                ]
             }
-        }
+        );
 
-        if (!lessonFound) {
-            return NextResponse.json({ error: `Lesson with _id ${lessonId} not found for student ${studentId}.` }, { status: 404, headers: CORS_HEADERS });
-        }
-
-        await course.save();
-
-        return NextResponse.json({ message: "Comment updated successfully." }, { status: 200, headers: CORS_HEADERS });
+        if (result.matchedCount === 0) return jsonRes(404, { status: false, mes: 'Course or student not found.', data: null })
+        if (result.modifiedCount === 0) return jsonRes(404, { status: false, mes: 'Lesson not found for given student.', data: null })
+        return jsonRes(200, { status: true, mes: 'Comment updated successfully.', data: null })
 
     } catch (error) {
-        console.error("API Error:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return NextResponse.json({ error: errorMessage }, { status: 500, headers: CORS_HEADERS });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        return jsonRes(500, { status: false, mes: errorMessage, data: null })
     }
 }
 

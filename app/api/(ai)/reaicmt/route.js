@@ -1,25 +1,19 @@
-import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import PostCourse from '@/models/course'; // Import model khóa học
-import connectDB from '@/config/connectDB';   // Import hàm kết nối DB
+import { NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import mongoose from 'mongoose'
+import PostCourse from '@/models/course'
+import connectDB from '@/config/connectDB'
+import jsonRes, { corsHeaders } from '@/utils/response'
 
-const CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+const CORS_HEADERS = corsHeaders
 
 export async function POST(req) {
     try {
         const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500, headers: CORS_HEADERS });
-        }
+        if (!apiKey) return jsonRes(500, { status: false, mes: 'GEMINI_API_KEY is not configured.', data: null })
 
-        const { data, prompt, courseId, studentId, lessonId } = await req.json();
-        if (data === undefined || !prompt) {
-            return NextResponse.json({ error: "Request body must include 'data' and 'prompt'." }, { status: 400, headers: CORS_HEADERS });
-        }
+        const { data, prompt, courseId, studentId, lessonId } = await req.json()
+        if (data === undefined || !prompt) return jsonRes(400, { status: false, mes: "Request body must include 'data' and 'prompt'.", data: null })
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -37,43 +31,28 @@ export async function POST(req) {
         const result = await model.generateContent(finalPrompt);
         const output = result.response.text();
 
-        // --- Bắt đầu phần cập nhật cơ sở dữ liệu ---
         if (courseId && studentId && lessonId) {
             await connectDB();
 
-            const course = await PostCourse.findById(courseId);
-            if (!course) {
-                console.warn(`Database update skipped: Course with _id ${courseId} not found.`);
-            } else {
-                const student = course.Student.find(s => s.ID === studentId);
-                if (!student) {
-                    console.warn(`Database update skipped: Student with ID ${studentId} not found in course ${courseId}.`);
-                } else {
-                    let lessonFound = false;
-                    for (const learnDetail of student.Learn.values()) {
-                        if (learnDetail.Lesson.toString() === lessonId) {
-                            learnDetail.CmtFn = output;
-                            lessonFound = true;
-                            break;
-                        }
-                    }
-
-                    if (lessonFound) {
-                        await course.save();
-                    } else {
-                        console.warn(`Database update skipped: Lesson with _id ${lessonId} not found for student ${studentId}.`);
-                    }
+            const result = await PostCourse.updateOne(
+                { _id: courseId },
+                { $set: { 'Student.$[stu].Learn.$[les].CmtFn': output } },
+                {
+                    arrayFilters: [
+                        { 'stu.ID': studentId },
+                        { 'les.Lesson': new mongoose.Types.ObjectId(lessonId) }
+                    ]
                 }
-            }
-        }
-        // --- Kết thúc phần cập nhật cơ sở dữ liệu ---
+            );
 
-        return NextResponse.json({ output }, { status: 200, headers: CORS_HEADERS });
+            if (result.matchedCount === 0) console.warn('Database update skipped: Course or student not found.')
+            else if (result.modifiedCount === 0) console.warn(`Database update skipped: Lesson with _id ${lessonId} not found for student ${studentId}.`)
+        }
+        return jsonRes(200, { status: true, mes: 'success', data: output })
 
     } catch (error) {
-        console.error("API Error:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return NextResponse.json({ error: errorMessage }, { status: 500, headers: CORS_HEADERS });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        return jsonRes(500, { status: false, mes: errorMessage, data: null })
     }
 }
 

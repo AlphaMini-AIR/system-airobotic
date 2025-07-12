@@ -1,7 +1,7 @@
-import PostStudent from "@/models/student";
-import connectDB from "@/config/connectDB";
+import PostStudent from '@/models/student'
+import connectDB from '@/config/connectDB'
 import authenticate from '@/utils/authenticate'
-import { NextResponse } from 'next/server'
+import jsonRes from '@/utils/response'
 
 
 export async function POST(request) {
@@ -14,8 +14,8 @@ export async function POST(request) {
         let { BD, Name, Phone, Type, Area, Address, Status, Avt, Course, Email, ParentName, School } = body
 
         await connectDB();
-        const students = await PostStudent.find({}, { ID: 1 })
-        
+        const students = await PostStudent.find({}, { ID: 1 }).lean()
+
 
         if (!Avt) Avt = 'https://lh3.googleusercontent.com/d/1Y-Dl9lHv4b4XjMZ5gW2DoRsC01UnAMn_'
         let Profile = {
@@ -40,14 +40,9 @@ export async function POST(request) {
         message = 'Thêm học sinh thành công';
         data = newPost
 
-        return new Response(JSON.stringify({
-            air: status == 200 ? 2 : 1, data, mes: message
-        }), { status: 201 });
+        return jsonRes(201, { status: true, mes: message, data })
     } catch (error) {
         console.log(error);
-        return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
-            { status: error.message === 'Authentication failed' ? 401 : 500 }
-        );
+        return jsonRes(error.message === 'Authentication failed' ? 401 : 500, { status: false, mes: error.message, data: null })
     }
 }

@@ -1,95 +1,69 @@
-import { NextResponse } from 'next/server';
-import PostBook from '@/models/book';
-import connectDB from '@/config/connectDB';
-import authenticate from '@/utils/authenticate';
+import { NextResponse } from 'next/server'
+import PostBook from '@/models/book'
+import connectDB from '@/config/connectDB'
+import authenticate from '@/utils/authenticate'
+import jsonRes from '@/utils/response'
 
 export async function GET(request) {
     try {
-        await connectDB();
-        const data = await PostBook.find();
-        return NextResponse.json(
-            { status: 200, mes: 'Lấy dữ liệu thành công', data },
-            { status: 200 }
-        );
+        await connectDB()
+        const data = await PostBook.find().lean()
+        return jsonRes(200, { status: true, mes: 'Lấy dữ liệu thành công', data })
     } catch (error) {
-        console.error('API GET error:', error);
-        return NextResponse.json(
-            { error: 'Internal Server Error' },
-            { status: 500 }
-        );
+        return jsonRes(500, { status: false, mes: 'Internal Server Error', data: null })
     }
 }
 
 export async function POST(request) {
     try {
-        const authResult = await authenticate(request);
+        const authResult = await authenticate(request)
         if (!authResult || !authResult.user) {
-            return NextResponse.json(
-                { status: 1, mes: 'Xác thực không thành công hoặc không tìm thấy người dùng.', data: null },
-                { status: 401 }
-            );
+            return jsonRes(401, { status: false, mes: 'Xác thực không thành công hoặc không tìm thấy người dùng.', data: null })
         }
 
-        const { user, body } = authResult;
+        const { user, body } = authResult
         if (!user.role.includes('Admin') && !user.role.includes('Acadamic')) {
-            return NextResponse.json(
-                { status: 1, mes: 'Bạn không có quyền truy cập vào chức năng này.', data: null },
-                { status: 403 }
-            );
+            return jsonRes(403, { status: false, mes: 'Bạn không có quyền truy cập vào chức năng này.', data: null })
         }
 
-        await connectDB();
+        await connectDB()
         const { ID, Name, Type, Price, Image, Topics } = body;
 
-        const missingFields = [];
-        if (!ID) missingFields.push('ID');
-        if (!Name) missingFields.push('Name');
-        if (!Type) missingFields.push('Type');
-        if (Price === undefined || Price === null) missingFields.push('Price');
-        if (!Image) missingFields.push('Image');
+        const missingFields = []
+        if (!ID) missingFields.push('ID')
+        if (!Name) missingFields.push('Name')
+        if (!Type) missingFields.push('Type')
+        if (Price === undefined || Price === null) missingFields.push('Price')
+        if (!Image) missingFields.push('Image')
 
         if (missingFields.length > 0) {
-            const message = `Dữ liệu không hợp lệ. Các trường sau là bắt buộc: ${missingFields.join(', ')}.`;
-            return NextResponse.json({ status: 1, mes: message, data: null }, { status: 400 });
+            const message = `Dữ liệu không hợp lệ. Các trường sau là bắt buộc: ${missingFields.join(', ')}`
+            return jsonRes(400, { status: false, mes: message, data: null })
         }
 
-        const urlPattern = new RegExp('^(https?:\\/\\/)?' + '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + '((\\d{1,3}\\.){3}\\d{1,3}))' + '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + '(\\?[;&a-z\\d%_.~+=-]*)?' + '(\\#[-a-z\\d_]*)?$', 'i');
+        const urlPattern = new RegExp('^(https?:\\/\\/)?' + '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + '((\\d{1,3}\\.){3}\\d{1,3}))' + '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + '(\\?[;&a-z\\d%_.~+=-]*)?' + '(\\#[-a-z\\d_]*)?$', 'i')
         if (!urlPattern.test(Image)) {
-            return NextResponse.json({ status: 1, mes: 'URL hình ảnh không hợp lệ.', data: null }, { status: 400 });
+            return jsonRes(400, { status: false, mes: 'URL hình ảnh không hợp lệ.', data: null })
         }
 
         const normalizedID = ID.toUpperCase();
 
-        const existingBook = await PostBook.findOne({ ID: normalizedID });
+        const existingBook = await PostBook.findOne({ ID: normalizedID }).lean()
         if (existingBook) {
-            return NextResponse.json(
-                { status: 1, mes: `ID '${normalizedID}' đã tồn tại. Vui lòng sử dụng một ID khác.`, data: null },
-                { status: 409 }
-            );
+            return jsonRes(409, { status: false, mes: `ID '${normalizedID}' đã tồn tại. Vui lòng sử dụng một ID khác.`, data: null })
         }
 
-        const newBook = new PostBook({ ID: normalizedID, Name, Type, Price, Image, Topics });
-
-        const savedBook = await newBook.save();
-
-        return NextResponse.json(
-            { status: 2, mes: 'Thêm chương trình thành công.', data: savedBook },
-            { status: 201 }
-        );
+        const newBook = new PostBook({ ID: normalizedID, Name, Type, Price, Image, Topics })
+        const savedBook = await newBook.save()
+        return jsonRes(201, { status: true, mes: 'Thêm chương trình thành công.', data: savedBook })
 
     } catch (error) {
-        console.error('API POST Error:', error);
-
         if (error.name === 'ValidationError' || (error.code && error.code === 11000)) {
             const message = error.code === 11000
                 ? `ID '${error.keyValue.ID || body.ID.toUpperCase()}' đã tồn tại.`
-                : 'Dữ liệu nhập vào không hợp lệ.';
-            return NextResponse.json({ status: 1, mes: message, data: null }, { status: 400 });
+                : 'Dữ liệu nhập vào không hợp lệ.'
+            return jsonRes(400, { status: false, mes: message, data: null })
         }
-
-        return NextResponse.json(
-            { status: 1, mes: 'Lỗi máy chủ: Không thể tạo chương trình.', data: null },
-            { status: 500 }
-        );
+        return jsonRes(500, { status: false, mes: 'Lỗi máy chủ: Không thể tạo chương trình.', data: null })
     }
 }

@@ -1,16 +1,15 @@
-import connectDB from '@/config/connectDB';
-import PostStudent from '@/models/student';
-import '@/models/area';
-import '@/models/course';
-import '@/models/book';
-import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
-import { Readable } from 'stream';
+import connectDB from '@/config/connectDB'
+import PostStudent from '@/models/student'
+import '@/models/area'
+import '@/models/course'
+import '@/models/book'
+import { google } from 'googleapis'
+import { Readable } from 'stream'
+import jsonRes from '@/utils/response'
 
 export async function GET(request) {
     try {
-        await connectDB();
-
+        await connectDB()
         const data = await PostStudent.find({})
             .populate({
                 path: 'Area'
@@ -25,19 +24,10 @@ export async function GET(request) {
                     select: 'Name Price'
                 }
             })
-            .lean();
-
-        return NextResponse.json(
-            { air: 2, mes: 'Lấy danh sách học sinh thành công', data },
-            { status: 200 }
-        );
+            .lean()
+        return jsonRes(200, { status: true, mes: 'Lấy danh sách học sinh thành công', data })
     } catch (error) {
-        // Log lỗi ra console server để dễ dàng debug
-        console.error("Lỗi API lấy danh sách học sinh:", error);
-        return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
-            { status: 500 }
-        );
+        return jsonRes(500, { status: false, mes: error.message, data: null })
     }
 }
 
@@ -59,12 +49,10 @@ const APPSCRIPT_ID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__Q
 export async function POST(request) {
     await connectDB();
     const drive = await getDriveClient();
-    let uploadedFileId = null; // Biến để lưu ID file đã tải lên, dùng cho việc dọn dẹp nếu có lỗi
+    let uploadedFileId = null
 
     try {
         const formData = await request.formData();
-
-        // === BƯỚC 1: XỬ LÝ TẢI LÊN AVATAR ===
         const avtFile = formData.get('Avt');
         if (avtFile && avtFile.size > 0) {
             const FOLDER_ID = '1t949fB9rVSQyaZHnCboWDtuLNBjceTl-';
@@ -93,24 +81,16 @@ export async function POST(request) {
                 throw new Error("Không thể lấy ID file từ Google Drive sau khi tải lên.");
             }
         }
+        const lastStudent = await PostStudent
+            .findOne({ ID: /^AI\d{4}$/ })
+            .sort({ ID: -1 })
+            .select('ID')
+            .lean();
 
-        // === BƯỚC 2: TẠO ID HỌC SINH DUY NHẤT ===
-        const studentCount = await PostStudent.countDocuments({});
-        let nextIdNumber = studentCount + 1;
-        let newId;
-        let isIdUnique = false;
-
-        while (!isIdUnique) {
-            newId = 'AI' + String(nextIdNumber).padStart(4, '0');
-            const existingStudent = await PostStudent.findOne({ ID: newId });
-            if (!existingStudent) {
-                isIdUnique = true;
-            } else {
-                nextIdNumber++;
-            }
-        }
-
-        // === BƯỚC 3: CHUẨN BỊ DỮ LIỆU HỌC SINH ===
+        const nextIdNumber = lastStudent
+            ? parseInt(lastStudent.ID.slice(2), 10) + 1
+            : 1;
+        const newId = 'AI' + String(nextIdNumber).padStart(4, '0');
         const studentData = {
             Name: formData.get('Name'),
             BD: formData.get('BD'),
@@ -128,8 +108,6 @@ export async function POST(request) {
             date: new Date(),
             note: 'Tạo học sinh thành công',
         };
-
-        // === BƯỚC 4: TẠO VÀ LƯU HỌC SINH MỚI VÀO DATABASE ===
         const newStudent = new PostStudent({
             ...studentData,
             ID: newId,
@@ -138,8 +116,6 @@ export async function POST(request) {
         });
 
         const savedStudent = await newStudent.save();
-
-        // === BƯỚC 4.5: LẤY UID ZALO VÀ CẬP NHẬT (NẾU CÓ) ===
         let finalMessage = 'Tạo học sinh mới thành công!';
         let finalResponseData = savedStudent;
 
@@ -152,19 +128,16 @@ export async function POST(request) {
                 if (appScriptResponse.ok) {
                     const result = await appScriptResponse.json();
                     if (result.status === 2 && result.data?.uid) {
-                        // Cập nhật học sinh với Uid mới
                         const updatedStudent = await PostStudent.findByIdAndUpdate(
                             savedStudent._id,
                             { $set: { Uid: result.data.uid } },
-                            { new: true } // Trả về document đã được cập nhật
+                            { new: true }
                         );
-                        finalResponseData = updatedStudent || savedStudent; // Dùng data đã update nếu thành công
+                        finalResponseData = updatedStudent || savedStudent
                     } else {
-                        // Lấy uid không thành công, trả về cảnh báo
                         finalMessage = 'Tạo học sinh mới thành công. Lấy uid không thành công, kiểm tra lại số điện thoại liên hệ.';
                     }
                 } else {
-                    // Lỗi HTTP khi gọi Apps Script
                     finalMessage = 'Tạo học sinh mới thành công. Lấy uid không thành công, kiểm tra lại số điện thoại liên hệ.';
                 }
             }
@@ -173,34 +146,23 @@ export async function POST(request) {
             finalMessage = 'Tạo học sinh mới thành công. Lấy uid không thành công, kiểm tra lại số điện thoại liên hệ.';
         }
 
-        // === KẾT THÚC: TRẢ VỀ PHẢN HỒI ===
-        return NextResponse.json(
-            { air: 2, mes: finalMessage, data: finalResponseData },
-            { status: 201 }
-        );
+        return jsonRes(201, { status: true, mes: finalMessage, data: finalResponseData })
 
     } catch (error) {
-        // === BƯỚC 5: XỬ LÝ LỖI VÀ DỌN DẸP ===
         if (uploadedFileId) {
             try {
-                await drive.files.delete({ fileId: uploadedFileId });
-                console.log(`Đã dọn dẹp file rác trên Drive: ${uploadedFileId}`);
+                await drive.files.delete({ fileId: uploadedFileId })
+                console.log(`Đã dọn dẹp file rác trên Drive: ${uploadedFileId}`)
             } catch (cleanupError) {
-                console.error(`Lỗi khi dọn dẹp file ${uploadedFileId} trên Drive:`, cleanupError);
+                console.error(`Lỗi khi dọn dẹp file ${uploadedFileId} trên Drive:`, cleanupError)
             }
         }
 
         if (error.name === 'ValidationError') {
-            return NextResponse.json(
-                { air: 1, mes: error.message, data: null },
-                { status: 400 }
-            );
+            return jsonRes(400, { status: false, mes: error.message, data: null })
         }
 
-        console.error('Lỗi API [POST /api/students]:', error);
-        return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
-            { status: 500 }
-        );
+        console.error('Lỗi API [POST /api/students]:', error)
+        return jsonRes(500, { status: false, mes: error.message, data: null })
     }
 }
