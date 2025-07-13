@@ -1,47 +1,39 @@
-import { NextResponse } from 'next/server';
-import connectDB from '@/config/connectDB';
-import PostArea from '@/models/area';
-import { Re_Area } from '@/data/area';
+import { NextResponse } from 'next/server'
+import connectDB from '@/config/connectDB'
+import Area from '@/models/area'
+import { Re_Area } from '@/data/area'
 
-const isValidHexColor = (hex) => {
-    if (typeof hex !== 'string') return false;
-    const regex = /^#[0-9a-fA-F]{6}$/;
-    return regex.test(hex);
-};
+const isHex = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)
 
 export async function PUT(request, { params }) {
-    const { id } = params;
+    const { id } = await params
     try {
-        const body = await request.json();
-        const { name, room, color } = body;
+        const { name, room, color } = await request.json()
 
-        if (!name || !color || !Array.isArray(room) || !isValidHexColor(color)) {
-            return NextResponse.json({ status: 0, mes: 'Dữ liệu không hợp lệ.', data: [] }, { status: 400 });
-        }
+        if (!name?.trim() || !room?.length || !isHex(color))
+            return NextResponse.json({ status: 0, mes: 'Dữ liệu không hợp lệ.' }, { status: 400 })
 
-        await connectDB();
+        await connectDB()
 
-        const nameConflict = await PostArea.findOne({ name, _id: { $ne: id } }).lean();
-        if (nameConflict) {
-            return NextResponse.json({ status: 0, mes: `Tên khu vực "${name}" đã tồn tại.`, data: [] }, { status: 409 });
-        }
+        if (await Area.exists({ name: name.trim(), _id: { $ne: id } }))
+            return NextResponse.json({ status: 0, mes: `Tên "${name}" đã tồn tại.` }, { status: 409 })
+        const normRooms = room.map((r) =>
+            typeof r === 'string' ? { name: r.trim() } : { name: String(r.name).trim() }
+        )
 
-        const updatedArea = await PostArea.findByIdAndUpdate(
+        const updated = await Area.findByIdAndUpdate(
             id,
-            { name, room, color },
+            { name: name.trim(), rooms: normRooms, color },
             { new: true, runValidators: true }
-        );
+        )
 
-        if (!updatedArea) {
-            return NextResponse.json({ status: 0, mes: 'Không tìm thấy khu vực để cập nhật.', data: [] }, { status: 404 });
-        }
-        Re_Area()
-        return NextResponse.json({ status: 2, mes: 'Cập nhật khu vực thành công!', data: updatedArea }, { status: 200 });
+        if (!updated)
+            return NextResponse.json({ status: 0, mes: 'Không tìm thấy khu vực.' }, { status: 404 })
 
-    } catch (error) {
-        return NextResponse.json(
-            { status: 0, mes: error.kind === 'ObjectId' ? 'ID không hợp lệ' : error.message, data: [] },
-            { status: error.message === 'Authentication failed' ? 401 : 500 }
-        );
+        await Re_Area()
+        return NextResponse.json({ status: 2, mes: 'Cập nhật thành công!', data: updated }, { status: 200 })
+    } catch (e) {
+        const code = e.kind === 'ObjectId' ? 400 : e.message === 'Authentication failed' ? 401 : 500
+        return NextResponse.json({ status: 0, mes: e.message }, { status: code })
     }
 }

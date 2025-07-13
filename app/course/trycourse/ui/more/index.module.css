@@ -1,0 +1,39 @@
+.mainContainer {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.filleft {
+    display: flex;
+    gap: 8px
+}
+
+.modeToggle {
+    display: flex;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.modeButton {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.modeButton.active {
+    background-color: var(--bg-primary);
+    color: var(--text-title);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

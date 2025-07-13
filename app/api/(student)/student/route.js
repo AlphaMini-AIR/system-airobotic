@@ -103,8 +103,8 @@ export async function POST(request) {
         };
 
         const initialStatus = {
-            status: 2,
-            act: 'tạo',
+            status: 1,
+            act: 'chờ',
             date: new Date(),
             note: 'Tạo học sinh thành công',
         };

@@ -1,0 +1,19 @@
+.mainContainer {
+    border: 1px solid var(--border-color);
+    padding: 6px 16px;
+    border-radius: 8px;
+    display: flex;
+}
+
+.box {
+    width: 103px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: thin solid var(--border-color);
+}
+
+.box:nth-last-child(1) {
+    border: none;
+}

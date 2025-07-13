@@ -9,7 +9,7 @@ const Course = new Schema({
 
 const Status = new Schema({
   status: { type: Number, required: true },
-  act: { type: String, required: true, enum: ['tạo', 'học', 'chờ', 'nghỉ'] },
+  act: { type: String, required: true, enum: ['học', 'chờ', 'nghỉ'] },
   date: { type: Date, required: true },
   note: { type: String, default: '' },
 });
@@ -53,11 +53,12 @@ const postSchema = new Schema({
   Avt: {
     type: String
   },
+   // 2: Đang học, 1: Chờ đợi, 0: Đã nghỉ
   Status: {
     type: [Status],
     default: () => ([{
-      status: 2,
-      act: 'tạo',
+      status: 1,
+      act: 'chờ',
       date: new Date(),
       note: 'Thêm học sinh thành công',
     }])

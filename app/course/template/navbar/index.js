@@ -15,6 +15,7 @@ import { Svg_Area, Svg_Course } from '@/components/(icon)/svg';
 import ListArea from '../../ui/area-item'
 import CreateArea from '../../ui/createarea';
 import { Re_Area } from '@/data/area';
+import CourseTryItem from '../../ui/coursetry-item';
 
 function BookIcon({ active }) {
     return (
@@ -30,12 +31,11 @@ function BookIcon({ active }) {
     );
 }
 
-// Hàm tiện ích để lấy chuỗi ngày ở định dạng ISO (YYYY-MM-DD)
 const getIsoDateString = (date) => {
     return date.toISOString().split('T')[0];
 };
 
-export default function Navbar({ data = [], book = [], user, areas = [] }) {
+export default function Navbar({ data = [], book = [], user, areas = [], trys }) {
     const router = useRouter();
     const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);
@@ -247,7 +247,7 @@ export default function Navbar({ data = [], book = [], user, areas = [] }) {
                                     value={startDate}
                                     onChange={(e) => {
                                         setStartDate(e.target.value);
-                                        setTimeRange(''); // Reset bộ chọn nếu chọn ngày tùy chỉnh
+                                        setTimeRange('');
                                     }}
                                 />
 
@@ -286,7 +286,10 @@ export default function Navbar({ data = [], book = [], user, areas = [] }) {
                         <>
                             {listForTab.length ? (
                                 <div className={styles.listWrap}>
-                                    {listForTab.map((c) => <CourseItem key={c.ID} data={c} />)}
+                                    {tab === 0 && <CourseTryItem data={trys} />}
+                                    {listForTab.map((c) =>
+                                        <CourseItem key={c.ID} data={c} />
+                                    )}
                                 </div>
                             ) : (
                                 <p className={styles.empty}>Không tìm thấy khóa học phù hợp.</p>

@@ -1,142 +1,134 @@
-/* --- CÁC CLASS ĐƯỢC GIỮ LẠI VÀ SỬ DỤNG --- */
+/* index.module.css */
+
+/* ===== Grid list ===== */
 .container {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
+/* ===== Card ===== */
 .card {
-    display: flex;
-    flex-direction: row;
-    background-color: #ffffff;
+    background: #fff;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: var(--boxshaw2);
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    width: calc(25% - (16px * 3 / 4));
     cursor: pointer;
+    overflow: hidden;
+    transition: box-shadow .2s;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--boxshaw);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15)
 }
 
 .content {
-    flex: 2;
-    padding: 20px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
+    gap: 8px
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
+/* ===== Text helpers ===== */
+.text_4 {
+    font-size: 16px;
+    font-weight: 600
 }
 
-/* --- CÁC CLASS MỚI ĐƯỢC THÊM VÀO TỪ JAVASCRIPT --- */
-
-/* Các class dùng chung trong popup */
-.input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+.text_6 {
     font-size: 14px;
-    transition: border-color 0.2s ease;
+    font-weight: 600
 }
 
-.input:focus {
-    outline: none;
-    border-color: var(--main, #4f46e5);
+.text_6_400 {
+    font-size: 14px;
+    font-weight: 400
 }
 
-.button_primary {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--main, #4f46e5);
-    color: white;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
+/* ===== Form layout ===== */
+.popupContainer {
+    padding: 4px 0;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto
 }
 
-.button_primary:hover {
-    background-color: var(--main_d, #4338ca);
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px
 }
 
-
+/* ===== Color picker ===== */
 .colorInputWrapper {
     display: flex;
     align-items: center;
-    border-radius: 5px;
-    padding: 0px 8px;
-    gap: 10px;
-    transition: border-color 0.2s ease;
-}
-
-.colorInputWrapper:focus-within {
-    border-color: var(--main, var(--main_b));
+    gap: 8px;
+    padding: 6px 8px
 }
 
 .colorSwatch {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    border: 1px solid #e0e0e0;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer
 }
 
 .hiddenColorInput {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    border: none;
-    padding: 0;
+    display: none
 }
 
 .textInput {
     flex: 1;
     border: none;
     outline: none;
-    padding: 10px 0;
-    font-size: 14px;
     background: transparent;
-    color: #1a202c;
+    font-size: 14px
 }
 
+/* ===== Rooms tag list ===== */
 .tagContainer {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    border-radius: 4px;
+    gap: 6px
 }
 
 .tag {
+    background: #e0e0e0;
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px
+}
+
+.tag button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px
+}
+
+/* ===== Menu scroll ===== */
+.wrapitem {
+    max-height: 240px;
+    overflow-y: auto
+}
+
+.item {
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer
+}
+
+.item:hover {
+    background: #f5f5f5
+}
+
+.checkboxLine {
     display: flex;
     align-items: center;
-    background-color: #e0e0e0;
-    padding: 6px 16px;
-    border-radius: 8px;
-}
-
-.deleteTagButton {
-    background: none;
-    border: none;
-    color: #333;
-    margin-left: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-    padding: 0;
-}
-
-.deleteTagButton:hover {
-    color: #ff0000;
+    gap: 6px;
+    cursor: pointer
 }

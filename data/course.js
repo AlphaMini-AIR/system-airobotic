@@ -2,6 +2,23 @@
 import fetchApi from '@/utils/fetchApi';
 import { revalidateTag } from 'next/cache';
 
+export async function Data_coursetry() {
+    try {
+        const res = await fetchApi(`/coursetry`, {
+            method: 'GET',
+            cache: "force-cache",
+            next: { tags: [`data_coursetry`] }
+        });
+
+        return res.data || [];
+    } catch (err) {
+        return { data: [] };
+    }
+}
+
+export async function Re_coursetry() {
+    revalidateTag(`data_coursetry`);
+}
 
 export async function Data_calendar(month, year) {
     const url = month != '' && year != '' ? `/calendar?month=${month}&year=${year}` : `/calendar`;

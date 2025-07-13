@@ -1,4 +1,4 @@
-import { Data_Course_all } from "@/data/course"
+import { Data_Course_all, Data_coursetry } from "@/data/course"
 import Navbar from "./template/navbar"
 import { Data_book } from "@/data/book"
 import { cookies } from 'next/headers'
@@ -9,10 +9,19 @@ export default async function Home() {
   const cookieStore = await cookies();
   const token = cookieStore.get(process.env.token)?.value;
   const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-  const data = await Data_Course_all()
-  const book = await Data_book()
-  const area = await Read_Area()
+  const [courses, books, areas, trial] = await Promise.all([
+    Data_Course_all(),
+    Data_book(),
+    Read_Area(),
+    Data_coursetry()
+  ])
   return (
-    <Navbar data={data} book={book} areas={area} user={decodedToken}/>
+    <Navbar
+      data={courses}
+      book={books}
+      areas={areas}
+      user={decodedToken}
+      trys={trial}
+    />
   )
 }

@@ -1,0 +1,93 @@
+.container {
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+/* ---------- navigation ---------- */
+.nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.nav button {
+    padding: 4px 10px;
+    background: #eceff1;
+    border: 1px solid #b0bec5;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 90px;
+}
+
+/* ---------- table ---------- */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+.day {
+    background: #fafafa;
+    font-weight: 600;
+    width: 110px;
+}
+
+.cell {
+    vertical-align: top;
+    height: 80px;
+}
+
+/* ---------- session badge ---------- */
+.session {
+    font-size: 0.8rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.upcoming {
+    background: #fff9c4;
+}
+
+/* vàng nhạt */
+.past {
+    background: #ffe082;
+}
+
+/* vàng đậm */
+.cancelled {
+    background: #ff8a80;
+    color: #fff;
+}
+
+/* đỏ */
+
+.slotHeader {
+    background: #fafafa;
+    font-weight: 600;
+    width: 90px;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    vertical-align: top;
+}
+
+.cell {
+    min-height: 60px;
+}

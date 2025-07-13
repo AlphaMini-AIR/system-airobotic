@@ -38,10 +38,9 @@ const BookSchema = new Schema({
         type: String,
         required: [true, 'Loại sách là bắt buộc.'],
     },
-    // --- THAY ĐỔI CHÍNH Ở ĐÂY ---
     Topics: {
-        type: [TopicItemSchema], // Chuyển từ Map sang một mảng các TopicItemSchema
-        default: [],             // Giá trị mặc định là một mảng rỗng
+        type: [TopicItemSchema],
+        default: [],            
     },
     Price: {
         type: Number,

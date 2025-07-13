@@ -1,17 +1,18 @@
 import { Schema, model, models } from 'mongoose'
 
-const postArea = new Schema({
-  name: {
-    type: String
-  },
-  room: { 
-    type: Array
-  },
-  color: {
-    type: String
-  }
-})
+const RoomSchema = new Schema(
+  { name: { type: String, required: true, trim: true }},
+  { _id: true }
+)
 
-const PostArea = models.area || model('area', postArea)
+const AreaSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    rooms: { type: [RoomSchema], default: [] },
+    color: { type: String, trim: true }
+  },
+  { timestamps: true }
+)
 
-export default PostArea
+const Area = models.area || model('area', AreaSchema)
+export default Area
