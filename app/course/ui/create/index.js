@@ -15,7 +15,7 @@ import { Re_course_all } from '@/data/course';
 import { Svg_Add } from '@/components/(icon)/svg';
 
 const initialProgramState = { Name: 'Chọn chương trình', ID: null, Topics: [] };
-const initialAreaState = { name: 'Chọn khu vực', room: [] };
+const initialAreaState = { name: 'Chọn khu vực', rooms: [] };
 const initialTeacherState = 'Chọn giáo viên';
 const initialCourseTypeState = 'Chọn loại';
 
@@ -71,7 +71,7 @@ const SingleForm = memo(({ initialData, onSave, programObj, areaObj, teachersLis
     const [openRoom, setOpenRoom] = useState(false);
     const [openSingleTeacher, setOpenSingleTeacher] = useState(false);
     const topicList = programObj?.Topics || [];
-    const roomList = areaObj?.room || [];
+    const roomList = areaObj?.rooms?.map(r => r.name) || [];
     const teacherNames = teachersList.map((u) => u.name);
 
     const handleSave = (e) => {
@@ -246,7 +246,7 @@ const BulkForm = memo(({ programObj, areaObj, teachersList, mainTeacher, addMany
         closeSecondary();
     };
 
-    const roomList = areaObj?.room || [];
+    const roomList = areaObj?.rooms?.map(r => r.name) || [];
     const teacherNames = teachersList.map(u => u.name);
 
     const getMenu = (items, onPick, placeholder) => {

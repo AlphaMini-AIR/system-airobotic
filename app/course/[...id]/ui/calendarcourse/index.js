@@ -168,7 +168,7 @@ const MakeupLessonForm = React.memo(({ course, onDone, initialStudents = [] }) =
     const [form, setForm] = useState({ Topic: '', Day: '', Start: '', Time: '', Teacher: '', TeachingAs: '', Room: '', Students: initialStudents });
     const [allTopics, setAllTopics] = useState(course.Book?.Topics || []);
     const [allTeachers, setAllTeachers] = useState([]);
-    const [allRooms, setAllRooms] = useState(course.Area ? course.Area.room || [] : []);
+    const [allRooms, setAllRooms] = useState(course.Area ? (course.Area.rooms || []).map(r => r.name) : []);
     const [loading, setLoading] = useState({ topics: true, teachers: true, rooms: true });
     const [open, setOpen] = useState({ topic: false, teacher: false, assist: false, room: false });
     const [saving, setSaving] = useState(false);
@@ -296,7 +296,7 @@ const EditLessonForm = React.memo(({ lesson, course, onDone, onCancel }) => {
         Students: toArr(course.Student).filter(s => s.Learn?.some(l => l.Lesson === lesson._id)).map(s => s.ID)
     });
     const [allTeachers, setAllTeachers] = useState([]);
-    const [allRooms, setAllRooms] = useState(course.Area ? course.Area.room || [] : []); // Initialize allRooms from course.Area
+    const [allRooms, setAllRooms] = useState(course.Area ? (course.Area.rooms || []).map(r => r.name) : []);
     const [loading, setLoading] = useState({ teachers: true, rooms: true });
     const [open, setOpen] = useState({ teacher: false, assist: false, room: false });
     const [saving, setSaving] = useState(false);

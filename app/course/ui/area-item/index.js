@@ -22,7 +22,6 @@ const AreaCard = ({ area, onClick }) => (
 /* ────────────────── Main list ────────────────── */
 export default function ProgramList({ programs = [] }) {
     const router = useRouter()
-
     const [selected, setSelected] = useState(null)
     const [form, setForm] = useState({ name: '', color: '#000000', rooms: [] })
     const [newRoom, setNewRoom] = useState('')

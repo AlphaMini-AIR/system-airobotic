@@ -10,7 +10,7 @@ const CreateArea = () => {
     const router = useRouter();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [notification, setNotification] = useState({ open: false, status: false, mes: '' });
-    const initialFormData = { name: '', color: '#00D097', room: [] };
+    const initialFormData = { name: '', color: '#00D097', rooms: [] };
     const [formData, setFormData] = useState(initialFormData);
     const [newRoom, setNewRoom] = useState('');
     const [colorError, setColorError] = useState('');
@@ -34,8 +34,8 @@ const CreateArea = () => {
 
     const handleAddRoom = () => {
         const trimmedRoom = newRoom.trim();
-        if (trimmedRoom && !formData.room.includes(trimmedRoom)) {
-            setFormData(prev => ({ ...prev, room: [...prev.room, trimmedRoom] }));
+        if (trimmedRoom && !formData.rooms.includes(trimmedRoom)) {
+            setFormData(prev => ({ ...prev, rooms: [...prev.rooms, trimmedRoom] }));
             setNewRoom('');
         }
     };
@@ -43,7 +43,7 @@ const CreateArea = () => {
     const handleRemoveRoom = (roomToRemove) => {
         setFormData(prev => ({
             ...prev,
-            room: prev.room.filter(room => room !== roomToRemove)
+            rooms: prev.rooms.filter(room => room !== roomToRemove)
         }));
     };
 
@@ -119,7 +119,7 @@ const CreateArea = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     <p className='text_6'>Phòng học</p>
                     <div className={styles.tagContainer}>
-                        {formData.room.map((room, index) => (
+                        {formData.rooms.map((room, index) => (
                             <div key={index} className={styles.tag}>
                                 <p className='text_6_400'>{room}</p>
                                 <span className={styles.removeTag} onClick={() => handleRemoveRoom(room)}>×</span>

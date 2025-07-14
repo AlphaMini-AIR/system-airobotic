@@ -3,7 +3,7 @@ import { Schema, model, models } from 'mongoose';
 const DetailSchema = new Schema({
     Topic: { type: Schema.Types.ObjectId, required: true },
     Day: { type: Date, required: true },
-    Room: { type: String },
+    Room: { type: Schema.Types.ObjectId },
     Time: { type: String },
     Teacher: { type: Schema.Types.ObjectId, ref: 'user' },
     TeachingAs: { type: Schema.Types.ObjectId, ref: 'user' },

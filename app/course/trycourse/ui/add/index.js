@@ -9,7 +9,10 @@ import styles from './index.module.css'
 export default function Add({ data, book = [], student = [], teacher = [], area = [], onCreate }) {
     const folderBase = data?.rootFolderId || 'drv://TRY_ROOT'
 
-    const roomList = useMemo(() => [...new Set(area.flatMap((a) => a.room))], [area])
+    const roomList = useMemo(
+        () => [...new Set(area.flatMap((a) => (a.rooms || []).map(r => r.name)))],
+        [area]
+    )
     const bookMap = useMemo(() => Object.fromEntries(book.map((b) => [b._id, b])), [book])
     const teacherRaw = useMemo(() => teacher.filter((t) => t.role.includes('Teacher')), [teacher])
 
