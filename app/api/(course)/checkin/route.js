@@ -1,85 +1,165 @@
-// app/api/checkin/route.js
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import PostCourse from '@/models/course';
-import connectDB from '@/config/connectDB';
+import { NextResponse } from 'next/server'
+import connectDB from '@/config/connectDB'
+import PostCourse from '@/models/course'
+import TrialCourse from '@/models/coursetry'
+import mongoose from 'mongoose'
 
-export async function POST(req) {
+export async function GET(req) {
   try {
-    const { courseId, sessionId, attendanceData } = await req.json();
+    const { searchParams } = new URL(req.url)
+    const month = +searchParams.get('month')
+    const year = +searchParams.get('year')
+    if (!Number.isInteger(month) || !Number.isInteger(year) || month < 1 || month > 12)
+      return NextResponse.json({ error: 'month/year không hợp lệ' }, { status: 400 })
 
-    if (
-      !courseId ||
-      !sessionId ||
-      !mongoose.Types.ObjectId.isValid(courseId) ||
-      !mongoose.Types.ObjectId.isValid(sessionId) ||
-      !Array.isArray(attendanceData) ||
-      !attendanceData.length
-    ) {
-      return NextResponse.json({ status: 1, mes: 'Dữ liệu đầu vào không hợp lệ hoặc không đầy đủ.' }, { status: 400 });
-    }
+    await connectDB()
+    if (mongoose.connection.readyState !== 1) await mongoose.connection.asPromise()
 
-    await connectDB();
+    const start = new Date(Date.UTC(year, month - 1, 1))
+    const end = new Date(Date.UTC(year, month, 1))
 
-    const course = await PostCourse.findById(courseId).select('Student.ID').lean();
-    if (!course) {
-      return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học.' }, { status: 404 });
-    }
-
-    const validStudentIds = new Set(course.Student?.map(s => s.ID) ?? []);
-    if (validStudentIds.size === 0) {
-      return NextResponse.json({ status: 1, mes: 'Khóa học này chưa có học sinh.' }, { status: 400 });
-    }
-
-    const processedStudents = new Set();
-    const bulkOps = attendanceData
-      .filter(({ studentId }) => {
-        if (!validStudentIds.has(studentId) || processedStudents.has(studentId)) {
-          return false;
-        }
-        processedStudents.add(studentId);
-        return true;
-      })
-      .map(({ studentId, checkin, comment }) => {
-        const setFields = {
-          'Student.$[stu].Learn.$[les].Checkin': Number(checkin),
-        };
-
-        if (comment !== undefined) {
-          setFields['Student.$[stu].Learn.$[les].Cmt'] = comment;
-        }
-
-        return {
-          updateOne: {
-            filter: { _id: courseId },
-            update: { $set: setFields },
-            arrayFilters: [
-              { 'stu.ID': studentId },
-              { 'les.Lesson': new mongoose.Types.ObjectId(sessionId) },
-            ],
-          },
-        };
-      });
-
-    if (bulkOps.length === 0) {
-      return NextResponse.json({ status: 1, mes: 'Không có dữ liệu hợp lệ để cập nhật.' }, { status: 400 });
-    }
-
-    const result = await PostCourse.bulkWrite(bulkOps, { ordered: false });
-
-    return NextResponse.json(
+    const officialAgg = PostCourse.aggregate([
+      { $unwind: '$Detail' },
+      { $match: { 'Detail.Day': { $gte: start, $lt: end } } },
       {
-        status: 2,
-        mes: `Đã cập nhật điểm danh cho ${result.modifiedCount} học sinh.`,
-        data: { courseId, sessionId, updatedCount: result.modifiedCount },
+        $addFields: {
+          students: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$Student',
+                  as: 'st',
+                  cond: {
+                    $anyElementTrue: [
+                      { $map: { input: '$$st.Learn', as: 'lr', in: { $eq: ['$$lr.Lesson', '$Detail._id'] } } }
+                    ]
+                  }
+                }
+              },
+              as: 'st',
+              in: {
+                $mergeObjects: [
+                  '$$st',
+                  { Learn: { $filter: { input: '$$st.Learn', as: 'lr', cond: { $eq: ['$$lr.Lesson', '$Detail._id'] } } } }
+                ]
+              }
+            }
+          }
+        }
       },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('API_CHECKIN_ERROR:', error);
-    return NextResponse.json(
-      { status: 1, mes: 'Lỗi máy chủ khi cập nhật điểm danh.' },
-      { status: 500 }
-    );
+      { $lookup: { from: 'books', localField: 'Book', foreignField: '_id', as: 'bk' } },
+      { $set: { bk: { $arrayElemAt: ['$bk', 0] } } },
+      {
+        $set: {
+          topic: {
+            $arrayElemAt: [
+              { $filter: { input: '$bk.Topics', as: 'tp', cond: { $eq: ['$$tp._id', '$Detail.Topic'] } } },
+              0
+            ]
+          }
+        }
+      },
+      { $lookup: { from: 'users', localField: 'Detail.Teacher', foreignField: '_id', as: 'teacher' } },
+      { $lookup: { from: 'users', localField: 'Detail.TeachingAs', foreignField: '_id', as: 'teachingAs' } },
+      { $lookup: { from: 'areas', localField: 'Area', foreignField: '_id', as: 'ar' } },
+      { $set: { ar: { $arrayElemAt: ['$ar', 0] } } },
+      {
+        $set: {
+          roomDoc: {
+            $arrayElemAt: [
+              { $filter: { input: '$ar.rooms', as: 'r', cond: { $eq: ['$$r._id', '$Detail.Room'] } } },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $project: {
+          _id: '$Detail._id',
+          courseId: '$ID',
+          courseName: '$Name',
+          type: { $literal: 'official' },
+          date: '$Detail.Day',
+          day: { $dayOfMonth: '$Detail.Day' },
+          month: { $month: '$Detail.Day' },
+          year: { $year: '$Detail.Day' },
+          time: '$Detail.Time',
+          room: {
+            _id: { $ifNull: ['$roomDoc._id', '$Detail.Room'] },
+            name: { $ifNull: ['$roomDoc.name', '$Detail.Room'] },
+            area: '$ar.name',
+            color: '$ar.color'
+          },
+          image: '$Detail.Image',
+          topic: '$topic',
+          teacher: { $arrayElemAt: ['$teacher', 0] },
+          teachingAs: { $arrayElemAt: ['$teachingAs', 0] },
+          students: '$students'
+        }
+      }
+    ])
+
+    const trialAgg = TrialCourse.aggregate([
+      { $unwind: '$sessions' },
+      { $match: { 'sessions.day': { $gte: start, $lt: end } } },
+      { $lookup: { from: 'books', localField: 'sessions.book', foreignField: '_id', as: 'bk' } },
+      { $set: { bk: { $arrayElemAt: ['$bk', 0] } } },
+      {
+        $set: {
+          topic: {
+            $arrayElemAt: [
+              { $filter: { input: '$bk.Topics', as: 'tp', cond: { $eq: ['$$tp._id', '$sessions.topicId'] } } },
+              0
+            ]
+          }
+        }
+      },
+      { $lookup: { from: 'users', localField: 'sessions.teacher', foreignField: '_id', as: 'teacher' } },
+      { $lookup: { from: 'users', localField: 'sessions.teachingAs', foreignField: '_id', as: 'teachingAs' } },
+      {
+        $lookup: {
+          from: 'areas',
+          let: { roomId: '$sessions.room' },
+          pipeline: [
+            { $unwind: '$rooms' },
+            { $match: { $expr: { $eq: ['$rooms._id', '$$roomId'] } } },
+            { $project: { _id: 0, room: '$rooms', areaName: '$name', areaColor: '$color' } }
+          ],
+          as: 'rd'
+        }
+      },
+      { $set: { rd: { $arrayElemAt: ['$rd', 0] } } },
+      {
+        $project: {
+          _id: '$sessions._id',
+          courseId: '$name',
+          courseName: '$name',
+          type: { $literal: 'trial' },
+          date: '$sessions.day',
+          day: { $dayOfMonth: '$sessions.day' },
+          month: { $month: '$sessions.day' },
+          year: { $year: '$sessions.day' },
+          time: '$sessions.time',
+          room: {
+            _id: { $ifNull: ['$rd.room._id', '$sessions.room'] },
+            name: { $ifNull: ['$rd.room.name', '$sessions.room'] },
+            area: '$rd.areaName',
+            color: '$rd.areaColor'
+          },
+          image: null,
+          topic: '$topic',
+          teacher: { $arrayElemAt: ['$teacher', 0] },
+          teachingAs: { $arrayElemAt: ['$teachingAs', 0] },
+          students: '$sessions.students'
+        }
+      }
+    ])
+
+    const [official, trial] = await Promise.all([officialAgg, trialAgg])
+    const data = [...official, ...trial].sort((a, b) => a.date - b.date)
+    return NextResponse.json({ success: true, data })
+  } catch (err) {
+    console.error('Calendar API error:', err)
+    return NextResponse.json({ success: false, error: err.message || 'internal error' }, { status: 500 })
   }
 }

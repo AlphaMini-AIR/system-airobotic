@@ -24,6 +24,7 @@ export default function FlexiblePopup({
     renderSecondaryList = () => null,
     secondaryTitle = 'Chi tiết',
     width = 500,
+    width2 = 500,
     globalZIndex = 1000
 }) {
     // primary state
@@ -167,10 +168,9 @@ export default function FlexiblePopup({
                     ref={popupRef}
                     className={`
             ${styles.popup}
-            ${visible ? styles.open : ''}
-            ${visible2 ? styles.shifted : ''}
+            
           `}
-                    style={{ zIndex: globalZIndex, width: width }}
+                    style={{ zIndex: globalZIndex, width: width, transform: visible2 ? `translateX(-${width2}px)` : visible ? 'translateX(0)' : `translateX(${width}px)` }}
                     onMouseDown={e => e.stopPropagation()}
                 >
                     <div className={styles.header}>
@@ -198,7 +198,7 @@ export default function FlexiblePopup({
               ${styles.popup2}
               ${visible2 ? styles.open : ''}
             `}
-                        style={{ zIndex: globalZIndex + 2, width: width }}
+                        style={{ zIndex: globalZIndex + 2, width: width2 }}
                         onMouseDown={e => e.stopPropagation()}
                     >
                         <div className={styles.header}>

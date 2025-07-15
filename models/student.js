@@ -7,6 +7,13 @@ const Course = new Schema({
   status: { type: Number, required: true, enum: [2, 1, 0], default: 0 },
 });
 
+const Trials = new Schema({
+  topic: { type: Schema.Types.ObjectId, required: true, ref: 'course' },
+  note: { type: String, default: '' },
+  // 2: Theo học, 1: Chờ, 0: Không theo
+  status: { type: Number, required: true, enum: [2, 1, 0], default: 1 },
+});
+
 const Status = new Schema({
   status: { type: Number, required: true },
   act: { type: String, required: true, enum: ['học', 'chờ', 'nghỉ'] },
@@ -53,7 +60,6 @@ const postSchema = new Schema({
   Avt: {
     type: String
   },
-   // 2: Đang học, 1: Chờ đợi, 0: Đã nghỉ
   Status: {
     type: [Status],
     default: () => ([{
@@ -71,6 +77,10 @@ const postSchema = new Schema({
     type: Object
   },
   Leave: { type: Boolean, default: false },
+  Trial: {
+    type: [Trials],
+    default: []
+  }
 }, { versionKey: false })
 
 const PostStudent = models.student || model('student', postSchema)

@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
             .populate([
                 { path: 'Book' },
                 { path: 'TeacherHR', select: 'name phone' },
-                { path: 'Area', select: 'name room color' }
+                { path: 'Area', select: 'name rooms color' }
             ])
             .lean();
 
@@ -78,12 +78,20 @@ export async function GET(request, { params }) {
                 }
             }
         }
+        let roomMap = null;
+        if (course.Area && Array.isArray(course.Area.rooms)) {
+            roomMap = new Map(course.Area.rooms.map(r => [r._id.toString(), r.name]));
+        }
 
         if (course.Detail) {
             course.Detail.forEach(detailItem => {
                 detailItem.LessonDetails = lessonDetailsMap.get(detailItem.Topic?.toString()) || null;
                 detailItem.Teacher = userDetailsMap.get(detailItem.Teacher?.toString()) || null;
                 detailItem.TeachingAs = userDetailsMap.get(detailItem.TeachingAs?.toString()) || null;
+                if (roomMap) {
+                    const rName = roomMap.get(detailItem.Room?.toString());
+                    if (rName) detailItem.Room = rName;
+                }
             });
         }
 

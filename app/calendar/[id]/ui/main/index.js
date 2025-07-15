@@ -124,8 +124,6 @@ export default function Main({ data }) {
     }
 
     const handleImageClick = (imageUrl) => {
-        console.log(imageUrl);
-        
         setPopupImageUrl(imageUrl);
         setShowImagePopup(true);
     };
@@ -269,8 +267,6 @@ export default function Main({ data }) {
                                     {roll.map(stu => {
                                         if (stu.Checkin == '-1') return null;
                                         const c = cur(stu);
-                                        console.log(stu);
-                                        
                                         return (
                                             <div key={stu.ID} className={styles.row}
                                                 style={{ borderBottom: '1px solid #e9ecef', background: '#fff' }}>

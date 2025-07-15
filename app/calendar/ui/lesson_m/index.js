@@ -14,16 +14,6 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
     const [detail, setDetail] = useState(null);
     const [error, setError] = useState(null);
 
-    const chipClass =
-        (room === 'Lab_B304' || room === 'T&A' || room === 'B304') ? styles.chipBienHoa :
-            (room === 'AI Robotic') ? styles.chipLongKhanh :
-                styles.chipLongThanh;
-
-    const locationName =
-        (room === 'Lab_B304' || room === 'T&A' || room === 'B304') ? 'Biên Hòa' :
-            (room === 'AI Robotic') ? 'Long Khánh' :
-                'Long Thành';
-
     useEffect(() => {
         if (!open || !id) return;
 
@@ -63,7 +53,7 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                     <span className={styles.topicLabel}>Chủ đề:</span> {topic?.Name || 'Không có chủ đề'} - Lớp: {courseID}
                 </div>
                 <div className={styles.room}>
-                    <p className={`${styles.chip} ${chipClass}`}>{locationName}</p>
+                    <p className={`${styles.chip}`} style={{ background: `${room.color}` }}>{room.area}</p>
                 </div>
             </div>
 

@@ -1,99 +1,167 @@
-// app/api/sessions/[id]/route.js
+// app/api/session/[id]/route.js
+import { NextResponse } from 'next/server'
+import { Types } from 'mongoose'
+import connect from '@/config/connectDB'
+import Course from '@/models/course'
+import Trial from '@/models/coursetry'
+import Book from '@/models/book'
+import Student from '@/models/student'
+import User from '@/models/users'
+import Area from '@/models/area'
 
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import connectDB from '@/config/connectDB';
-import PostCourse from '@/models/course';
-import PostBook from '@/models/book';
-import PostStudent from '@/models/student';
-import User from '@/models/users';
+const isId = v => Types.ObjectId.isValid(v)
 
-export async function GET(request, { params }) {
-    const { id } = await params;
+/* ───────── helpers ───────── */
+const topicById = async tid =>
+    Book.findOne({ 'Topics._id': tid }, { 'Topics.$': 1 })
+        .lean()
+        .then(b => b?.Topics?.[0] || null)
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-        return NextResponse.json(
-            { success: false, message: 'ID của buổi học không hợp lệ.' },
-            { status: 400 }
-        );
-    }
+const roomName = async rid =>
+    Area.aggregate([
+        { $unwind: '$rooms' },
+        { $match: { 'rooms._id': rid } },
+        { $replaceRoot: { newRoot: '$rooms' } },
+        { $limit: 1 }
+    ]).then(r => r[0]?.name || rid)
+
+const buildStudents = (raw, mapById, lessonId) =>
+    raw.map(st => {
+        const info = mapById.get(st.studentId || st.ID) || {}
+        const a = st.attendance || st            // khóa chính thức có attendance riêng
+        return {
+            _id: info._id ?? null,
+            ID: info.ID ?? st.studentId ?? '–––',
+            Name: info.Name ?? 'Không tên',
+            Avt: info.Avt ?? null,
+            attendance: {
+                Checkin: a.Checkin ?? (st.checkin ? 1 : 0),
+                Cmt: a.Cmt ?? [],
+                CmtFn: a.CmtFn ?? '',
+                Note: a.Note ?? st.note ?? '',
+                Lesson: lessonId,
+                Image: a.Image ?? st.images ?? []
+            }
+        }
+    })
+
+export async function GET(_req, { params }) {
+    const { id } = params
+    if (!isId(id))
+        return NextResponse.json({ success: false, message: 'ID không hợp lệ' }, { status: 400 })
 
     try {
-        await connectDB();
+        await connect()
 
-        const courseData = await PostCourse.findOne(
+        /* ───── Khóa chính thức ───── */
+        const c = await Course.findOne(
             { 'Detail._id': id },
-            { 'Detail.$': 1, ID: 1, Book: 1, Student: 1, Version: 1 }
-        ).lean();
+            { ID: 1, Version: 1, Area: 1, Student: 1, Detail: { $elemMatch: { _id: id } } }
+        ).lean()
 
-        if (!courseData || !courseData.Detail?.length) {
-            return NextResponse.json(
-                { success: false, message: 'Buổi học không được tìm thấy.' },
-                { status: 404 }
-            );
+        if (c) {
+            const ses = c.Detail[0]
+
+            const [topic, teachers, studs, room] = await Promise.all([
+                topicById(ses.Topic),
+                User.find({ _id: { $in: [ses.Teacher, ses.TeachingAs].filter(Boolean) } })
+                    .select('name')
+                    .lean(),
+                Student.find({ ID: { $in: c.Student.map(s => s.ID) } })
+                    .select('ID Name Avt')
+                    .lean(),
+                roomName(ses.Room)
+            ])
+
+            const uMap = new Map(teachers.map(u => [u._id.toString(), u]))
+            const sMap = new Map(studs.map(s => [s.ID, s]))
+
+            const students = buildStudents(
+                c.Student.map(s => ({
+                    ...s,
+                    attendance: s.Learn.find(lr => lr.Lesson.toString() === id) || {}
+                })),
+                sMap,
+                id
+            )
+
+            return NextResponse.json({
+                success: true,
+                data: {
+                    course: { _id: c._id, ID: c.ID, Version: c.Version },
+                    session: {
+                        _id: ses._id,
+                        Topic: topic,
+                        Day: ses.Day,
+                        Room: room,
+                        Time: ses.Time,
+                        Teacher: uMap.get(String(ses.Teacher)) || null,
+                        TeachingAs: uMap.get(String(ses.TeachingAs)) || null,
+                        Image: ses.Image,
+                        DetailImage: ses.DetailImage
+                    },
+                    students
+                }
+            })
         }
 
-        const session = courseData.Detail[0];
+        /* ───── Khóa học thử ───── */
+        const t = await Trial.findOne(
+            { 'sessions._id': id },
+            { name: 1, sessions: { $elemMatch: { _id: id } } }
+        ).lean()
 
-        const userIdsToPopulate = [
-            session.Teacher,
-            session.TeachingAs,
-        ].filter(Boolean);
+        if (!t)
+            return NextResponse.json({ success: false, message: 'Không tìm thấy buổi học.' }, { status: 404 })
 
-        const studentStringIds = courseData.Student?.map(s => s.ID) || [];
+        const s = t.sessions[0]
+        console.log(s);
 
-        const [users, book, students] = await Promise.all([
-            User.find({ _id: { $in: userIdsToPopulate } }).select('name').lean(),
-            PostBook.findOne({ 'Topics._id': session.Topic }).select({ 'Topics.$': 1 }).lean(),
-            // THAY ĐỔI 1: Yêu cầu lấy thêm trường 'Avt'
-            PostStudent.find({ ID: { $in: studentStringIds } }).select('ID Name Avt').lean()
-        ]);
+        const [topic2, teachers2, studs2, room2] = await Promise.all([
+            topicById(s.topicId),
+            User.find({ _id: { $in: [s.teacher, s.teachingAs].filter(Boolean) } })
+                .select('name')
+                .lean(),
+            Student.find({
+                $or: [
+                    { _id: { $in: s.students.filter(x => isId(x.studentId)).map(x => x.studentId) } },
+                    { ID: { $in: s.students.map(x => x.studentId) } }
+                ]
+            }).select('ID Name Avt').lean(),
+            roomName(s.room)
+        ])
 
-        const userMap = new Map(users.map(u => [u._id.toString(), u]));
+        const uMap2 = new Map(teachers2.map(u => [u._id.toString(), u]))
+        const sMap2 = new Map([
+            ...studs2.map(st => [st._id?.toString() || st.ID, st]),
+            ...studs2.map(st => [st.ID, st])
+        ])
 
-        // THAY ĐỔI 2: Đổi tên và lưu trữ toàn bộ thông tin học sinh (bao gồm cả Avt)
-        const studentInfoMap = new Map(students.map(s => [s.ID, s]));
+        const students2 = buildStudents(s.students, sMap2, id)
 
-        session.Teacher = userMap.get(session.Teacher?.toString()) || null;
-        session.TeachingAs = userMap.get(session.TeachingAs?.toString()) || null;
-        session.Topic = book?.Topics?.[0] || null;
-
-        const studentsWithAttendance = courseData.Student.map(s => {
-            const attendance = s.Learn.find(learnItem => learnItem.Lesson.equals(session._id));
-
-            // Lấy thông tin đầy đủ của học sinh từ map
-            const studentInfo = studentInfoMap.get(s.ID);
-
-            // THAY ĐỔI 3: Thêm 'Name' và 'Avt' vào đối tượng trả về
-            return {
-                _id: s._id,
-                ID: s.ID,
-                Name: studentInfo?.Name || 'Không có tên',
-                Avt: studentInfo?.Avt || null, // Thêm trường Avt, fallback là null nếu không có
-                attendance: attendance || { Checkin: -1, Cmt: [], Note: '' }
-            };
-        });
-
-        const responsePayload = {
-            course: {
-                _id: courseData._id,
-                ID: courseData.ID,
-                Version: courseData.Version
-            },
-            session: session,
-            students: studentsWithAttendance,
-        };
-
+        return NextResponse.json({
+            success: true,
+            data: {
+                course: { _id: t._id, ID: 'trycourse', Version: 1, type: 'trial' },
+                session: {
+                    _id: s._id,
+                    Topic: topic2,
+                    Day: s.day,
+                    Room: room2,
+                    Time: s.time,
+                    Teacher: uMap2.get(String(s.teacher)) || null,
+                    TeachingAs: uMap2.get(String(s.teachingAs)) || null,
+                    Image: s.folderId,
+                    DetailImage: s.images
+                },
+                students: students2
+            }
+        })
+    } catch (err) {
+        console.error('[SESSION_GET]', err)
         return NextResponse.json(
-            { success: true, message: 'Lấy dữ liệu buổi học thành công', data: responsePayload },
-            { status: 200 }
-        );
-
-    } catch (error) {
-        console.error(`[SESSION_GET_BY_ID_ERROR] ID: ${id}`, error);
-        return NextResponse.json(
-            { success: false, message: 'Lỗi từ máy chủ.' },
+            { success: false, message: 'Đã xảy ra lỗi máy chủ.' },
             { status: 500 }
-        );
+        )
     }
 }

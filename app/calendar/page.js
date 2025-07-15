@@ -14,18 +14,15 @@ export default async function Page(props) {
   const viewYear = parseInt(yearParam, 10) || currentYear;
 
   const viewPromise = await Data_calendar(viewMonth, viewYear);
-  console.log(viewPromise);
-  
   const todayPromise = viewMonth === currentMonth && viewYear === currentYear
     ? viewPromise
     : await Data_calendar(currentMonth, currentYear);
-
-
   const [viewData, todayData] = await Promise.all([viewPromise, todayPromise]);
   const todayEvents = todayData.filter(ev => {
     const [d, m, y] = [ev.day, ev.month, ev.year]
     return d === currentDay && m === currentMonth && y === currentYear;
   });
+  
   return (
     <div style={{
       display: 'flex',

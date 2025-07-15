@@ -16,13 +16,14 @@ export async function GET() {
                 model: 'user',
                 select: 'name avt phone'
             })
+            .populate({ path: 'Area', select: 'rooms' })
             .lean();
 
         const teacherData = {};
 
         for (const course of courses) {
             if (!course.Detail || course.Detail.length === 0) continue;
-
+            const roomMap = new Map(course.Area?.rooms?.map(r => [r._id.toString(), r.name]) || []);
             for (const lesson of course.Detail) {
                 if (!lesson.Teacher || !lesson.Teacher._id) continue;
 
@@ -52,7 +53,7 @@ export async function GET() {
                         course_id: course._id.toString(),
                         topicId: lesson.Topic,
                         day: lesson.Day,
-                        room: lesson.Room,
+                        room: roomMap.get(lesson.Room?.toString()) || lesson.Room,
                         status: 'chưa diễn ra', // Trạng thái mới cho buổi học tương lai
                         isViolation: false,
                         errors: {
@@ -94,7 +95,7 @@ export async function GET() {
                     course_id: course._id.toString(),
                     topicId: lesson.Topic,
                     day: lesson.Day,
-                    room: lesson.Room,
+                    room: roomMap.get(lesson.Room?.toString()) || lesson.Room,
                     status: 'đã diễn ra', // Trạng thái cho các buổi học đã qua
                     isViolation: isViolation,
                     errors: {

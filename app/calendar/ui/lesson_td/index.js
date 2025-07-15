@@ -20,14 +20,12 @@ const CalendarCourse = ({ data = {} }) => {
         }
     });
     if (num == 0) {
-        statusLesson[1] = 0
-        statusLesson[2] = 0
+        statusLesson = [0, 0, 0];
     }
-
-
+    
     return (
         <Link href={`/calendar/${data._id}`} className={styles.calendarCourse} >
-            <div className={styles.dot} />
+            <div className={styles.dot} style={{ background: data.type == "trial" ? 'var(--yellow)' : 'var(--main_b)' }} />
             <div className={styles.content}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <p className={`${styles.Chip} Chip text_7 ${statusLesson[0] == 1 ? styles.Chipgreen : styles.Chipred}`} style={{ background: statusLesson[0] == 1 ? 'var(--green)' : 'var(--red)', padding: '3px 10px', borderRadius: 12, width: 'max-content' }}>
@@ -51,10 +49,10 @@ const CalendarCourse = ({ data = {} }) => {
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width={16} height={16} fill="var(--text-primary)" className={styles.icon}>
                             <path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z" />
                         </svg>
-                        {data.room}
+                        {data.room.name}
                     </div>
                 </div>
-                <div><span style={{ fontWeight: 500 }}>Chủ đề:</span> {data.topic.Name} </div>
+                <div><span style={{ fontWeight: 500 }}>Chủ đề:</span> {data.topic.Name} {data.type == "trial" && '- Học thử'} </div>
                 <div><span style={{ fontWeight: 500 }}>Giáo viên:</span> {data.teacher.name} </div>
                 <div><span style={{ fontWeight: 500 }}>Trợ giảng:</span> {data.teachingAs?.name ? data.teachingAs.name : '-'} </div>
             </div>

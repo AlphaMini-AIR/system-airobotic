@@ -23,9 +23,10 @@ const TrialStudentStatusSchema = new Schema(
 const TrialSessionSchema = new Schema(
     {
         day: { type: Date, required: true },
-        room: { type: String },
+        room: { type: Schema.Types.ObjectId },
         time: { type: String },
         folderId: { type: String, required: true },
+        images: { type: ImageSchema, required: true },
         book: { type: Schema.Types.ObjectId, ref: 'book', required: true },
         topicId: { type: Schema.Types.ObjectId, required: true },
         students: { type: [TrialStudentStatusSchema], default: [] },

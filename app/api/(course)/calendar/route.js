@@ -1,185 +1,166 @@
-import { NextResponse } from 'next/server';
-import PostCourse from '@/models/course';
-import connectDB from '@/config/connectDB';
-import mongoose from 'mongoose';
+import { NextResponse } from 'next/server'
+import connectDB from '@/config/connectDB'
+import PostCourse from '@/models/course'
+import TrialCourse from '@/models/coursetry'
+import mongoose from 'mongoose'
 
-
-export async function GET(request) {
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    const monthParam = parseInt(searchParams.get('month'), 10);
-    const yearParam = parseInt(searchParams.get('year'), 10);
+    const { searchParams } = new URL(req.url)
+    const month = +searchParams.get('month')
+    const year = +searchParams.get('year')
+    if (!Number.isInteger(month) || !Number.isInteger(year) || month < 1 || month > 12)
+      return NextResponse.json({ error: 'month/year không hợp lệ' }, { status: 400 })
 
-    if (
-      !Number.isInteger(monthParam) ||
-      !Number.isInteger(yearParam) ||
-      monthParam < 1 ||
-      monthParam > 12
-    ) {
-      return NextResponse.json(
-        { error: 'Tham số month và year không hợp lệ' },
-        { status: 400 }
-      );
-    }
+    await connectDB()
+    if (mongoose.connection.readyState !== 1) await mongoose.connection.asPromise()
 
-    await connectDB();
+    const start = new Date(Date.UTC(year, month - 1, 1))
+    const end = new Date(Date.UTC(year, month, 1))
 
-    const startDate = new Date(Date.UTC(yearParam, monthParam - 1, 1));
-    const endDate = new Date(Date.UTC(yearParam, monthParam, 1));
-
-    const events = await PostCourse.aggregate([
+    const officialAgg = PostCourse.aggregate([
       { $unwind: '$Detail' },
-      
-      {
-        $match: {
-          'Detail.Day': {
-            $gte: startDate,
-            $lt: endDate,
-          },
-        },
-      },
-
-      // BƯỚC 1: Lọc ra danh sách student có tham gia buổi học này
+      { $match: { 'Detail.Day': { $gte: start, $lt: end } } },
       {
         $addFields: {
-          attendingStudents: {
-            $filter: {
-              input: '$Student',
-              as: 'student',
-              cond: {
-                $anyElementTrue: [
-                  {
-                    $map: {
-                      input: '$$student.Learn',
-                      as: 'learnItem',
-                      in: {
-                        $eq: ['$$learnItem.Lesson', '$Detail._id'],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-
-      // *** BƯỚC MỚI: LỌC MẢNG "LEARN" BÊN TRONG MỖI STUDENT ĐÃ TÌM THẤY ***
-      {
-        $addFields: {
-          // Ghi đè lại trường attendingStudents với phiên bản đã được biến đổi
-          attendingStudents: {
-            // Dùng $map để duyệt qua từng student trong danh sách vừa lọc
+          students: {
             $map: {
-              input: '$attendingStudents',
-              as: 'student',
-              // "in" định nghĩa cấu trúc object mới cho mỗi student
-              in: {
-                // Dùng $mergeObjects để giữ lại các trường gốc của student (như ID)...
-                $mergeObjects: [
-                  '$$student',
-                  // ...và ghi đè lại trường "Learn"
-                  {
-                    Learn: {
-                      // Lọc mảng Learn của student để chỉ lấy duy nhất learnItem khớp với Detail._id
-                      $filter: {
-                        input: '$$student.Learn',
-                        as: 'learnItem',
-                        cond: {
-                          $eq: ['$$learnItem.Lesson', '$Detail._id'],
-                        },
-                      },
-                    },
-                  },
-                ],
+              input: {
+                $filter: {
+                  input: '$Student',
+                  as: 'st',
+                  cond: {
+                    $anyElementTrue: [
+                      { $map: { input: '$$st.Learn', as: 'lr', in: { $eq: ['$$lr.Lesson', '$Detail._id'] } } }
+                    ]
+                  }
+                }
               },
-            },
-          },
-        },
+              as: 'st',
+              in: {
+                $mergeObjects: [
+                  '$$st',
+                  { Learn: { $filter: { input: '$$st.Learn', as: 'lr', cond: { $eq: ['$$lr.Lesson', '$Detail._id'] } } } }
+                ]
+              }
+            }
+          }
+        }
       },
-      // *** KẾT THÚC BƯỚC MỚI ***
-
-      // === BẮT ĐẦU CHUỖI XỬ LÝ TOPIC (giữ nguyên) ===
+      { $lookup: { from: 'books', localField: 'Book', foreignField: '_id', as: 'b' } },
+      { $set: { b: { $arrayElemAt: ['$b', 0] } } },
+      {
+        $set: {
+          topic: {
+            $arrayElemAt: [
+              { $filter: { input: '$b.Topics', as: 't', cond: { $eq: ['$$t._id', '$Detail.Topic'] } } },
+              0
+            ]
+          }
+        }
+      },
+      { $lookup: { from: 'users', localField: 'Detail.Teacher', foreignField: '_id', as: 'teacher' } },
+      { $lookup: { from: 'users', localField: 'Detail.TeachingAs', foreignField: '_id', as: 'teachingAs' } },
       {
         $lookup: {
-          from: 'books',
-          localField: 'Book',
-          foreignField: '_id',
-          as: 'bookInfo',
-        },
+          from: 'areas',
+          let: { roomId: '$Detail.Room' },
+          pipeline: [
+            { $unwind: '$rooms' },
+            { $match: { $expr: { $eq: ['$rooms._id', '$$roomId'] } } },
+            { $project: { _id: 0, room: '$rooms', name: '$name', color: '$color' } }
+          ],
+          as: 'rd'
+        }
       },
-      {
-        $addFields: {
-          bookDoc: { $arrayElemAt: ['$bookInfo', 0] },
-        },
-      },
-      {
-        $addFields: {
-          matchedTopic: {
-            $filter: {
-              input: '$bookDoc.Topics',
-              as: 'topicItem',
-              cond: { $eq: ['$$topicItem._id', '$Detail.Topic'] },
-            },
-          },
-        },
-      },
-      {
-        $addFields: {
-          topic: { $arrayElemAt: ['$matchedTopic', 0] },
-        },
-      },
-      // === KẾT THÚC CHUỖI XỬ LÝ TOPIC ===
-
-      // Các bước lookup thông tin giáo viên (giữ nguyên)
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'Detail.Teacher',
-          foreignField: '_id',
-          as: 'teacherInfo',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'Detail.TeachingAs',
-          foreignField: '_id',
-          as: 'teachingAsInfo',
-        },
-      },
-
-      { $sort: { 'Detail.Day': 1 } },
-      
+      { $set: { rd: { $arrayElemAt: ['$rd', 0] } } },
       {
         $project: {
           _id: '$Detail._id',
           courseId: '$ID',
           courseName: '$Name',
+          type: { $literal: 'official' },
+          date: '$Detail.Day',
           day: { $dayOfMonth: '$Detail.Day' },
           month: { $month: '$Detail.Day' },
           year: { $year: '$Detail.Day' },
-          date: '$Detail.Day',
-          room: '$Detail.Room',
           time: '$Detail.Time',
+          room: {
+            _id: { $ifNull: ['$rd.room._id', '$Detail.Room'] },
+            name: { $ifNull: ['$rd.room.name', '$Detail.Room'] },
+            area: '$rd.name',
+            color: '$rd.color'
+          },
           image: '$Detail.Image',
           topic: '$topic',
-          teacher: { $arrayElemAt: ['$teacherInfo', 0] },
-          teachingAs: { $arrayElemAt: ['$teachingAsInfo', 0] },
-          students: '$attendingStudents',
-        },
-      },
-    ]);
+          teacher: { $arrayElemAt: ['$teacher', 0] },
+          teachingAs: { $arrayElemAt: ['$teachingAs', 0] },
+          students: '$students'
+        }
+      }
+    ])
 
-    return NextResponse.json(
-      { success: true, message: 'Lấy dữ liệu thành công', data: events },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Lỗi API lấy lịch trình:', error);
-    return NextResponse.json(
-      { success: false, error: 'Lỗi máy chủ nội bộ' },
-      { status: 500 }
-    );
+    const trialAgg = TrialCourse.aggregate([
+      { $unwind: '$sessions' },
+      { $match: { 'sessions.day': { $gte: start, $lt: end } } },
+      { $lookup: { from: 'books', localField: 'sessions.book', foreignField: '_id', as: 'b' } },
+      { $set: { b: { $arrayElemAt: ['$b', 0] } } },
+      {
+        $set: {
+          topic: {
+            $arrayElemAt: [
+              { $filter: { input: '$b.Topics', as: 't', cond: { $eq: ['$$t._id', '$sessions.topicId'] } } },
+              0
+            ]
+          }
+        }
+      },
+      { $lookup: { from: 'users', localField: 'sessions.teacher', foreignField: '_id', as: 'teacher' } },
+      { $lookup: { from: 'users', localField: 'sessions.teachingAs', foreignField: '_id', as: 'teachingAs' } },
+      {
+        $lookup: {
+          from: 'areas',
+          let: { roomId: '$sessions.room' },
+          pipeline: [
+            { $unwind: '$rooms' },
+            { $match: { $expr: { $eq: ['$rooms._id', '$$roomId'] } } },
+            { $project: { _id: 0, room: '$rooms', name: '$name', color: '$color' } }
+          ],
+          as: 'rd'
+        }
+      },
+      { $set: { rd: { $arrayElemAt: ['$rd', 0] } } },
+      {
+        $project: {
+          _id: '$sessions._id',
+          courseId: '$name',
+          courseName: '$name',
+          type: { $literal: 'trial' },
+          date: '$sessions.day',
+          day: { $dayOfMonth: '$sessions.day' },
+          month: { $month: '$sessions.day' },
+          year: { $year: '$sessions.day' },
+          time: '$sessions.time',
+          room: {
+            _id: { $ifNull: ['$rd.room._id', '$sessions.room'] },
+            name: { $ifNull: ['$rd.room.name', '$sessions.room'] },
+            area: '$rd.name',
+            color: '$rd.color'
+          },
+          image: null,
+          topic: '$topic',
+          teacher: { $arrayElemAt: ['$teacher', 0] },
+          teachingAs: { $arrayElemAt: ['$teachingAs', 0] },
+          students: '$sessions.students'
+        }
+      }
+    ])
+
+    const [official, trial] = await Promise.all([officialAgg, trialAgg])
+    const data = [...official, ...trial].sort((a, b) => a.date - b.date)
+    return NextResponse.json({ success: true, data })
+  } catch (err) {
+    console.error('Calendar API error:', err)
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }

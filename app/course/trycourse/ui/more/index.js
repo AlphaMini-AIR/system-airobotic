@@ -1,26 +1,42 @@
-import { Svg_ArowRight, Svg_Left } from '@/components/(icon)/svg';
-import styles from './index.module.css';
-import Add from '../add';
+'use client'
 
-export default function MainAll({ data, book, student, teacher, area }) {
+import { Svg_ArowRight, Svg_Left } from '@/components/(icon)/svg'
+import Add from '../add'
+import styles from './index.module.css'
+
+const fmt = d =>
+    d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+export default function More({
+    data, weekStart, setWeekStart, book, student, teacher, area
+}) {
+    const prevWeek = () => setWeekStart(w => new Date(w.getTime() - 7 * 864e5))
+    const nextWeek = () => setWeekStart(w => new Date(w.getTime() + 7 * 864e5))
+
+    const weekLabel = `${fmt(weekStart)} - ${fmt(new Date(weekStart.getTime() + 6 * 864e5))}`
+
     return (
         <div className={styles.mainContainer}>
             <div className={styles.filleft}>
                 <div className={styles.modeToggle}>
-                    <button className={`${styles.modeButton} ${styles.active}`}>Tất cả</button>
-                    <button className={`${styles.modeButton}`}>Theo tuần</button>
+                    <button className={`${styles.modeButton}`}>Tất cả</button>
+                    <button className={`${styles.modeButton} ${styles.active}`}>Theo tuần</button>
                 </div>
+
                 <div className={styles.modeToggle}>
-                    <button className={`${styles.modeButton} ${styles.active}`} style={{ alignItems: 'center', display: 'flex' }}>
-                        <Svg_Left w={16} h={16} c={'var(--text-primary)'} />
+                    <button className={`${styles.modeButton} ${styles.active}`} onClick={prevWeek}>
+                        <Svg_Left w={16} h={16} c='var(--text-primary)' />
                     </button>
-                    <button className={`${styles.modeButton}`}>10/04/2004 - 20/04/2004</button>
-                    <button className={`${styles.modeButton} ${styles.active}`} style={{ alignItems: 'center', display: 'flex' }}>
-                        <Svg_ArowRight w={16} h={16} c={'var(--text-primary)'} />
+
+                    <button className={`${styles.modeButton}`}>{weekLabel}</button>
+
+                    <button className={`${styles.modeButton} ${styles.active}`} onClick={nextWeek}>
+                        <Svg_ArowRight w={16} h={16} c='var(--text-primary)' />
                     </button>
                 </div>
             </div>
+
             <Add data={data} book={book} student={student} teacher={teacher} area={area} />
         </div>
-    );
+    )
 }
