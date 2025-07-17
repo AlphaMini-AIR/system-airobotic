@@ -121,3 +121,69 @@
     max-height: 200px;
     overflow-y: auto;
 }
+
+.selectedStudentsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+    /* Khoảng cách với danh sách bên dưới */
+}
+
+.addStudentBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.addStudentBtn:hover {
+    background-color: var(--hover);
+}
+
+.addStudentBtn span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.selectedStudentList {
+    width: 100%;
+    max-height: 120px;
+    /* Giới hạn chiều cao và cho phép scroll */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 4px;
+    background-color: var(--bg-secondary);
+}
+
+.selectedStudentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+.selectedStudentItem:hover {
+    background-color: var(--hover);
+}
+
+.studentInfo {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.noStudentText {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-secondary);
+    font-style: italic;
+}

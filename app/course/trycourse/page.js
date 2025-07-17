@@ -16,7 +16,6 @@ export default async function CourseTryPage() {
         Data_user(),
         Read_Area()
     ])
-    console.log(data);
     
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>

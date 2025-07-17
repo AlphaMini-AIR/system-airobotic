@@ -11,22 +11,23 @@ import { Svg_Add, Svg_Course, Svg_Delete, Svg_Pen, Svg_Profile, Svg_Student } fr
 import { formatDate } from '@/function'
 import { attendInfo } from '../student'
 import styles from './index.module.css'
+import ResponsiveGrid from '@/components/(ui)/grid'
+import ImageComponent from '@/components/(ui)/(image)'
 
-// Helper functions để xác định trạng thái buổi học
+// Helper functions
 const buildDate = (d, h, m) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m)
 const statusOf = (session) => {
-    if (!session.time || !session.day) return { weight: 2 }; // Mặc định là đã qua nếu thiếu dữ liệu
+    if (!session.time || !session.day) return { weight: 2 };
     const [st, et] = session.time.split('-')
     const [sh, sm] = st.split(':').map(Number)
     const [eh, em] = et.split(':').map(Number)
     const base = new Date(session.day)
     const end = buildDate(base, eh, em)
     const now = new Date()
-    if (now > end) return { weight: 2 } // Đã diễn ra
-    return { weight: 1 } // Đang hoặc sắp diễn ra
+    if (now > end) return { weight: 2 }
+    return { weight: 1 }
 }
 
-// Component Row không đổi
 const Row = ({ icon, label, val }) => (
     <div className={styles.row}>
         {icon}
@@ -42,14 +43,11 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
     const [loading, setLoading] = useState(false);
     const [noti, setNoti] = useState({ open: false, ok: false, msg: '' });
 
-    // Xác định xem buổi học đã kết thúc hay chưa
     const isPastSession = useMemo(() => statusOf(session).weight === 2, [session]);
-
     const timeLabel = useMemo(() => `${formatDate(new Date(session.day))} – ${session.time} – ${session.room?.name || '–––'}`, [session])
     const images = useMemo(() => session.students.flatMap(st => st.images || []), [session])
 
     const handleSave = async (payload) => {
-        // Chặn lưu nếu buổi học đã kết thúc
         if (isPastSession) {
             setNoti({ open: true, ok: false, msg: 'Buổi học đã kết thúc, không thể chỉnh sửa.' });
             return;
@@ -86,20 +84,14 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                     <Row icon={<Svg_Course w={16} h={16} c='var(--text-primary)' />} label='Thời gian' val={timeLabel} />
                 </div>
                 <div style={{ flex: 0.5, display: 'flex', gap: 8, height: '100%', justifyContent: 'end' }}>
-                    <div className={styles.trigger} style={isPastSession ? { opacity: 0.5, cursor: 'not-allowed' } : {}} onClick={() => !isPastSession && setSec('stu')}>
-                        <Svg_Student w={24} h={24} c='var(--text-primary)' />
-                        <p className="text_7">Học sinh</p>
-                    </div>
-                    <div className={styles.trigger} style={isPastSession ? { opacity: 0.5, cursor: 'not-allowed' } : {}} onClick={() => !isPastSession && setSec('info')}>
-                        <Svg_Pen w={24} h={24} c='var(--text-primary)' />
-                        <p className="text_7">Thông tin</p>
-                    </div>
+                    <div className={styles.trigger} style={isPastSession ? { opacity: 0.5, cursor: 'not-allowed' } : {}} onClick={() => !isPastSession && setSec('stu')}><Svg_Student w={24} h={24} c='var(--text-primary)' /><p className="text_7">Học sinh</p></div>
+                    <div className={styles.trigger} style={isPastSession ? { opacity: 0.5, cursor: 'not-allowed' } : {}} onClick={() => !isPastSession && setSec('info')}><Svg_Pen w={24} h={24} c='var(--text-primary)' /><p className="text_7">Thông tin</p></div>
                 </div>
             </div>
         </section>
     );
 
-    const StudentTable = () => ( /* Giữ nguyên không thay đổi */
+    const StudentTable = () => (
         <section className={styles.block}>
             <header className={styles.blockHead}><p className='text_4'>Danh sách học sinh</p></header>
             {session.students.length === 0 ? <p className='text_6_400' style={{ paddingTop: 16 }}>Chưa có học sinh.</p> : (
@@ -124,16 +116,26 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
         </section>
     );
 
-    const ImageBlock = ({ all = false }) => ( /* Giữ nguyên không thay đổi */
-        <section className={styles.block}>
-            <p className='text_4' style={{ marginBottom: 16 }}>Hình ảnh</p>
-            {images.length === 0 ? <p className='text_6_400' style={{ paddingTop: 16 }}>Không có hình ảnh.</p> : (
-                <div className={all ? styles.galleryAll : styles.galleryThumb}>
-                    {(all ? images : images.slice(0, 4)).map(i => (<img key={i.id} src={`https://lh3.googleusercontent.com/d/${i.id}`} alt='' />))}
-                </div>
-            )}
-        </section>
-    );
+    const ImageBlock = () => {
+        const listColumnsConfig = { mobile: 2, tablet: 4, desktop: 6 };
+        const reload = () => router.refresh();
+        const imageItems = images.map((item) => (
+            <ImageComponent key={item.id} imageInfo={item} refreshData={reload} width="100%" width2={500} />
+        ));
+        
+        return (
+            <section className={styles.block}>
+                <header className={styles.blockHead}>
+                    <p className='text_4'>Hình ảnh buổi học ({images.length})</p>
+                </header>
+                {images.length > 0 ? (
+                    <ResponsiveGrid items={imageItems} columns={listColumnsConfig} type="list" width={500}/>
+                ) : (
+                    <p className='text_6_400' style={{ paddingTop: 16 }}>Không có hình ảnh nào.</p>
+                )}
+            </section>
+        )
+    };
 
     const EditStudents = ({ onSave, loading, isPast }) => {
         const original = useMemo(() => new Set(session.students.map(s => s.studentId)), [session]);
@@ -157,8 +159,6 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                 <p className="text_4" style={{ margin: '16px 0' }}>Danh sách học sinh tham gia buổi học</p>
                 <div className={styles.scrollBox}>
                     {[...pick].map(id => {
-                        console.log(student);
-
                         const info = student.find(s => s._id === id) || {};
                         return (<div key={id} className={styles.chkLine}><span className="text_6_400">{info.ID} – {info.Name}</span><WrapIcon icon={<Svg_Delete w={16} h={16} c="white" />} click={() => !(loading || isPast) && toggle(id)} content="Bỏ khỏi danh sách" placement="left" style={{ padding: 8, background: 'var(--red)', cursor: 'pointer' }} /></div>);
                     })}
@@ -178,16 +178,9 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
         const normalizeTime = useCallback((v) => { const m = v.match(/^(\d{1,2})(?::?(\d{0,2}))?-(\d{1,2})(?::?(\d{0,2}))?$/); if (!m) return form.time; const pad = (x, lim) => String(Math.min(lim, +x)).padStart(2, '0'); const s = `${pad(m[1], 23)}:${pad(m[2] || 0, 59)}`; const e = `${pad(m[3], 23)}:${pad(m[4] || 0, 59)}`; return s < e ? `${s}-${e}` : `${s}-${e}`; }, [form.time]);
         const save = () => onSave(form);
 
-        // Sửa lại cách dùng Menu theo mẫu
         const Select = ({ label, value, menu }) => (
-            <div className={styles.field}>
-                <p className='text_6'>{label}</p>
-                <Menu
-                    buttonContent={value}
-                    menuItems={menu}
-                    disabled={loading || isPast}
-                    customButton={<div className='input' style={{ cursor: 'pointer' }}><span className='text_6_400'>{value || 'Tùy chọn'}</span></div>}
-                />
+            <div className={styles.field}><p className='text_6'>{label}</p>
+                <Menu buttonContent={value} menuItems={menu} disabled={loading || isPast} customButton={<div className='input' style={{ cursor: 'pointer' }}><span className='text_6_400'>{value || 'Tùy chọn'}</span></div>} />
             </div>
         );
         const wrap = arr => <div className={styles.wrapitem}>{arr}</div>;
@@ -218,7 +211,6 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
     const renderSecondaryView = () => {
         let content;
         let loadingMessage = "Đang xử lý...";
-        if (sec === 'img') return <ImageBlock all />;
         if (sec === 'stu') { content = <EditStudents onSave={handleSave} loading={loading} isPast={isPastSession} />; loadingMessage = "Đang lưu danh sách..."; }
         if (sec === 'info') { content = <EditInfo onSave={handleSave} loading={loading} isPast={isPastSession} />; loadingMessage = "Đang cập nhật..."; }
         if (!content) return null;
@@ -229,7 +221,7 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                 {content}
             </>
         )
-    }
+    };
 
     return (
         <FlexiblePopup
@@ -239,7 +231,7 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
             renderItemList={() => (<div className={styles.container}><InfoBlock /><StudentTable /><ImageBlock /></div>)}
             secondaryOpen={!!sec}
             onCloseSecondary={() => setSec(null)}
-            secondaryTitle={sec === 'img' ? 'Tất cả hình ảnh' : sec === 'stu' ? 'Chỉnh sửa học sinh' : 'Cập nhật buổi học'}
+            secondaryTitle={sec === 'stu' ? 'Chỉnh sửa học sinh' : 'Cập nhật buổi học'}
             renderSecondaryList={renderSecondaryView}
             width={'calc(100vw - 500px)'}
             globalZIndex={1400}

@@ -3,11 +3,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
-import { Svg_Add } from '@/components/(icon)/svg';
+import { Svg_Add, Svg_Delete } from '@/components/(icon)/svg';
 import Menu from '@/components/(ui)/(button)/menu';
 import Noti from '@/components/(features)/(noti)/noti';
 import Loading from '@/components/(ui)/(loading)/loading';
 import styles from './index.module.css';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 
 export default function Add({ book = [], student = [], teacher = [], area = [], onCreate }) {
     const router = useRouter();
@@ -20,7 +21,7 @@ export default function Add({ book = [], student = [], teacher = [], area = [], 
     const bookMap = useMemo(() => Object.fromEntries(book.map(b => [b._id, b])), [book]);
     const teacherRaw = useMemo(() => teacher.filter(t => t.role.includes('Teacher')), [teacher]);
 
-    /* ---------- default selections (Đã cập nhật) ---------- */
+    /* ---------- default selections ---------- */
     const defaultBook = useMemo(() => book.find(b => b._id === '685633c413427722b24c3892') || book[0], [book]);
     const defaultTopic = useMemo(() => defaultBook?.Topics?.find(t => t._id === '68565eaf13427722b24c3f50') || defaultBook?.Topics?.[0], [defaultBook]);
     const defaultTeacher = useMemo(() => teacher.find(t => /khắc\s*hoàng/i.test(t.name.toLowerCase())) || teacherRaw[0], [teacher, teacherRaw]);
@@ -45,6 +46,11 @@ export default function Add({ book = [], student = [], teacher = [], area = [], 
     }));
 
     const topics = useMemo(() => bookMap[form.book]?.Topics ?? [], [form.book, bookMap]);
+
+    const selectedStudents = useMemo(() => {
+        const selectedIds = new Set(form.studentIds);
+        return student.filter(s => selectedIds.has(s._id));
+    }, [form.studentIds, student]);
 
     /* ---------- utils ---------- */
     const normalizeTime = useCallback(v => {
@@ -118,47 +124,53 @@ export default function Add({ book = [], student = [], teacher = [], area = [], 
     );
 
     /* ---------- select wrapper ---------- */
-    const Select = ({ label, value, menu, openCustom }) => (
+    const Select = ({ label, value, menu }) => (
         <div className={styles.field}>
             <p className='text_6'>{label}</p>
-            {openCustom ? (
-                <div className='input' style={{ cursor: 'pointer' }} onClick={openCustom}>
-                    <span className='text_6_400'>{value || 'Tùy chọn'}</span>
-                </div>
-            ) : (
-                <Menu
-                    buttonContent={value}
-                    menuItems={menu}
-                    customButton={<div className='input' style={{ cursor: 'pointer' }}><span className='text_6_400'>{value || 'Tùy chọn'}</span></div>}
-                />
-            )}
+            <Menu buttonContent={value} menuItems={menu} customButton={<div className='input' style={{ cursor: 'pointer' }}><span className='text_6_400'>{value || 'Tùy chọn'}</span></div>} />
         </div>
     );
 
     /* ---------- main popup ---------- */
     const body = (
         <div className={styles.popupContainer}>
-            <div className={styles.field}>
-                <p className='text_6'>Ngày học:</p>
-                <input type='date' className='input' value={form.day} onChange={e => setForm({ ...form, day: e.target.value })} />
-            </div>
-            <div className={styles.field}>
-                <p className='text_6'>Giờ:</p>
-                <input className='input' value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} onBlur={e => setForm({ ...form, time: normalizeTime(e.target.value) })} />
-            </div>
+            <div className={styles.field}><p className='text_6'>Ngày học:</p><input type='date' className='input' value={form.day} onChange={e => setForm({ ...form, day: e.target.value })} /></div>
+            <div className={styles.field}><p className='text_6'>Giờ:</p><input className='input' value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} onBlur={e => setForm({ ...form, time: normalizeTime(e.target.value) })} /></div>
             <Select label='Chương trình' value={bookMap[form.book]?.Name} menu={bookM} />
             <Select label='Chủ đề' value={topics.find(t => t._id === form.topicId)?.Name} menu={topicM} />
             <Select label='Phòng' value={roomList.find(r => r.id === form.room)?.name} menu={roomM} />
             <Select label='Giáo viên' value={teacher.find(t => t._id === form.teacher)?.name} menu={teachM} />
             <Select label='Trợ giảng' value={teacher.find(t => t._id === form.teachingAs)?.name} menu={asstM} />
-            <Select label={`Học sinh (${form.studentIds.length})`} value={form.studentIds.length ? 'Đã chọn' : ''} openCustom={() => setShowStu(true)} />
+
             <div className={styles.field}>
-                <p className='text_6'>Ghi chú:</p>
-                <textarea rows={3} className='input' value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} />
+                <div className={styles.selectedStudentsHeader}>
+                    <p className='text_6'>Học sinh đã chọn ({selectedStudents.length})</p>
+                    <button className={styles.addStudentBtn} onClick={() => setShowStu(true)}>
+                        <Svg_Add w={14} h={14} c="var(--main_b)" />
+                        <span>Thêm</span>
+                    </button>
+                </div>
+                <div className={styles.selectedStudentList}>
+                    {selectedStudents.length > 0 ? (
+                        selectedStudents.map(s => (
+                            <div key={s._id} className={styles.selectedStudentItem}>
+                                <span className={styles.studentInfo}>{s.ID} – {s.Name}</span>
+                                <WrapIcon
+                                    icon={<Svg_Delete w={12} h={12} c="white" />}
+                                    click={() => toggleStudent(s._id)}
+                                    content="Xóa"
+                                    style={{ padding: 8, background: 'var(--red)', borderRadius: 5 }}
+                                />
+                            </div>
+                        ))
+                    ) : (
+                        <p className={`${styles.noStudentText} text_6_400`}>Chưa có học sinh nào được chọn.</p>
+                    )}
+                </div>
             </div>
-            <button className='btn' style={{ width: '100%', marginTop: 16, borderRadius: 5, justifyContent: 'center' }} onClick={save}>
-                Thêm buổi học thử
-            </button>
+
+            <div className={styles.field}><p className='text_6'>Ghi chú:</p><textarea rows={3} className='input' value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} /></div>
+            <button className='btn' style={{ width: '100%', marginTop: 16, borderRadius: 5, justifyContent: 'center' }} onClick={save}>Thêm buổi học thử</button>
         </div>
     );
 
