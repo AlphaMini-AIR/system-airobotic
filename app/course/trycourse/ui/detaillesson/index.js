@@ -126,10 +126,7 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
 
     const ImageBlock = ({ all = false }) => ( /* Giữ nguyên không thay đổi */
         <section className={styles.block}>
-            <header className={styles.blockHead}>
-                <p className='text_4'>Hình ảnh</p>
-                {!all && images.length > 4 && (<button className='btnSmall' onClick={() => setSec('img')}>Xem tất cả</button>)}
-            </header>
+            <p className='text_4' style={{ marginBottom: 16 }}>Hình ảnh</p>
             {images.length === 0 ? <p className='text_6_400' style={{ paddingTop: 16 }}>Không có hình ảnh.</p> : (
                 <div className={all ? styles.galleryAll : styles.galleryThumb}>
                     {(all ? images : images.slice(0, 4)).map(i => (<img key={i.id} src={`https://lh3.googleusercontent.com/d/${i.id}`} alt='' />))}
@@ -160,6 +157,8 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                 <p className="text_4" style={{ margin: '16px 0' }}>Danh sách học sinh tham gia buổi học</p>
                 <div className={styles.scrollBox}>
                     {[...pick].map(id => {
+                        console.log(student);
+
                         const info = student.find(s => s._id === id) || {};
                         return (<div key={id} className={styles.chkLine}><span className="text_6_400">{info.ID} – {info.Name}</span><WrapIcon icon={<Svg_Delete w={16} h={16} c="white" />} click={() => !(loading || isPast) && toggle(id)} content="Bỏ khỏi danh sách" placement="left" style={{ padding: 8, background: 'var(--red)', cursor: 'pointer' }} /></div>);
                     })}

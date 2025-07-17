@@ -150,8 +150,7 @@ export default function Student({ data, student, teacher = [], area = [], book =
                                     setCareSession({
                                         ...r.session,
                                         ...r.studentRaw,
-                                        // Đảm bảo topicId được truyền đúng tên `_id` của session
-                                        topicId: r.session._id,
+                                        ids: r.session._id,
                                         attendLabel: r.attend.label,
                                         careStatus: r.careStatus,
                                         note: r.note

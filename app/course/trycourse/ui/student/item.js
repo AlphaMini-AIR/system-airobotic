@@ -25,6 +25,8 @@ const updateCareInfo = async (payload) => {
 };
 
 export default function CareSessionPopup({ open, onClose, session }) {
+    console.log(session);
+    
     const router = useRouter();
 
     // 1. Tìm đúng đối tượng status/note từ mảng statuses dựa trên ID của buổi học
@@ -120,7 +122,7 @@ export default function CareSessionPopup({ open, onClose, session }) {
                     {s.images && s.images.length > 0 ? (
                         <div className={styles.imgWrap}>
                             {s.images.map(img => (
-                                <img key={img.id} src={`https://lh3.googleusercontent.com/d/$${img.id}`} alt='Ảnh buổi học' />
+                                <img key={img.id} src={`https://lh3.googleusercontent.com/d/${img.id}`} alt='Ảnh buổi học' />
                             ))}
                         </div>
                     ) : (
