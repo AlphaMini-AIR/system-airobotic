@@ -84,7 +84,7 @@ export default function CourseItem({ data = {} }) {
                                 padding: '4px 16px', color: 'white'
                             }}>{Area.name}</span>}
                         </div>
-                        <p className={styles.courseName}>{Book.Name}</p>
+                        <p className={styles.courseName}>{Book?.Name || '-'}</p>
                     </div>
                 </div>
 
