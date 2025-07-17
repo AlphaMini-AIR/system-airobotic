@@ -6,6 +6,8 @@ import '@/models/book'
 import { google } from 'googleapis'
 import { Readable } from 'stream'
 import jsonRes from '@/utils/response'
+import mongoose from 'mongoose';
+import { Re_coursetry } from '@/data/course'
 
 export async function GET(request) {
     try {
@@ -164,5 +166,63 @@ export async function POST(request) {
 
         console.error('Lỗi API [POST /api/students]:', error)
         return jsonRes(500, { status: false, mes: error.message, data: null })
+    }
+}
+
+export async function PUT(request) {
+    try {
+        await connectDB();
+
+        const { studentId, topicId, status, note } = await request.json();
+
+        if (!studentId || !topicId) {
+            return jsonRes(400, { success: false, message: "Thiếu ID của học sinh hoặc ID của buổi học thử." });
+        }
+
+        if (!mongoose.isValidObjectId(studentId) || !mongoose.isValidObjectId(topicId)) {
+            return jsonRes(400, { success: false, message: "ID của học sinh hoặc buổi học thử không hợp lệ." });
+        }
+
+        if (status === undefined && note === undefined) {
+            return jsonRes(400, { success: false, message: "Không có dữ liệu 'status' hoặc 'note' để cập nhật." });
+        }
+
+        const updateFields = {};
+
+        if (status !== undefined) {
+            if (![0, 1, 2].includes(status)) {
+                return jsonRes(400, { success: false, message: "Giá trị 'status' không hợp lệ. Chỉ chấp nhận 0, 1, hoặc 2." });
+            }
+            updateFields["Trial.$[elem].status"] = status;
+        }
+
+        if (note !== undefined) {
+            updateFields["Trial.$[elem].note"] = String(note); 
+        }
+
+        const result = await PostStudent.updateOne(
+            {
+                _id: new mongoose.Types.ObjectId(studentId),
+                "Trial.topic": new mongoose.Types.ObjectId(topicId)
+            },
+            { $set: updateFields },
+            {
+                arrayFilters: [{ "elem.topic": new mongoose.Types.ObjectId(topicId) }]
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return jsonRes(404, { success: false, message: "Không tìm thấy học sinh với buổi học thử tương ứng." });
+        }
+
+        if (result.modifiedCount === 0) {
+            return jsonRes(200, { success: true, message: "Dữ liệu không có thay đổi." });
+        }
+        Re_coursetry()
+        return jsonRes(200, { success: true, message: "Cập nhật thông tin chăm sóc thành công." });
+
+    } catch (error) {
+        console.error('API Error [PUT /api/student/care]:', error);
+        return jsonRes(500, { success: false, message: 'Lỗi máy chủ.', error: error.message });
     }
 }

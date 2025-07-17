@@ -1,123 +1,188 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import FlexiblePopup from '@/components/(features)/(popup)/popup_right'
-import { formatDate } from '@/function'
-import styles from './index.module.css'
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import { formatDate } from '@/function';
+import styles from './index.module.css';
+import Loading from '@/components/(ui)/(loading)/loading';
+import Noti from '@/components/(features)/(noti)/noti';
+import { IconSuccess, IconFailure } from '@/components/(features)/(noti)/noti';
 
-/* ánh xạ status → nhãn */
-const STATUS = [
-    { value: 1, label: 'Chưa CS' },
-    { value: 3, label: 'Đang CS' },
+const CARE_STATUS_OPTIONS = [
+    { value: 1, label: 'Chưa chăm sóc' },
     { value: 2, label: 'Theo học' },
     { value: 0, label: 'Không theo' }
-]
+];
 
-export default function CareSessionPopup({ open, onClose, session, onChangeStatus }) {
-    const [status, setStatus] = useState(session?.careStatus ?? 1)
-    const [note, setNote] = useState(session?.note || '')
-    const [msg, setMsg] = useState('')
+const updateCareInfo = async (payload) => {
+    const response = await fetch('/api/student', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    return response.json();
+};
 
-    /* đồng bộ khi props thay đổi */
+export default function CareSessionPopup({ open, onClose, session }) {
+    const router = useRouter();
+
+    // 1. Tìm đúng đối tượng status/note từ mảng statuses dựa trên ID của buổi học
+    const careInfo = useMemo(() => {
+        if (!session?.statuses || !session?.ids) return null;
+        return session.statuses.find(s => String(s.topic) === String(session.ids));
+    }, [session]);
+
+    // 2. Khởi tạo state từ đối tượng careInfo đã tìm được
+    const [status, setStatus] = useState(careInfo?.status ?? 1);
+    const [note, setNote] = useState(careInfo?.note || '');
+    const [loading, setLoading] = useState(false);
+    const [noti, setNoti] = useState({ open: false, ok: false, msg: '' });
+
+    // Đồng bộ state khi props `session` thay đổi
     useEffect(() => {
         if (session) {
-            setStatus(session.careStatus)
-            setNote(session.note || '')
-            setMsg('')
+            const currentCareInfo = session.statuses?.find(s => String(s.topic) === String(session.ids));
+            setStatus(currentCareInfo?.status ?? 1);
+            setNote(currentCareInfo?.note || '');
         }
-    }, [session])
+    }, [session]);
 
-    /* đổi trạng thái */
-    const handleChangeStatus = val => {
-        if (val === status) return
-        setStatus(val)
-        onChangeStatus?.(val)           // call API ở cha
-    }
+    const handleApiCall = async (payload, successMsg) => {
+        setLoading(true);
+        try {
+            const res = await updateCareInfo(payload);
+            setNoti({
+                open: true,
+                ok: res.success,
+                msg: res.message || (res.success ? successMsg : "Thao tác thất bại.")
+            });
+            if (res.success) {
+                router.refresh();
+            }
+        } catch (error) {
+            setNoti({ open: true, ok: false, msg: 'Lỗi kết nối hoặc máy chủ.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    /* gợi ý tin nhắn = gộp nhận xét */
-    const suggestion = `Chào PH, buổi ${session?.topicName ?? ''} HS đã ${session?.attendLabel?.toLowerCase()}. Nhận xét: HS tập trung tốt, cần củng cố từ vựng.`
+    const handleChangeStatus = (newStatus) => {
+        if (newStatus === status) return;
+        setStatus(newStatus);
+        const payload = {
+            topicId: session.ids,
+            studentId: session.studentId,
+            status: newStatus
+        };
+        handleApiCall(payload, 'Cập nhật trạng thái thành công!');
+    };
 
-    /* UI chính trả về cho FlexiblePopup */
-    const renderForm = useCallback(
-        ([s]) => (
+    const handleSaveNote = () => {
+        // 3. So sánh với note gốc từ careInfo
+        if (note === (careInfo?.note || '')) {
+            setNoti({ open: true, ok: false, msg: 'Bạn chưa thay đổi nội dung ghi chú.' });
+            return;
+        }
+        const payload = {
+            topicId: session.ids,
+            studentId: session.studentId,
+            note: note
+        };
+        handleApiCall(payload, 'Cập nhật ghi chú thành công!');
+    };
+
+    
+    const renderForm = useCallback(([s]) => {
+        if (!s) return null;
+        return (
             <div className={styles.wrapper}>
-                {/* Thông tin buổi */}
-                <section className={styles.infoBox}>
-                    <p className='text_4'><b>Chủ đề:</b> {s.topicName}</p>
-                    <p className='text_4'><b>Thời gian:</b> {s.time} – {formatDate(new Date(s.day))}</p>
-                    <p className='text_4'><b>Trạng thái buổi:</b> {s.attendLabel}</p>
-                </section>
-
-                {/* Nút trạng thái chăm sóc */}
-                <section className={styles.statusGroup}>
-                    {STATUS.map(st => (
-                        <button
-                            key={st.value}
-                            className={`btn ${styles.stBtn} ${status === st.value ? styles.active : ''}`}
-                            onClick={() => handleChangeStatus(st.value)}
-                        >
-                            {st.label}
-                        </button>
-                    ))}
-                </section>
-
-                {/* Nhận xét & hình ảnh */}
                 <section className={styles.section}>
-                    <p className='text_4'><b>Nhận xét</b></p>
-                    <ul className={styles.commentList}>
-                        <li>HS tập trung tốt</li>
-                        <li>Cần củng cố từ vựng chủ đề “Food”</li>
-                    </ul>
+                    <p className='text_4'><b>Chủ đề:</b> {s.topic?.Name}</p>
+                    <p className='text_5'><b>Thời gian:</b> {s.time} – {formatDate(new Date(s.day))}</p>
+                    <p className='text_5'><b>Giáo viên:</b> {s.teacher?.name || '---'}</p>
+                </section>
 
-                    <p className='text_4' style={{ marginTop: 12 }}><b>Hình ảnh</b></p>
-                    <div className={styles.imgWrap}>
-                        <img src='/placeholder.jpg' alt='' />
-                        <img src='/placeholder.jpg' alt='' />
+                <section className={styles.section}>
+                    <p className='text_4'><b>Thông tin buổi học của học sinh</b></p>
+                    <p className='text_5'><b>Điểm danh:</b> {s.attendLabel}</p>
+
+                    <p className='text_5' style={{ marginTop: 8 }}><b>Nhận xét từ giáo viên:</b></p>
+                    {s.cmt && s.cmt.length > 0 ? (
+                        <ul className={styles.commentList}>
+                            {s.cmt.map((comment, index) => <li key={index}>{comment}</li>)}
+                        </ul>
+                    ) : (
+                        <p className='text_6_400' style={{ fontStyle: 'italic' }}>Chưa có nhận xét.</p>
+                    )}
+
+                    <p className='text_5' style={{ marginTop: 12 }}><b>Hình ảnh trong buổi học:</b></p>
+                    {s.images && s.images.length > 0 ? (
+                        <div className={styles.imgWrap}>
+                            {s.images.map(img => (
+                                <img key={img.id} src={`https://lh3.googleusercontent.com/d/$${img.id}`} alt='Ảnh buổi học' />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className='text_6_400' style={{ fontStyle: 'italic' }}>Chưa có hình ảnh.</p>
+                    )}
+                </section>
+
+                <section className={styles.section}>
+                    <p className='text_4'><b>Trạng thái chăm sóc</b></p>
+                    <div className={styles.statusGroup}>
+                        {CARE_STATUS_OPTIONS.map(st => (
+                            <button
+                                key={st.value}
+                                className={`${styles.stBtn} ${status === st.value ? styles.active : ''}`}
+                                onClick={() => handleChangeStatus(st.value)}
+                            >
+                                {st.label}
+                            </button>
+                        ))}
                     </div>
                 </section>
 
-                {/* Note */}
                 <section className={styles.section}>
                     <p className='text_4'><b>Ghi chú nội bộ</b></p>
                     <textarea
                         className='input'
-                        rows={3}
+                        rows={4}
                         value={note}
                         onChange={e => setNote(e.target.value)}
-                    />
-                </section>
-
-                {/* Tin nhắn phụ huynh */}
-                <section className={styles.section}>
-                    <p className='text_4'><b>Tin nhắn phụ huynh</b></p>
-                    <textarea
-                        className='input'
-                        rows={4}
-                        value={msg}
-                        onChange={e => setMsg(e.target.value)}
-                        placeholder='Nhập nội dung...'
+                        placeholder='Nhập ghi chú...'
                     />
                     <div className={styles.msgActions}>
-                        <button className='btn' onClick={() => setMsg(suggestion)}>Gợi ý nhận xét</button>
-                        <button className='btn' style={{ background: 'var(--main_b)', color: '#fff' }}>Gửi</button>
+                        <button className='btn' style={{ background: 'var(--main_b)', color: '#fff' }} onClick={handleSaveNote}>
+                            Lưu ghi chú
+                        </button>
                     </div>
                 </section>
             </div>
-        ),
-        [status, note, msg]
-    )
+        )
+    }, [session, status, note]);
 
-    if (!session) return null
+    if (!session) return null;
 
     return (
-        <FlexiblePopup
-            open={open}
-            onClose={onClose}
-            data={[session]}
-            title={`Chăm sóc: ${session.name}`}
-            renderItemList={renderForm}
-            width={520}
-            globalZIndex={1200}
-        />
+        <>
+            {loading && <div className={styles.loadingOverlay}><Loading content="Đang xử lý..." /></div>}
+            <Noti
+                open={noti.open}
+                onClose={() => setNoti(prev => ({ ...prev, open: false }))}
+                status={noti.ok}
+                mes={noti.msg}
+                button={<button className='btn' style={{ width: 'calc(100% - 24px)', justifyContent: 'center' }} onClick={() => setNoti(prev => ({ ...prev, open: false }))}>Đóng</button>}
+            />
+            <FlexiblePopup
+                open={open}
+                onClose={onClose}
+                data={[session]}
+                title={`Chăm sóc: ${session.name}`}
+                renderItemList={renderForm}
+                width={520}
+                globalZIndex={1200}
+            />
+        </>
     )
 }
