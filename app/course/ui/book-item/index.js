@@ -8,7 +8,8 @@ const formatPrice = (price) => {
 };
 
 const ProgramCard = ({ program }) => {
-    const topicCount = Object.keys(program.Topics || {}).length;
+    const topicCount = Object.keys(program.Topics || {}).length
+
     return (
         <Link href={`/course/book/${program._id}`} className={styles.card}>
             <div className={styles.imageWrapper}>
@@ -23,7 +24,7 @@ const ProgramCard = ({ program }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <p className='text_6'>Mã chương trình: <span style={{ fontWeight: 400 }}>{program.ID}</span></p>
                     <p className='text_6'>Số chủ đề: <span style={{ fontWeight: 400 }}>{topicCount} chủ đề</span></p>
-                    <p className='text_6'>Số tiết học: <span style={{ fontWeight: 400 }}>{program.Topics.reduce((total, item) => total + (item.Period || 0), 0)} tiết</span></p>
+                    <p className='text_6'>Số tiết học: <span style={{ fontWeight: 400 }}>{program.Topics?.reduce((total, item) => total + (item.Period || 0), 0) || 0} tiết</span></p>
                     <p className='text_6'>Giá khóa học: <span style={{ fontWeight: 400 }}>{formatPrice(program.Price)}</span></p>
                 </div>
             </div>
