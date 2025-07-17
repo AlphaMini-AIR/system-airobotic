@@ -68,11 +68,11 @@ const CreateArea = () => {
 
             const result = await response.json();
 
-            if (result.status != 2) {
-                setNotification({ open: true, status: false, mes: result.mes });
+            if (result.status) {
+                setNotification({ open: true, status: true, mes: result.mes });
             } else {
                 router.refresh();
-                setNotification({ open: true, status: true, mes: result.mes });
+                setNotification({ open: true, status: false, mes: result.mes });
             }
             setIsPopupOpen(false)
         } catch (error) {

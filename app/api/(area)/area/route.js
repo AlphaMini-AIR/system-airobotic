@@ -26,7 +26,7 @@ export async function POST(request) {
         }
         const normRooms = rooms.map((r) => typeof r === 'string' ? { name: r.trim() } : { name: String(r.name).trim() })
         const newArea = await Area.create({ name: name.trim(), rooms: normRooms, color })
-        await Re_Area()
+        Re_Area()
         return jsonRes(201, { status: true, mes: 'Tạo khu vực thành công', data: newArea })
     } catch (err) {
         const code = err.message === 'Authentication failed' ? 401 : 500
