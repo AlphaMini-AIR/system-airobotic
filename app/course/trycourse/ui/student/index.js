@@ -24,16 +24,19 @@ export const attendInfo = (session, st) => {
 
 const careTxt = s => (s === 2 ? 'Đã theo học' : s === 0 ? 'Không theo' : 'Chưa chăm sóc')
 
-export default function Student({ data }) {
+// 1. Cập nhật props để nhận thêm teacher, area, và book
+export default function Student({ data, student, teacher = [], area = [], book = [] }) {
     const [q, setQ] = useState('')
-    const [detail, setDetail] = useState(null)
+    // 2. Chỉ lưu ID của session đang được chọn để tránh dữ liệu cũ
+    const [detailId, setDetailId] = useState(null)
     const [careOpen, setCareOpen] = useState(false)
     const [careSession, setCareSession] = useState(null)
 
-    /* build rows */
     const rows = useMemo(() => {
         const out = []
-        data.sessions.forEach(session => {
+        // Đảm bảo data.sessions là một mảng an toàn
+        const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+        sessions.forEach(session => {
             session.students.forEach(st => {
                 const careObj = st.statuses?.find(v => String(v.topic) === String(session._id))
                 out.push({
@@ -53,6 +56,14 @@ export default function Student({ data }) {
         const kw = q.toLowerCase()
         return out.filter(r => r.name.toLowerCase().includes(kw) || r.phone.includes(kw))
     }, [data.sessions, q])
+
+    // 3. Tìm đối tượng session đầy đủ từ `data.sessions` (luôn mới nhất) bằng ID đã lưu
+    const detailSession = useMemo(() => {
+        if (!detailId) return null;
+        // Đảm bảo data.sessions là một mảng an toàn
+        const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+        return sessions.find(s => String(s._id) === detailId);
+    }, [detailId, data.sessions]);
 
     /* counters */
     const total = rows.length
@@ -78,7 +89,6 @@ export default function Student({ data }) {
                         value={q}
                         onChange={e => setQ(e.target.value)}
                     />
-
                     <div className={styles.stats}>
                         <span className={styles.stat} style={{ background: 'var(--main_b)' }}>Tổng: {total}</span>
                         <span className={styles.stat} style={{ background: 'var(--green)' }}>Theo học: {follow}</span>
@@ -96,8 +106,8 @@ export default function Student({ data }) {
                                 style={r.careStatus === 2 ? { opacity: .55, background: 'var(--green)' } : undefined}
                                 onClick={() => {
                                     setCareSession({
-                                        ...r.session,                    // toàn bộ thông tin buổi
-                                        ...r.studentRaw,                // toàn bộ thông tin học sinh
+                                        ...r.session,
+                                        ...r.studentRaw,
                                         attendLabel: r.attend.label,
                                         careStatus: r.careStatus,
                                         note: r.note
@@ -106,39 +116,36 @@ export default function Student({ data }) {
                                 }}
                             >
                                 {r.careStatus === 2 && <span className={styles.cared}>Đã chăm sóc</span>}
-
-                                <div className={styles.gr}>
-                                    <p className='text_6_400'>Tên học sinh</p>
-                                    <p className='text_6'>{r.name}</p>
-                                </div>
-
-                                <div className={styles.gr}>
-                                    <p className='text_6_400'>Trạng thái học thử</p>
-                                    <p className='text_6'>{r.attend.label}</p>
-                                </div>
-
-                                <div className={styles.gr}>
-                                    <p className='text_6_400'>Trạng thái chăm sóc</p>
-                                    <p className='text_6'>{careTxt(r.careStatus)}</p>
-                                </div>
+                                <div className={styles.gr}><p className='text_6_400'>Tên học sinh</p><p className='text_6'>{r.name}</p></div>
+                                <div className={styles.gr}><p className='text_6_400'>Trạng thái học thử</p><p className='text_6'>{r.attend.label}</p></div>
+                                <div className={styles.gr}><p className='text_6_400'>Trạng thái chăm sóc</p><p className='text_6'>{careTxt(r.careStatus)}</p></div>
                             </div>
 
                             {/* session column */}
                             <div
                                 className={styles.sessionInfo}
-                                onClick={() => setDetail(r.session)}
+                                onClick={() => setDetailId(r.session._id)}
                             >
                                 <p className='text_6'>Chủ đề: {r.session.topic?.Name || 'Chưa có'}</p>
-                                <p className='text_6_400'>
-                                    Thời gian: {r.session.time} – {formatDate(new Date(r.session.day))}
-                                </p>
+                                <p className='text_6_400'>Thời gian: {r.session.time} – {formatDate(new Date(r.session.day))}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {detail && <SessionPopup open onClose={() => setDetail(null)} session={detail} />}
+            {/* 4. Truyền đầy đủ props cho SessionPopup */}
+            {detailSession && (
+                <SessionPopup
+                    open
+                    onClose={() => setDetailId(null)}
+                    session={detailSession}
+                    student={student}
+                    teacher={teacher}
+                    area={area}
+                    book={book}
+                />
+            )}
 
             {careSession && (
                 <CareSessionPopup

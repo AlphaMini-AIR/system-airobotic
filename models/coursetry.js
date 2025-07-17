@@ -13,7 +13,7 @@ const TrialStudentStatusSchema = new Schema(
     {
         studentId: { type: String, required: true },
         checkin: { type: Boolean, default: false },
-        cmt: { type: String, default: '' },
+        cmt: { type: Array, default: [] },
         images: { type: [ImageSchema], default: [] },
         note: { type: String, default: '' },
     },

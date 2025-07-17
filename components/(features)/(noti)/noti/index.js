@@ -1,20 +1,18 @@
 'use client';
 
-import Button from '@/components/(ui)/(button)/button';
 import air from './index.module.css'
 
-export default function Noti({ open, onClose, status, mes, button }) {
+export default function Noti({ open, onClose, status, mes, button, width }) {
   if (!open) return null;
 
   return (
     <div
-
       style={{
         position: 'fixed',
         top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
+        left: width ? 'calc(-100vw + ' + width + 'px)' : '0',
+        width: '100vw',
+        height: '100vh',
         backgroundColor: 'rgba(0,0,0,0.5)',
         display: 'flex',
         alignItems: 'center',
@@ -57,7 +55,7 @@ export default function Noti({ open, onClose, status, mes, button }) {
         <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
           {status ? <IconSuccess /> : <IconFailure />}
         </div>
-        <p style={{ padding: '0 16px 8px 16px', textAlign: 'center' , marginTop: -12 }}>
+        <p style={{ padding: '0 16px 8px 16px', textAlign: 'center', marginTop: -12 }}>
           {mes}
         </p>
         <div>

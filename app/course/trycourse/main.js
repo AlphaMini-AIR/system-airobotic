@@ -18,12 +18,13 @@ export default function CourseTryMain({ data, book, student, teacher, area }) {
     const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
     const weekSessions = useMemo(() => {
         const weekEnd = addDays(weekStart, 6)
-        return data.sessions.filter(s => {
+        return data.sessions?.filter(s => {
             const day = new Date(s.day)
             return day >= weekStart && day <= weekEnd
         })
     }, [data.sessions, weekStart])
 
+    
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
             <Calendar data={{ sessions: weekSessions }} time={weekStart} />

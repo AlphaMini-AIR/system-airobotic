@@ -10,6 +10,7 @@ import styles from './index.module.css'
 const buildDate = (d, h, m) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m)
 
 const statusOf = s => {
+    if (!s.time || !s.day) return { label: 'Lỗi dữ liệu', color: styles.gray, weight: 3, end: new Date() };
     const [st, et] = s.time.split('-')
     const [sh, sm] = st.split(':').map(Number)
     const [eh, em] = et.split(':').map(Number)
@@ -23,10 +24,10 @@ const statusOf = s => {
     return { label: 'Đang diễn ra', color: styles.blue, weight: 1, end }
 }
 
-export default function CourseTryFilter({ data, teacher = [] }) {
+export default function CourseTryFilter({ data, student, teacher = [], area = [], book = [] }) {
     const [statusFilter, setStatusFilter] = useState('all')
     const [teacherFilter, setTeacherFilter] = useState('all')
-    const [activeSession, setActiveSession] = useState(null)
+    const [activeSessionId, setActiveSessionId] = useState(null)
 
     const statusText = {
         all: 'Tất cả trạng thái',
@@ -70,7 +71,6 @@ export default function CourseTryFilter({ data, teacher = [] }) {
 
     const sessionsSorted = useMemo(() => {
         const sessions = Array.isArray(data?.sessions) ? data.sessions : []
-
         return sessions
             .map(s => ({ ...s, _st: statusOf(s) }))
             .filter(s => {
@@ -85,13 +85,22 @@ export default function CourseTryFilter({ data, teacher = [] }) {
             )
     }, [data, statusFilter, teacherFilter])
 
+    const activeSession = useMemo(() => {
+        if (!activeSessionId) return null
+        return sessionsSorted.find(s => s._id === activeSessionId)
+    }, [activeSessionId, sessionsSorted])
+
     return (
         <>
             {activeSession && (
                 <SessionPopup
                     open
-                    onClose={() => setActiveSession(null)}
+                    onClose={() => setActiveSessionId(null)}
                     session={activeSession}
+                    student={student}
+                    teacher={teacher}
+                    area={area}
+                    book={book}
                 />
             )}
 
@@ -116,34 +125,12 @@ export default function CourseTryFilter({ data, teacher = [] }) {
                     />
                 ) : (
                     sessionsSorted.map(s => (
-                        <div
-                            key={s._id}
-                            className={styles.items}
-                            onClick={() => setActiveSession(s)}
-                        >
+                        <div key={s._id} className={styles.items} onClick={() => setActiveSessionId(s._id)}>
                             <div className={`${styles.badge} ${s._st.color}`}>{s._st.label}</div>
-
-                            <div className={styles.row}>
-                                <p className='text_6'>Chủ đề:</p>
-                                <span className='text_6_400'>{s.topic?.Name}</span>
-                            </div>
-
-                            <div className={styles.row}>
-                                <p className='text_6'>Số lượng học sinh:</p>
-                                <span className='text_6_400'>{s.students.length}</span>
-                            </div>
-
-                            <div className={styles.row}>
-                                <p className='text_6'>Thời gian:</p>
-                                <span className='text_6_400'>
-                                    {formatDate(new Date(s.day))} – {s.time} – {s.room?.name}
-                                </span>
-                            </div>
-
-                            <div className={styles.row}>
-                                <p className='text_6'>Giáo viên:</p>
-                                <span className='text_6_400'>{s.teacher?.name}</span>
-                            </div>
+                            <div className={styles.row}><p className='text_6'>Chủ đề:</p><span className='text_6_400'>{s.topic?.Name || '---'}</span></div>
+                            <div className={styles.row}><p className='text_6'>Số lượng học sinh:</p><span className='text_6_400'>{s.students.length}</span></div>
+                            <div className={styles.row}><p className='text_6'>Thời gian:</p><span className='text_6_400'>{formatDate(new Date(s.day))} – {s.time} – {s.room?.name || '---'}</span></div>
+                            <div className={styles.row}><p className='text_6'>Giáo viên:</p><span className='text_6_400'>{s.teacher?.name || '---'}</span></div>
                         </div>
                     ))
                 )}

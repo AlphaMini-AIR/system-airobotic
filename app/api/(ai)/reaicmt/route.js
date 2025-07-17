@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import mongoose from 'mongoose'
 import PostCourse from '@/models/course'
+import TrialCourse from '@/models/coursetry'
 import connectDB from '@/config/connectDB'
 import jsonRes, { corsHeaders } from '@/utils/response'
 
@@ -34,7 +35,7 @@ export async function POST(req) {
         if (courseId && studentId && lessonId) {
             await connectDB();
 
-            const result = await PostCourse.updateOne(
+            let result = await PostCourse.updateOne(
                 { _id: courseId },
                 { $set: { 'Student.$[stu].Learn.$[les].CmtFn': output } },
                 {
@@ -44,9 +45,17 @@ export async function POST(req) {
                     ]
                 }
             );
-
-            if (result.matchedCount === 0) console.warn('Database update skipped: Course or student not found.')
-            else if (result.modifiedCount === 0) console.warn(`Database update skipped: Lesson with _id ${lessonId} not found for student ${studentId}.`)
+            if (result.matchedCount === 0) {
+                result = await TrialCourse.updateOne(
+                    { _id: courseId },
+                    { $set: { 'sessions.$[ses].students.$[stu].cmt': output } },
+                    { arrayFilters: [{ 'ses._id': new mongoose.Types.ObjectId(lessonId) }, { 'stu.studentId': studentId }] }
+                );
+                if (result.matchedCount === 0) console.warn('Database update skipped: Course or student not found.')
+                else if (result.modifiedCount === 0) console.warn(`Database update skipped: Lesson with _id ${lessonId} not found for student ${studentId}.`)
+            } else if (result.modifiedCount === 0) {
+                console.warn(`Database update skipped: Lesson with _id ${lessonId} not found for student ${studentId}.`)
+            }
         }
         return jsonRes(200, { status: true, mes: 'success', data: output })
 

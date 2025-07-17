@@ -28,19 +28,21 @@ const roomName = async rid =>
 const buildStudents = (raw, mapById, lessonId) =>
     raw.map(st => {
         const info = mapById.get(st.studentId || st.ID) || {}
-        const a = st.attendance || st            // khóa chính thức có attendance riêng
+        const a = st.attendance || st        
+        console.log(a,1);
+        
         return {
             _id: info._id ?? null,
             ID: info.ID ?? st.studentId ?? '–––',
             Name: info.Name ?? 'Không tên',
             Avt: info.Avt ?? null,
             attendance: {
-                Checkin: a.Checkin ?? (st.checkin ? 1 : 0),
-                Cmt: a.Cmt ?? [],
-                CmtFn: a.CmtFn ?? '',
-                Note: a.Note ?? st.note ?? '',
+                Checkin: a.checkin ?? (st.checkin ? 1 : 0),
+                Cmt: a.cmt ?? [],
+                CmtFn: a.cmtFn ?? '',
+                Note: a.note ?? st.note ?? '',
                 Lesson: lessonId,
-                Image: a.Image ?? st.images ?? []
+                Image: a.image ?? st.images ?? []
             }
         }
     })
@@ -115,7 +117,6 @@ export async function GET(_req, { params }) {
             return NextResponse.json({ success: false, message: 'Không tìm thấy buổi học.' }, { status: 404 })
 
         const s = t.sessions[0]
-        console.log(s);
 
         const [topic2, teachers2, studs2, room2] = await Promise.all([
             topicById(s.topicId),
