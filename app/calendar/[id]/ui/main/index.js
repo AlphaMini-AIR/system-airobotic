@@ -27,6 +27,8 @@ const updateAttendance = async (courseId, sessionId, attendanceData) => {
 
 export default function Main({ data }) {
     const { course, session, students } = data;
+    console.log(students);
+    
     const [showComment, setShowComment] = useState(false);
     const [selStu, setSelStu] = useState(null);
     const [att, setAtt] = useState({});
@@ -42,7 +44,7 @@ export default function Main({ data }) {
 
     const router = useRouter();
 
-    const isTrialCourse = course.type === 'trial';
+    const isTrialCourse = course?.type === 'trial' || false;
 
     const roll = (students || []).map(stu => ({
         ID: stu.ID,
@@ -214,13 +216,11 @@ export default function Main({ data }) {
                                     </div>
                                     {roll.map(stu => {
                                         if (stu.Checkin == '-1') return null;
-
+                                        console.log(stu);
+                                        
                                         const currentCheckinValue = cur(stu);
                                         let displayValue = currentCheckinValue;
-
-                                        // Ánh xạ giá trị checkin sang giá trị hiển thị cho khóa học thử
                                         if (isTrialCourse) {
-                                            // giá trị 1 là true (có mặt), các giá trị khác (0, 2, 3) là false (vắng mặt)
                                             displayValue = (currentCheckinValue == 1) ? '1' : '2';
                                         }
 
@@ -235,7 +235,7 @@ export default function Main({ data }) {
                                                     {attendanceOptions.map(v => (
                                                         <label key={v} style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'pointer' }}>
                                                             <input type="radio" name={`att_${stu.ID}`} value={v}
-                                                                checked={displayValue == v} // Sử dụng giá trị hiển thị đã được xử lý
+                                                                checked={displayValue == v} 
                                                                 onChange={() => changeAtt(stu.ID, v)}
                                                                 style={{ transform: 'scale(1.1)', cursor: 'pointer' }} />
                                                         </label>

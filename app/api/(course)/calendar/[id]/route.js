@@ -27,22 +27,22 @@ const roomName = async rid =>
 
 const buildStudents = (raw, mapById, lessonId) =>
     raw.map(st => {
-        const info = mapById.get(st.studentId || st.ID) || {}
-        const a = st.attendance || st        
-        console.log(a,1);
+        console.log(st);
         
+        const info = mapById.get(st.studentId || st.ID) || {}
+        const a = st.attendance || st
         return {
             _id: info._id ?? null,
             ID: info.ID ?? st.studentId ?? '–––',
             Name: info.Name ?? 'Không tên',
             Avt: info.Avt ?? null,
             attendance: {
-                Checkin: a.checkin ?? (st.checkin ? 1 : 0),
-                Cmt: a.cmt ?? [],
-                CmtFn: a.cmtFn ?? '',
-                Note: a.note ?? st.note ?? '',
+                Checkin: a.Checkin ?? (st.checkin ? 1 : 0),
+                Cmt: a.Cmt ?? a.cmt ?? [],
+                CmtFn: a.CmtFn ?? st.cmtFn ?? '',
+                Note: a.Note ?? st.note ?? '',
                 Lesson: lessonId,
-                Image: a.image ?? st.images ?? []
+                Image: a.Image ?? st.images ?? []
             }
         }
     })
