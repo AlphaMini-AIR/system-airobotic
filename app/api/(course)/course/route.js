@@ -10,6 +10,9 @@ import authenticate from '@/utils/authenticate';
 const APPSCRIPT_URL =
     'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
 
+// =================================================================
+// HÀM GET (KHÔNG THAY ĐỔI)
+// =================================================================
 export async function GET() {
     try {
         await connectDB();
@@ -75,8 +78,10 @@ export async function GET() {
         );
     }
 }
+
 export async function POST(request) {
     try {
+        // --- Phần xác thực và kiểm tra quyền (không đổi) ---
         const authResult = await authenticate(request);
         if (!authResult?.user) {
             return NextResponse.json({ status: 0, mes: 'Xác thực không thành công.' }, { status: 401 });
@@ -95,9 +100,47 @@ export async function POST(request) {
 
         await connectDB();
 
+        // --- BẮT ĐẦU LOGIC MỚI SỬ DỤNG AGGREGATION ---
+
+        /* 1. Lấy danh sách tên phòng học duy nhất từ request body */
+        const roomNames = [...new Set(
+            Detail
+                .map(d => d.Room)
+                .filter(name => typeof name === 'string' && name.trim() !== '')
+        )];
+
+        /* 2. Dùng Aggregation Pipeline để tìm _id của các phòng */
+        const roomNameToIdMap = new Map();
+        if (roomNames.length > 0) {
+            const pipeline = [
+                // Tách mỗi phần tử trong mảng 'rooms' thành một document riêng
+                { $unwind: '$rooms' },
+                // Lọc các document có tên phòng nằm trong danh sách cần tìm
+                { $match: { 'rooms.name': { $in: roomNames } } },
+                // Định dạng lại output chỉ lấy tên và _id của phòng
+                {
+                    $project: {
+                        _id: 0,
+                        name: '$rooms.name',
+                        roomId: '$rooms._id'
+                    }
+                }
+            ];
+
+            // Thực thi pipeline
+            const foundRooms = await PostArea.aggregate(pipeline);
+
+            // Tạo map để tra cứu: 'Tên phòng' -> ObjectId('...')
+            foundRooms.forEach(room => {
+                roomNameToIdMap.set(room.name, room.roomId);
+            });
+        }
+        // --- KẾT THÚC LOGIC MỚI ---
+
+
+        // --- Phần tạo ID khóa học (không đổi) ---
         const yearPrefix = new Date().getFullYear().toString().slice(-2);
         const coursePrefix = `${yearPrefix}${code.trim().toUpperCase()}`;
-
         const lastCourse = await PostCourse.findOne({ ID: { $regex: `^${coursePrefix}` } })
             .sort({ ID: -1 }).select('ID').lean();
 
@@ -108,6 +151,8 @@ export async function POST(request) {
         }
         const newCourseID = `${coursePrefix}${newSequence.toString().padStart(3, '0')}`;
 
+
+        // --- Phần gọi Google Apps Script (không đổi) ---
         const topicString = Detail.map(d => d.Day).join('|');
         let imageUrls = [];
         try {
@@ -122,14 +167,18 @@ export async function POST(request) {
             console.error('[APPSCRIPT_ERROR]', scriptError.message);
         }
 
+        // --- Chuẩn hóa dữ liệu chi tiết buổi học (không đổi) ---
         const normalizedDetail = Detail.map((d, i) => {
             if (!d.Topic || !mongoose.Types.ObjectId.isValid(d.Topic) || !d.Day) {
                 throw new Error(`Buổi học thứ ${i + 1} thiếu Topic hoặc Day, hoặc ID không hợp lệ.`);
             }
+
+            const roomId = d.Room ? roomNameToIdMap.get(d.Room.trim()) : null;
+
             return {
                 Topic: d.Topic,
                 Day: new Date(d.Day),
-                Room: d.Room || '',
+                Room: roomId || null,
                 Time: d.Time || '',
                 Teacher: mongoose.Types.ObjectId.isValid(d.Teacher) ? d.Teacher : null,
                 TeachingAs: mongoose.Types.ObjectId.isValid(d.TeachingAs) ? d.TeachingAs : null,
@@ -137,13 +186,13 @@ export async function POST(request) {
             };
         });
 
+        // --- Phần tạo và lưu dữ liệu khóa học (không đổi) ---
         const newCourseData = {
             ID: newCourseID,
             Detail: normalizedDetail,
-            Student: [], // Luôn bắt đầu với mảng rỗng
+            Student: [],
         };
 
-        // Chỉ thêm các trường tùy chọn vào object nếu chúng được cung cấp và hợp lệ
         if (Book && mongoose.Types.ObjectId.isValid(Book)) newCourseData.Book = Book;
         if (Area && mongoose.Types.ObjectId.isValid(Area)) newCourseData.Area = Area;
         if (TeacherHR && mongoose.Types.ObjectId.isValid(TeacherHR)) newCourseData.TeacherHR = TeacherHR;
