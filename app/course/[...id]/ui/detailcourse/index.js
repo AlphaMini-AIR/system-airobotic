@@ -1,4 +1,3 @@
-// THÊM MỚI: Chuyển đổi thành Client Component và import hooks cần thiết
 "use client";
 import { useState, useMemo } from 'react';
 import ResponsiveGrid from '@/components/(ui)/grid';
@@ -17,6 +16,7 @@ import CommentPopup from '../cmt';
 import { formatDate } from '@/function';
 import ImageComponent from '@/components/(ui)/(image)';
 import BoxFile from '@/components/(ui)/(box)/file';
+import Noti from '@/components/(features)/(noti)/noti';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -24,7 +24,6 @@ const SortIcon = ({ direction }) => {
     }
     return direction === 'ascending' ? <span style={{ width: 16, display: 'inline-block' }}>🔼</span> : <span style={{ width: 16, display: 'inline-block' }}>🔽</span>;
 };
-
 
 export default function Detail({ data = [], params, book, users, studentsx }) {
     let allImages = []
@@ -34,7 +33,6 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
         allImages = data.Detail?.flatMap(lesson => lesson.DetailImage || []);
     }
 
-
     const images = allImages?.filter(item => item.type === 'image');
     const videos = allImages?.filter(item => item.type === 'video');
 
@@ -43,8 +41,13 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
 
     const listColumnsConfig = { mobile: 3, tablet: 5, desktop: 6 };
 
-
     const [loading, setLoading] = useState(false);
+    // THÊM MỚI: State để quản lý thông báo
+    const [notification, setNotification] = useState({
+        open: false,
+        status: true,
+        mes: ''
+    });
     const router = useRouter();
     const today = new Date();
     const currentHour = today.getHours();
@@ -52,61 +55,137 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     // THÊM MỚI: State để quản lý trạng thái sắp xếp
     const [sortConfig, setSortConfig] = useState({ key: 'Name', direction: 'ascending' });
 
-    const calculateCourseProgress = (data, today, currentHour) => {
-        let done = 0;
-        let total = 0;
+    // THÊM MỚI: Hàm xử lý khi bấm nút "Xác nhận hoàn thành"
+    const handleCompleteCourse = async () => {
+        if (!td.isCompleted) return;
 
-        if (!data || !Array.isArray(data.Detail)) {
-            return { lessonsDone: 0, totalLessons: 0, percent: 0 };
+        setLoading(true);
+
+        try {
+            const response = await fetch(`/api/course/${data.ID}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Status: true }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                setNotification({
+                    open: true,
+                    status: true,
+                    mes: result.mes || 'Xác nhận hoàn thành khóa học thành công!'
+                });
+                router.refresh();
+            } else {
+                throw new Error(result.mes || 'Có lỗi xảy ra, vui lòng thử lại.');
+            }
+        } catch (error) {
+            setNotification({
+                open: true,
+                status: false,
+                mes: error.message
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const calculateCourseProgress = (data, today) => {
+        // --- BƯỚC 1: KIỂM TRA DỮ LIỆU ĐẦU VÀO ---
+        if (!data || !Array.isArray(data.Detail) || !Array.isArray(data.Student)) {
+            return {
+                isCompleted: false,
+                notCheckedInCount: 0,
+                missingCommentCount: 0,
+                failReason: 'Dữ liệu khóa học không hợp lệ.'
+            };
         }
 
-        const details = data.Detail;
         const todayStart = new Date(today);
-        todayStart.setHours(0, 0, 0, 0);
-        details.forEach((lesson) => {
-            if (!lesson || typeof lesson.Lesson !== 'number' || typeof lesson.Day !== 'string') { return }
+        todayStart.setHours(0, 0, 0, 0); // Đặt về đầu ngày để so sánh
 
-            total += lesson.Lesson;
-
-            let lessonDate;
-            if (lesson.Day.includes('/')) {
-                const parts = lesson.Day.split('/');
-                if (parts.length !== 3) return;
-                const [dd, mm, yyyy] = parts;
-                lessonDate = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-            }
-            else if (lesson.Day.includes('-')) {
-                lessonDate = new Date(`${lesson.Day}T00:00:00`);
-            }
-            else {
-                return;
+        // --- BƯỚC 2: KIỂM TRA TẤT CẢ CÁC BUỔI HỌC TRONG `data.Detail` ---
+        for (const lesson of data.Detail) {
+            // Điều kiện 1.1: Ngày của buổi học phải ở trong quá khứ
+            const lessonDate = new Date(lesson.Day);
+            if (isNaN(lessonDate.getTime()) || lessonDate > todayStart) {
+                return {
+                    isCompleted: false,
+                    notCheckedInCount: 0,
+                    missingCommentCount: 0,
+                    failReason: `Còn buổi học trong tương lai (${formatDate(lessonDate)}).`
+                };
             }
 
-            if (isNaN(lessonDate.getTime())) {
-                return;
-            }
+            // Điều kiện 1.2: Phải có hình ảnh minh chứng cho buổi học
+            if (!lesson.DetailImage || lesson.DetailImage.length === 0) {
 
-            if (todayStart > lessonDate) {
-                done += lesson.Lesson;
-            } else if (todayStart.getTime() === lessonDate.getTime()) {
-                if (typeof lesson.Time === 'string' && lesson.Time.includes(':')) {
-                    const hourStart = parseInt(lesson.Time.split(':')[0], 10);
-                    if (!isNaN(hourStart) && hourStart < currentHour) {
-                        done += lesson.Lesson;
+                return {
+                    isCompleted: false,
+                    notCheckedInCount: 0,
+                    missingCommentCount: 0,
+                    failReason: `Buổi học ngày ${formatDate(lessonDate)} thiếu hình ảnh.`
+                };
+            }
+        }
+
+        // --- BƯỚC 3: KIỂM TRA DỮ LIỆU HỌC TẬP CỦA TỪNG HỌC SINH ---
+        let notCheckedInCount = 0;
+        let missingCommentCount = 0;
+        const lessonIds = new Set(data.Detail.map(d => d._id.toString())); // Lấy danh sách ID các buổi học của khóa
+
+        // Duyệt qua từng học sinh trong khóa
+        for (const student of data.Student) {
+            // Duyệt qua lịch sử học tập của học sinh đó
+            if (student.Learn && Array.isArray(student.Learn)) {
+                // Chỉ xét những buổi học có trong khóa này
+                const relevantLearnHistory = student.Learn.filter(learnItem => lessonIds.has(learnItem.Lesson.toString()));
+
+                for (const learnItem of relevantLearnHistory) {
+                    // Điều kiện 2: Đếm số lượt chưa điểm danh (checkin = 0)
+                    if (learnItem.Checkin === 0) {
+                        notCheckedInCount++;
+                    }
+
+                    // Điều kiện 3: Đếm số lượt đi học (checkin = 1) nhưng chưa có nhận xét
+                    if (learnItem.Checkin === 1 && (!learnItem.Cmt || learnItem.Cmt.length === 0)) {
+                        missingCommentCount++;
                     }
                 }
             }
-        });
+        }
 
+        // --- BƯỚC 4: TỔNG KẾT VÀ TRẢ VỀ KẾT QUẢ ---
+        if (notCheckedInCount > 0) {
+            return {
+                isCompleted: false,
+                notCheckedInCount,
+                missingCommentCount,
+                failReason: `Còn ${notCheckedInCount} lượt học sinh chưa được điểm danh.`
+            };
+        }
+
+        if (missingCommentCount > 0) {
+            return {
+                isCompleted: false,
+                notCheckedInCount,
+                missingCommentCount,
+                failReason: `Còn ${missingCommentCount} lượt nhận xét cần hoàn thành.`
+            };
+        }
+
+        // Nếu tất cả điều kiện đều được thỏa mãn
         return {
-            lessonsDone: done,
-            totalLessons: total,
-            percent: total > 0 ? Math.round((done / total) * 100) : 0,
+            isCompleted: true,
+            notCheckedInCount: 0,
+            missingCommentCount: 0,
+            failReason: 'Khóa học đã hoàn thành đủ điều kiện.'
         };
     };
     let td = calculateCourseProgress(data, today, currentHour)
 
-    // CHỈNH SỬA: Sử dụng useMemo để sắp xếp danh sách học sinh
+
     const sortedStudents = useMemo(() => {
         const enrichedStudents = enrichStudents(data);
 
@@ -231,7 +310,6 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
         }
 
     }
-    console.log(slide);
 
     return (
         <div className={styles.container}>
@@ -298,7 +376,6 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                     <span className='text_6'>Địa điểm học :</span>
                                     <span className="text_6_400"> {lesson.Room || 'Trống'} - {data.Area.name || 'Trống'}</span>
                                 </div>
-
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                     <Svg_Map w={14} h={14} c='var(--text-primary)' />
                                     <span className='text_6'>Trạng thái lớp học :</span>
@@ -321,38 +398,59 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                     <path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z" /></svg>
                                 <p className='text_6_400' style={{ color: 'white' }}>Tải lại dữ liệu</p>
                             </div>
-                            {params.length > 1 &&
+                            {(params.length > 1 && !data.Status) &&
                                 <a href={`https://sys.airobotic.edu.vn/calendar/${params[1]}`} className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }}>
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width={16} height={16} fill='white'>
                                         <path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 48 0c26.5 0 48 21.5 48 48l0 48L0 160l0-48C0 85.5 21.5 64 48 64l48 0 0-32c0-17.7 14.3-32 32-32zM0 192l448 0 0 272c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 192zM312 376c13.3 0 24-10.7 24-24s-10.7-24-24-24l-176 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l176 0z" /></svg>
                                     <p className='text_6_400' style={{ color: 'white' }}>Điểm danh bù</p>
                                 </a>}
                             {params.length == 1 &&
-                                <div className='btn' style={{ marginTop: 8, borderRadius: 5, background: td.percent == 100 ? 'var(--main_d)' : 'var(--border-color)' }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
-                                        <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
-                                    </svg>
-                                    <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
-                                </div>
+                                <>
+                                    {data.Status ?
+                                        <div
+                                            className='btn'
+                                            style={{
+                                                marginTop: 8,
+                                                borderRadius: 5,
+                                                background: 'var(--green)',
+                                                cursor: 'not-allowed',
+                                                transform: 'none'
+                                            }}
+
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
+                                                <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
+                                            </svg>
+                                            <p className='text_6_400' style={{ color: 'white' }}>Đã hoàn thành</p>
+                                        </div> : <div
+                                            className='btn'
+                                            style={{
+                                                marginTop: 8,
+                                                borderRadius: 5,
+                                                background: td.isCompleted ? 'var(--main_d)' : 'var(--border-color)',
+                                                cursor: td.isCompleted ? 'pointer' : 'not-allowed'
+                                            }}
+                                            onClick={handleCompleteCourse}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width={16} height={16} fill='white'>
+                                                <path d="M96 80c0-26.5 21.5-48 48-48l288 0c26.5 0 48 21.5 48 48l0 304L96 384 96 80zm313 47c-9.4-9.4-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L409 161c9.4-9.4 9.4-24.6 0-33.9zM0 336c0-26.5 21.5-48 48-48l16 0 0 128 448 0 0-128 16 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48L48 480c-26.5 0-48-21.5-48-48l0-96z" />
+                                            </svg>
+                                            <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
+                                        </div>}
+                                </>
+
                             }
                         </div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', width: 180, gap: 8, flexWrap: 'wrap', height: 150 }}>
-                    <div className={styles.Boxk}>
-                        <Student course={data} student={sortedStudents} />
-                    </div>
-                    <div className={styles.Boxk}>
-                        <Calendar course={data} student={sortedStudents} />
-                    </div>
-                    <div className={styles.Boxk}>
-                        <AnnounceStudent course={data} />
-                    </div>
-                    <div className={styles.Boxk}>
-                        <Report course={data} student={sortedStudents} />
-                    </div>
+                    <div className={styles.Boxk}><Student course={data} student={sortedStudents} /></div>
+                    <div className={styles.Boxk}><Calendar course={data} student={sortedStudents} /></div>
+                    <div className={styles.Boxk}><AnnounceStudent course={data} /></div>
+                    <div className={styles.Boxk}><Report course={data} student={sortedStudents} /></div>
                 </div>
             </div>
+
             <div className={styles.box}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <div style={{ padding: 16, display: 'flex' }}>
@@ -378,9 +476,9 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                         })}
                     </div>
                     {params.length > 1 ? detaillesson : detailcourse}
-
                 </div>
             </div>
+
             <div className={styles.box}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <p style={{ padding: 16, borderBottom: 'thin solid var(--border-color)' }} className='text_4'>Hình ảnh</p>
@@ -393,6 +491,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     </div>
                 </div>
             </div>
+
             <div className={styles.box}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <p style={{ padding: 16, borderBottom: 'thin solid var(--border-color)' }} className='text_4'>Video thuyết trình</p>
@@ -405,6 +504,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     </div>
                 </div>
             </div>
+
             {params.length > 1 &&
                 <div className={styles.box}>
                     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -417,9 +517,17 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     </div>
                 </div>
             }
+
             {loading && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                 <Loading />
             </div>}
+
+            <Noti
+                open={notification.open}
+                onClose={() => setNotification({ ...notification, open: false })}
+                status={notification.status}
+                mes={notification.mes}
+            />
         </div>
     )
 }
@@ -434,9 +542,7 @@ const title = [
     { content: 'Thêm', flex: .5, data: 'More', align: 'center' },
 ]
 
-
 function enrichStudents(course, now = new Date()) {
-    // Kiểm tra đầu vào an toàn
     if (!course || !course.Detail) {
         return [];
     }
@@ -447,7 +553,7 @@ function enrichStudents(course, now = new Date()) {
                 if (!Day) return false;
                 return new Date(Day) <= now;
             })
-            .map(({ _id }) => _id.toString()) // Dùng _id thay vì ID
+            .map(({ _id }) => _id.toString())
     );
 
     const totalPastLessons = pastLessonIds.size;
@@ -464,7 +570,6 @@ function enrichStudents(course, now = new Date()) {
                 const { Lesson, Checkin } = learnItem;
                 const lessonIdStr = Lesson?.toString();
 
-                // Bỏ qua nếu buổi học chưa diễn ra hoặc không có ID
                 if (!lessonIdStr || !pastLessonIds.has(lessonIdStr)) {
                     continue;
                 }
@@ -478,7 +583,6 @@ function enrichStudents(course, now = new Date()) {
         const [f, m, k, c] = counts;
         let b = totalPastLessons - m - k;
 
-        // Giới hạn giá trị của b từ 0 đến 2
         if (b > 2) b = 2;
         else if (b < 0) b = 0;
 

@@ -9,7 +9,6 @@ const ResponsiveGrid = ({ items = [], columns, type = 'grid', style = {}, width 
     const [isPopupOpen, setPopupOpen] = useState(false);
     const isListMode = type === 'list';
     const maxItemsOnList = columns.desktop;
-    console.log(maxItemsOnList, items.length);
 
     const shouldShowMoreButton = isListMode && items.length > maxItemsOnList;
     const itemsToRender = shouldShowMoreButton

@@ -7,6 +7,8 @@ import PostStudent from '@/models/student';
 import User from '@/models/users';
 import { NextResponse } from 'next/server';
 import { Types } from 'mongoose';
+import { Re_course_all, Re_course_one } from '@/data/course';
+import authenticate from '@/utils/authenticate';
 
 export async function GET(request, { params }) {
     const { id } = await params;
@@ -113,6 +115,77 @@ export async function GET(request, { params }) {
         return NextResponse.json(
             { status: 1, mes: isCastError ? 'ID không hợp lệ.' : 'Lỗi từ máy chủ.', data: null },
             { status: isCastError ? 400 : 500 }
+        );
+    }
+}
+
+export async function PATCH(request, { params }) {
+    const { id } = params;
+
+    if (!id) {
+        return NextResponse.json(
+            { status: 1, mes: 'Thiếu ID của khóa học.', data: null },
+            { status: 400 }
+        );
+    }
+
+    try {
+        const { user, body } = await authenticate(request);
+        await connectDB();
+
+        if (Object.keys(body).length === 0) {
+            return NextResponse.json(
+                { status: 1, mes: 'Không có dữ liệu để cập nhật.', data: null },
+                { status: 400 }
+            );
+        }
+
+        const course = await PostCourse.findOne({ ID: id }).select('TeacherHR').lean();
+
+        if (!course) {
+            return NextResponse.json(
+                { status: 1, mes: 'Không tìm thấy khóa học.', data: null },
+                { status: 404 }
+            );
+        }
+
+        const isTeacherHR = course.TeacherHR.toString() === user.id;
+        const isAdmin = user.role && user.role.includes('Admin');
+
+        if (!isAdmin && !isTeacherHR) {
+            return NextResponse.json(
+                { status: 1, mes: 'Bạn không phải giáo viên chủ nhiệm của lớp này.', data: null },
+                { status: 403 } 
+            );
+        }
+
+        delete body.ID;
+        const updatedCourse = await PostCourse.findOneAndUpdate(
+            { ID: id },
+            { $set: body },
+            { new: true }
+        );
+
+        if (!updatedCourse) {
+            return NextResponse.json(
+                { status: 1, mes: 'Không tìm thấy khóa học để cập nhật.', data: null },
+                { status: 404 }
+            );
+        }
+
+        Re_course_all();
+        Re_course_one(id);
+
+        return NextResponse.json(
+            { status: 2, mes: 'Cập nhật khóa học thành công.', data: null },
+            { status: 200 }
+        );
+
+    } catch (error) {
+        console.error('[COURSE_UPDATE_ERROR]', error);
+        return NextResponse.json(
+            { status: 1, mes: error.message, data: null },
+            { status: 500 }
         );
     }
 }

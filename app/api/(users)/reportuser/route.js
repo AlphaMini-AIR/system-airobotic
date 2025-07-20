@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import connectToDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
-import '@/models/users';
+import '@/models/users'; // Đảm bảo model 'user' được đăng ký
 
 export async function GET() {
     try {
         await connectToDB();
 
-        // Lấy thời gian hiện tại một lần bên ngoài vòng lặp để tối ưu hóa
         const now = new Date();
 
+        // Lấy tất cả khóa học và populate thông tin cần thiết
         const courses = await PostCourse.find({})
             .populate({
                 path: 'Detail.Teacher',
@@ -21,14 +21,21 @@ export async function GET() {
 
         const teacherData = {};
 
+        // Duyệt qua từng khóa học để tổng hợp dữ liệu
         for (const course of courses) {
             if (!course.Detail || course.Detail.length === 0) continue;
+
+            // Tạo map để tra cứu tên phòng học hiệu quả
             const roomMap = new Map(course.Area?.rooms?.map(r => [r._id.toString(), r.name]) || []);
+
+            // Duyệt qua từng buổi học trong khóa
             for (const lesson of course.Detail) {
                 if (!lesson.Teacher || !lesson.Teacher._id) continue;
 
                 const teacherId = lesson.Teacher._id.toString();
+                const lessonId = lesson._id.toString();
 
+                // Khởi tạo dữ liệu cho giáo viên nếu chưa có
                 if (!teacherData[teacherId]) {
                     teacherData[teacherId] = {
                         teacherInfo: lesson.Teacher,
@@ -37,73 +44,83 @@ export async function GET() {
                     };
                 }
 
-                const lessonId = lesson._id.toString();
-
-                // --- THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ---
-
-                // Chuyển đổi ngày dạy của buổi học sang đối tượng Date để so sánh
                 const lessonDate = new Date(lesson.Day);
 
-                // Kiểm tra nếu ngày dạy là trong tương lai
+                // --- Xử lý các buổi học CHƯA DIỄN RA ---
                 if (lessonDate > now) {
-                    // Nếu buổi học chưa diễn ra, thêm vào danh sách với trạng thái đặc biệt và bỏ qua kiểm tra lỗi
                     teacherData[teacherId].allLessons.push({
-                        lessonId: lessonId,
+                        lessonId,
                         courseId: course.ID,
                         course_id: course._id.toString(),
-                        topicId: lesson.Topic,
                         day: lesson.Day,
                         room: roomMap.get(lesson.Room?.toString()) || lesson.Room,
-                        status: 'chưa diễn ra', // Trạng thái mới cho buổi học tương lai
+                        status: 'chưa diễn ra',
                         isViolation: false,
-                        errors: {
-                            attendance: false,
-                            comment: false,
-                            image: false,
-                        },
+                        errors: { attendance: false, comment: false, image: false },
                     });
                     continue; // Chuyển sang buổi học tiếp theo
                 }
 
-                // --- KẾT THÚC THAY ĐỔI ---
+                // --- Xử lý các buổi học ĐÃ DIỄN RA ---
 
-                // Logic kiểm tra lỗi bên dưới chỉ chạy cho các buổi học đã hoặc đang diễn ra
-                let isViolation = false;
-                let hasAttendanceViolation = false;
-                let hasCommentViolation = false;
+                // highlight-start
+                // CẬP NHẬT LOGIC KIỂM TRA LỖI
+
+                // 1. Lỗi hình ảnh
                 const hasImageViolation = !lesson.DetailImage || lesson.DetailImage.length === 0;
 
-                for (const student of course.Student) {
-                    const learnRecord = student.Learn.find(
-                        (lr) => lr.Lesson && lr.Lesson.toString() === lessonId
-                    );
+                // 2. Lỗi điểm danh và nhận xét
+                let hasAttendanceViolation = false;
+                let hasCommentViolation = false;
 
-                    if (learnRecord) {
-                        if (learnRecord.Checkin === 0) hasAttendanceViolation = true;
-                        if (!learnRecord.Cmt || learnRecord.Cmt.length === 0) hasCommentViolation = true;
+                if (course.Student && course.Student.length > 0) {
+                    for (const student of course.Student) {
+                        const learnRecord = student.Learn.find(lr => lr.Lesson?.toString() === lessonId);
+
+                        if (learnRecord) {
+                            // Lỗi điểm danh: Học sinh có trong danh sách nhưng chưa được điểm danh (Checkin = 0)
+                            if (learnRecord.Checkin === 0) {
+                                hasAttendanceViolation = true;
+                            }
+                            // Lỗi nhận xét: Học sinh có đi học (Checkin = 1) nhưng không có nhận xét
+                            if (learnRecord.Checkin === 1 && (!learnRecord.Cmt || learnRecord.Cmt.length === 0)) {
+                                hasCommentViolation = true;
+                            }
+                        } else {
+                            // Nếu học sinh thuộc khóa học nhưng không có bản ghi học tập cho buổi đã qua -> Lỗi điểm danh
+                            hasAttendanceViolation = true;
+                        }
+
+                        // Tối ưu: Nếu đã phát hiện đủ các loại lỗi thì không cần duyệt tiếp
+                        if (hasAttendanceViolation && hasCommentViolation) break;
                     }
+                } else {
+                    // Nếu khóa học có lịch học nhưng không có học sinh -> Lỗi hệ thống
+                    hasAttendanceViolation = true;
+                    hasCommentViolation = true;
                 }
 
-                if (hasAttendanceViolation || hasCommentViolation || hasImageViolation) {
-                    isViolation = true;
+                const isViolation = hasAttendanceViolation || hasCommentViolation || hasImageViolation;
+                if (isViolation) {
                     teacherData[teacherId].totalViolations++;
                 }
 
+                // Thêm kết quả buổi học vào danh sách của giáo viên
                 teacherData[teacherId].allLessons.push({
-                    lessonId: lessonId,
+                    lessonId,
                     courseId: course.ID,
                     course_id: course._id.toString(),
-                    topicId: lesson.Topic,
                     day: lesson.Day,
                     room: roomMap.get(lesson.Room?.toString()) || lesson.Room,
-                    status: 'đã diễn ra', // Trạng thái cho các buổi học đã qua
-                    isViolation: isViolation,
+                    status: 'đã diễn ra',
+                    isViolation,
                     errors: {
                         attendance: hasAttendanceViolation,
                         comment: hasCommentViolation,
                         image: hasImageViolation,
                     },
                 });
+                // highlight-end
             }
         }
 

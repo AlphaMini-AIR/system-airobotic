@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import styles from './index.module.css';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -152,8 +153,7 @@ const getCurrentMonthDateRange = () => {
 // THÀNH PHẦN CHÍNH (Main Component)
 // ====================================================================
 const EnhancedViolationsReport = ({ initialReports }) => {
-    console.log(initialReports);
-    
+    const router = useRouter();
     const [visibleTeacher, setVisibleTeacher] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [startDate, setStartDate] = useState(getCurrentMonthDateRange().start);
@@ -248,6 +248,7 @@ const EnhancedViolationsReport = ({ initialReports }) => {
         setStartDate(currentMonth.start);
         setEndDate(currentMonth.end);
         setShowMode('violations');
+        router.refresh();
     };
 
     return (
