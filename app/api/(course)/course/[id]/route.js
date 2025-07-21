@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { Types } from 'mongoose';
 import { Re_course_all, Re_course_one } from '@/data/course';
 import authenticate from '@/utils/authenticate';
+import { Re_Student_All } from '@/data/student';
 
 export async function GET(request, { params }) {
     const { id } = await params;
@@ -123,40 +124,27 @@ export async function PATCH(request, { params }) {
     const { id } = params;
 
     if (!id) {
-        return NextResponse.json(
-            { status: 1, mes: 'Thiếu ID của khóa học.', data: null },
-            { status: 400 }
-        );
+        return NextResponse.json({ status: 1, mes: 'Thiếu ID của khóa học.' }, { status: 400 });
     }
 
     try {
         const { user, body } = await authenticate(request);
-        await connectDB();
-
         if (Object.keys(body).length === 0) {
-            return NextResponse.json(
-                { status: 1, mes: 'Không có dữ liệu để cập nhật.', data: null },
-                { status: 400 }
-            );
+            return NextResponse.json({ status: 1, mes: 'Không có dữ liệu để cập nhật.' }, { status: 400 });
         }
 
+        await connectDB();
         const course = await PostCourse.findOne({ ID: id }).select('TeacherHR').lean();
 
         if (!course) {
-            return NextResponse.json(
-                { status: 1, mes: 'Không tìm thấy khóa học.', data: null },
-                { status: 404 }
-            );
+            return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học.' }, { status: 404 });
         }
 
         const isTeacherHR = course.TeacherHR.toString() === user.id;
-        const isAdmin = user.role && user.role.includes('Admin');
+        const isAdmin = user.role?.includes('Admin');
 
         if (!isAdmin && !isTeacherHR) {
-            return NextResponse.json(
-                { status: 1, mes: 'Bạn không phải giáo viên chủ nhiệm của lớp này.', data: null },
-                { status: 403 } 
-            );
+            return NextResponse.json({ status: 1, mes: 'Bạn không có quyền thực hiện hành động này.' }, { status: 403 });
         }
 
         delete body.ID;
@@ -164,27 +152,68 @@ export async function PATCH(request, { params }) {
             { ID: id },
             { $set: body },
             { new: true }
-        );
+        ).lean(); // Thêm .lean() để tối ưu
 
         if (!updatedCourse) {
-            return NextResponse.json(
-                { status: 1, mes: 'Không tìm thấy khóa học để cập nhật.', data: null },
-                { status: 404 }
-            );
+            return NextResponse.json({ status: 1, mes: 'Cập nhật khóa học thất bại.' }, { status: 404 });
         }
+
+        // --- BẮT ĐẦU LOGIC CẬP NHẬT HỌC SINH MỚI ---
+        if (body.Status === true) { // Giả định Status: true là hoàn thành, tương ứng status: 2
+            const studentIDsInCourse = updatedCourse.Student.map(s => s.ID);
+
+            if (studentIDsInCourse.length > 0) {
+                const students = await PostStudent.find({ ID: { $in: studentIDsInCourse } }).select('ID Course');
+
+                const studentBulkOps = [];
+
+                for (const student of students) {
+                    const hasOtherActiveCourses = student.Course.some(
+                        c => c.course.toString() !== updatedCourse._id.toString() && c.status === 0
+                    );
+
+                    const newStatusForStudent = {
+                        status: hasOtherActiveCourses ? 2 : 1, // 2 = học, 1 = chờ
+                        act: hasOtherActiveCourses ? 'học' : 'chờ',
+                        date: new Date(),
+                        note: `Hoàn thành khóa học ${updatedCourse.ID}`,
+                    };
+
+                    studentBulkOps.push({
+                        updateOne: {
+                            filter: {
+                                _id: student._id,
+                                'Course.course': updatedCourse._id,
+                                'Course.status': 0 // Chỉ cập nhật nếu khóa học đang diễn ra
+                            },
+                            update: {
+                                $set: { 'Course.$.status': 2 }, // Cập nhật status khóa học thành 2 (hoàn thành)
+                                $push: { Status: newStatusForStudent } // Thêm trạng thái chung mới
+                            }
+                        }
+                    });
+                }
+
+                if (studentBulkOps.length > 0) {
+                    await PostStudent.bulkWrite(studentBulkOps);
+                }
+            }
+        }
+        // --- KẾT THÚC LOGIC CẬP NHẬT HỌC SINH ---
 
         Re_course_all();
         Re_course_one(id);
+        Re_Student_All();
 
         return NextResponse.json(
-            { status: 2, mes: 'Cập nhật khóa học thành công.', data: null },
+            { status: 2, mes: 'Cập nhật khóa học và trạng thái học sinh thành công.' },
             { status: 200 }
         );
 
     } catch (error) {
         console.error('[COURSE_UPDATE_ERROR]', error);
         return NextResponse.json(
-            { status: 1, mes: error.message, data: null },
+            { status: 1, mes: error.message },
             { status: 500 }
         );
     }

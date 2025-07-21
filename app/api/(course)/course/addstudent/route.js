@@ -4,6 +4,7 @@ import PostCourse from '@/models/course';
 import PostModel from '@/models/student';
 import { isValidObjectId } from 'mongoose';
 import { revalidateTag } from 'next/cache';
+import { Re_Student_All } from '@/data/student';
 
 export async function POST(req) {
     try {
@@ -58,7 +59,7 @@ export async function POST(req) {
 
         if (newStudentIDsToAdd.length === 0) {
             return NextResponse.json(
-                { ok: true, mes: 'No new students to add (all already exist).', data: course },
+                { ok: true, mes: 'Không có học sinh nào để thêm.', data: course },
                 { status: 200 }
             );
         }
@@ -78,7 +79,6 @@ export async function POST(req) {
                 Learn: learnEntriesForNewStudent
             });
 
-            // Chuẩn bị các hành động $push
             const newCourseEntry = {
                 course: course._id,
                 tuition: null,
@@ -93,7 +93,7 @@ export async function POST(req) {
                 const newLearningStatus = {
                     status: 2,
                     act: 'học',
-                    note: '',
+                    note: `Tham gia khóa học ${course.ID}`,
                     date: new Date(),
                 };
                 pushOperations.Status = newLearningStatus;
@@ -111,7 +111,8 @@ export async function POST(req) {
         if (notFoundStudentIDs.length > 0) {
             console.warn(`Students not found in collection: ${notFoundStudentIDs.join(', ')}`);
         }
-
+        console.log(studentUpdates);
+        
         if (studentUpdates.length > 0) {
             await PostModel.bulkWrite(studentUpdates);
         }
@@ -121,9 +122,10 @@ export async function POST(req) {
             { $push: { Student: { $each: newStudentDocsToAdd } } },
             { new: true }
         );
-        revalidateTag('student');
+        Re_Student_All();
+        
         return NextResponse.json(
-            { ok: true, mes: `Thêm ${newStudentDocsToAdd.length} học sinh mới vào khóa học.`, data: updatedCourseResult },
+            { ok: true, mes: `Thêm ${newStudentDocsToAdd.length} học sinh mới vào khóa học.`, data: null },
             { status: 200 }
         );
 

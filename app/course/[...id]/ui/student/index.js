@@ -1,34 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Component imports
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import CenterPopup from '@/components/(features)/(popup)/popup_center';
 import Menu from '@/components/(ui)/(button)/menu';
-
 import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
+import AlertPopup from '@/components/(features)/(noti)/alert'; // Đảm bảo đường dẫn này đúng
+import Title from '@/components/(features)/(popup)/title';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+import { Svg_Add, Svg_Student } from '@/components/(icon)/svg';
 
+// Data and Actions
 import { Read_Student_All } from '@/data/student';
 import { Re_course_one } from '@/data/course';
 
+// Styles
 import styles from './index.module.css';
-import { Svg_Add, Svg_Student } from '@/components/(icon)/svg';
-import Title from '@/components/(features)/(popup)/title';
-import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+
 
 export default function Student({ course }) {
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
-    // CHỈNH SỬA 1: Đổi tên state 'search' để làm rõ mục đích
     const [courseStudentSearch, setCourseStudentSearch] = useState('');
     const [openAdd, setOpenAdd] = useState(false);
     const [allStudents, setAllStudents] = useState([]);
     const [loadingAll, setLoadingAll] = useState(false);
     const [selectMenuOpen, setSelectMenuOpen] = useState(false);
-    // CHỈNH SỬA 2: Đổi tên state 'selectSearch' để làm rõ mục đích
     const [addStudentSearch, setAddStudentSearch] = useState('');
     const [selected, setSelected] = useState([]);
     const [saving, setSaving] = useState(false);
@@ -36,6 +38,18 @@ export default function Student({ course }) {
     const [notiOpen, setNotiOpen] = useState(false);
     const [notiStatus, setNotiStatus] = useState(false);
     const [notiMes, setNotiMes] = useState('');
+
+    const [alertConfig, setAlertConfig] = useState({
+        open: false,
+        type: 'warning',
+        title: '',
+        content: null,
+        onConfirm: null,
+    });
+
+    const [reasonNote, setReasonNote] = useState('');
+
+    const studentNameMap = useMemo(() => new Map(allStudents.map(s => [s.ID, s.Name])), [allStudents]);
 
     useEffect(() => {
         if ((!open && !openAdd) || allStudents.length > 0) return;
@@ -62,7 +76,6 @@ export default function Student({ course }) {
         setOpenAdd(false);
         setSelected([]);
         setSelectMenuOpen(false);
-        // Đảm bảo reset đúng state tìm kiếm
         setAddStudentSearch('');
     };
 
@@ -70,11 +83,10 @@ export default function Student({ course }) {
         if (selected.length === 0) return;
         setSaving(true);
         setGlobalLoading(true);
-        fetch('/api/course/addstudent', {
+        fetch(`/api/course/${course._id}/student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                courseID: course._id,
                 students: selected.map((s) => s.ID),
             }),
         })
@@ -82,7 +94,6 @@ export default function Student({ course }) {
                 const json = await res.json();
                 setNotiStatus(res.ok);
                 setNotiMes(json.mes || (res.ok ? 'Đã thêm học sinh' : 'Lỗi không xác định'));
-                setNotiOpen(true);
                 if (res.ok) {
                     await Re_course_one(course.ID);
                     router.refresh();
@@ -92,21 +103,73 @@ export default function Student({ course }) {
             .catch((err) => {
                 setNotiStatus(false);
                 setNotiMes(err.message || 'Không thể kết nối server');
-                setNotiOpen(true);
             })
             .finally(() => {
+                setNotiOpen(true);
                 setSaving(false);
                 setGlobalLoading(false);
             });
     };
 
-    const renderStudentList = (listInCourse) => {
-        if (loadingAll) {
-            return <Loading content="Đang tải dữ liệu học sinh..." />;
+    const executeStudentAction = useCallback(async (studentId, actionType, note) => {
+        setGlobalLoading(true);
+        setAlertConfig(prev => ({ ...prev, open: false }));
+
+        try {
+            const res = await fetch(`/api/course/${course._id}/student`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentId, action: actionType, note }),
+            });
+            const json = await res.json();
+
+            if (res.ok) {
+                await Re_course_one(course.ID);
+                router.refresh();
+            }
+            setNotiStatus(res.ok);
+            setNotiMes(json.mes || 'Thao tác thất bại');
+        } catch (err) {
+            setNotiStatus(false);
+            setNotiMes(err.message || 'Lỗi kết nối server');
+        } finally {
+            setNotiOpen(true);
+            setGlobalLoading(false);
         }
+    }, [course.ID, course._id, router]);
+
+    const handleStudentAction = useCallback((student, studentName, actionType) => {
+        setReasonNote('');
+        const isReserve = actionType === 'reserve';
+
+        setAlertConfig({
+            open: true,
+            type: 'warning',
+            title: isReserve ? 'Xác nhận bảo lưu' : 'Xác nhận xóa học sinh',
+            content: (
+                <div className="flex_col" style={{ gap: 16 }}>
+                    <p className="text_6">
+                        Bạn có chắc muốn {isReserve ? 'bảo lưu kết quả' : 'xóa'} học sinh <b>{studentName} ({student.ID})</b>?
+                        {!isReserve && <><br />Hành động này sẽ xóa toàn bộ dữ liệu liên quan và <b>không thể hoàn tác.</b></>}
+                    </p>
+                    <textarea
+                        className="input"
+                        placeholder="Vui lòng nhập lý do..."
+                        rows={3}
+                        defaultValue=""
+                        onChange={(e) => setReasonNote(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+            ),
+            onConfirm: (note) => executeStudentAction(student.ID, actionType, note),
+        });
+    }, [executeStudentAction]);
+
+    const renderStudentList = (listInCourse) => {
+        if (loadingAll) return <Loading content="Đang tải dữ liệu học sinh..." />;
 
         const key = courseStudentSearch.trim().toLowerCase();
-        const studentNameMap = new Map(allStudents.map(s => [s.ID, s.Name]));
 
         const show = key
             ? listInCourse.filter((s) => {
@@ -115,7 +178,6 @@ export default function Student({ course }) {
             })
             : listInCourse;
         const reversedShow = [...show].reverse();
-        console.log(course);
 
         return (
             <>
@@ -145,18 +207,24 @@ export default function Student({ course }) {
                         </div>
                         {reversedShow.map((s, index) => {
                             const studentName = studentNameMap.get(s.ID) || 'Không có tên';
-                            console.log(s);
-
                             return (
                                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} key={index}>
                                     <p className="text_6" style={{ flex: 1, padding: 8 }}>{s.ID}</p>
                                     <p className="text_6" style={{ flex: 3, padding: 8 }}>{studentName}</p>
-                                    <div className="text_6" style={{ padding: 8, flex: 1, display: 'flex', justifyContent: 'start' }}>
+                                    <div className="text_6" style={{ padding: 8, flex: 1, gap: 8, display: 'flex', justifyContent: 'start' }}>
                                         <WrapIcon
-                                            icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width={16} height={16} fill="white"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM471 143c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></svg>}
+                                            icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width={16} height={16} fill="white"><path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256s256-114.6 256-256S397.4 0 256 0zM368 288H144c-17.7 0-32-14.3-32-32s14.3-32 32-32H368c17.7 0 32 14.3 32 32s-14.3 32-32 32z" /></svg>}
+                                            content='Bảo lưu kết quả'
+                                            style={{ background: 'var(--yellow)' }}
+                                            placement='bottom'
+                                            click={() => handleStudentAction(s, studentName, 'reserve')}
+                                        />
+                                        <WrapIcon
+                                            icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width={16} height={16} fill="white"><path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0h120.4c12.1 0 23.2 6.8 28.6 17.7L320 32h96c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 96 0 81.7 0 64s14.3-32 32-32h96l7.2-14.3zM32 128h384v320c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V128zm192-48a24 24 0 1 1 0-48 24 24 0 1 1 0 48z" /></svg>}
                                             content='Xóa khỏi khóa học'
                                             style={{ background: 'var(--red)' }}
                                             placement='bottom'
+                                            click={() => handleStudentAction(s, studentName, 'remove')}
                                         />
                                     </div>
                                 </div>
@@ -168,7 +236,6 @@ export default function Student({ course }) {
         );
     };
 
-    // CHỈNH SỬA 4: Cập nhật logic lọc cho popup "Thêm học sinh" để sử dụng state 'addStudentSearch'
     const availableStudents = allStudents.filter((s) => !selected.find((sel) => sel._id === s._id));
     const filteredAvailableStudents = addStudentSearch.trim()
         ? availableStudents.filter((s) => (`${s.Name ?? ''} ${s.ID ?? ''}`).toLowerCase().includes(addStudentSearch.trim().toLowerCase()))
@@ -205,7 +272,7 @@ export default function Student({ course }) {
 
             <FlexiblePopup
                 open={open}
-                onClose={() => { setOpen(false); setCourseStudentSearch(''); }} // Reset đúng state tìm kiếm
+                onClose={() => { setOpen(false); setCourseStudentSearch(''); }}
                 title="Danh sách học sinh"
                 width={600}
                 globalZIndex={1500}
@@ -230,7 +297,7 @@ export default function Student({ course }) {
                                             selected.map((s) => (
                                                 <div key={s._id} className={styles.selectedItem}>
                                                     <p className="text_6_400">{s.Name} ({s.ID})</p>
-                                                    <button className={styles.removeBtn} onClick={() => handleRemove(s._id)} disabled={saving}>&times;</button>
+                                                    <button className={styles.removeBtn} onClick={() => handleRemove(s._id)} disabled={saving}>×</button>
                                                 </div>
                                             ))
                                         )}
@@ -247,7 +314,30 @@ export default function Student({ course }) {
                 </>
             </CenterPopup>
 
-            {globalLoading && <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loading content="Đang xử lý..." /></div>}
+            <AlertPopup
+                open={alertConfig.open}
+                onClose={() => setAlertConfig({ ...alertConfig, open: false })}
+                title={alertConfig.title}
+                content={alertConfig.content}
+                type={alertConfig.type}
+                actions={
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="input" onClick={() => setAlertConfig({ ...alertConfig, open: false })}>
+                            Hủy bỏ
+                        </button>
+                        <button
+                            className={`btn ${alertConfig.type === 'warning' ? 'btn_warning' : ''}`}
+                            onClick={() => alertConfig.onConfirm(reasonNote)}
+                            disabled={!reasonNote.trim()}
+                            style={{ margin: 0, transform: 'none' }}
+                        >
+                            Xác nhận
+                        </button>
+                    </div>
+                }
+            />
+
+            {globalLoading && <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loading content={<p className="text_6_400" style={{color:'white'}}>Đang xử lý...</p>} /></div>}
 
             <Noti open={notiOpen} onClose={() => setNotiOpen(false)} status={notiStatus} mes={notiMes} button={<div className="btn" onClick={() => setNotiOpen(false)} style={{ marginTop: 16, width: 'calc(100% - 24px)', justifyContent: 'center' }}>Tắt thông báo</div>} />
         </>

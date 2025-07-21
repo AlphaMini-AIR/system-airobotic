@@ -1,79 +1,108 @@
-// /app/api/validate-course-topics/route.js
-
 import { NextResponse } from 'next/server';
-import dbConnect from '@/config/connectDB'; // Giả sử bạn có một file helper để kết nối DB
+import { isValidObjectId } from 'mongoose';
+import connectDB from '@/config/connectDB';
 import PostCourse from '@/models/course';
-import Book from '@/models/book'; // Import Book model để Mongoose biết cách populate
+import PostStudent from '@/models/student';
 
-export async function GET(request) {
+export async function POST(req) {
     try {
-        await dbConnect();
+        const { courseId } = await req.json();
 
-        // 1. Lấy tất cả các khóa học và populate thông tin sách liên quan
-        // Chúng ta chỉ cần các trường ID, Name, và Topics từ Book để kiểm tra
-        const courses = await PostCourse.find({})
-            .populate({
-                path: 'Book',
-                model: Book,
-                select: 'ID Name Topics' // Chỉ lấy những trường cần thiết từ Book
-            })
-            .lean(); // Sử dụng .lean() để tăng hiệu suất vì chúng ta chỉ đọc dữ liệu
+        if (!courseId || !isValidObjectId(courseId)) {
+            return NextResponse.json(
+                { status: false, message: 'ID của khóa học là bắt buộc và phải hợp lệ.' },
+                { status: 400 }
+            );
+        }
 
-        const validationErrors = [];
+        await connectDB();
 
-        // 2. Lặp qua từng khóa học để kiểm tra
-        for (const course of courses) {
-            // Bỏ qua nếu khóa học không có sách hoặc sách không có topics
-            if (!course.Book || !course.Book.Topics || course.Book.Topics.length === 0) {
-                // Bạn có thể thêm một loại lỗi khác ở đây nếu cần
-                // ví dụ: một khóa học không có sách tham chiếu
-                continue;
-            }
+        const course = await PostCourse.findById(courseId).select('ID Student').lean();
 
-            // Tạo một Set chứa các ID của Topic hợp lệ từ sách để tra cứu nhanh (O(1))
-            const validTopicIds = new Set(
-                course.Book.Topics.map(topic => topic._id.toString())
+        if (!course) {
+            return NextResponse.json(
+                { status: false, message: 'Không tìm thấy khóa học với ID đã cho.' },
+                { status: 404 }
+            );
+        }
+
+        if (!course.Student || course.Student.length === 0) {
+            return NextResponse.json(
+                { status: true, message: 'Khóa học không có học sinh nào để đồng bộ.' },
+                { status: 200 }
+            );
+        }
+
+        const studentIdsInCourse = course.Student.map(s => s.ID);
+
+        // BƯỚC MỚI: Dọn dẹp các phần tử lỗi trong mảng Course của học sinh
+        // Lệnh này sẽ xóa bất kỳ phần tử nào trong mảng Course không có trường 'course'
+        await PostStudent.updateMany(
+            { ID: { $in: studentIdsInCourse } },
+            { $pull: { Course: { course: { $exists: false } } } }
+        );
+
+        // Sau khi dọn dẹp, tiến hành logic đồng bộ như cũ trên dữ liệu đã sạch
+        const studentsToSync = await PostStudent.find({
+            ID: { $in: studentIdsInCourse }
+        }).select('ID Course Status');
+
+        const bulkUpdateOps = [];
+        const newStatusEntry = {
+            status: 2,
+            act: 'học',
+            date: new Date(),
+            note: `Tham gia khóa học ${course.ID}`,
+        };
+
+        for (const student of studentsToSync) {
+            const isAlreadyEnrolled = student.Course.some(
+                c => c.course.toString() === courseId
             );
 
-            // 3. Lặp qua từng phần tử trong mảng Detail của khóa học
-            course.Detail.forEach((detail, index) => {
-                // Chuyển ID của Topic trong Detail sang chuỗi để so sánh
-                const detailTopicId = detail.Topic ? detail.Topic.toString() : null;
+            if (!isAlreadyEnrolled) {
+                const newCourseEntry = {
+                    course: courseId,
+                    tuition: null,
+                    status: 0,
+                };
 
-                // 4. Kiểm tra xem detailTopicId có tồn tại trong Set các ID hợp lệ không
-                if (detailTopicId && !validTopicIds.has(detailTopicId)) {
-                    // Nếu không tìm thấy, ghi nhận là lỗi
-                    validationErrors.push({
-                        courseID: course.ID, // Tên/ID của khóa học
-                        courseMongoId: course._id,
-                        bookName: course.Book.Name,
-                        error: `Phần tử trong Detail không hợp lệ.`,
-                        mismatchedDetail: {
-                            detailIndex: index, // Vị trí phần tử lỗi trong mảng Detail
-                            topicIdNotFound: detailTopicId // ID của Topic không tìm thấy
+                bulkUpdateOps.push({
+                    updateOne: {
+                        filter: { _id: student._id },
+                        update: {
+                            $push: {
+                                Course: newCourseEntry,
+                                Status: newStatusEntry
+                            }
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
         }
 
-        // 5. Trả về kết quả
-        if (validationErrors.length > 0) {
-            return NextResponse.json({
-                message: 'Đã tìm thấy các phần tử Detail không hợp lệ.',
-                errors: validationErrors
-            }, { status: 200 });
+        if (bulkUpdateOps.length === 0) {
+            return NextResponse.json(
+                { status: true, message: 'Tất cả học sinh đã được đồng bộ từ trước.' },
+                { status: 200 }
+            );
         }
 
-        return NextResponse.json({
-            message: 'Tất cả các khóa học đều có dữ liệu hợp lệ.'
-        }, { status: 200 });
+        const result = await PostStudent.bulkWrite(bulkUpdateOps);
 
-    } catch (error) {
-        console.error("Lỗi khi xác thực dữ liệu khóa học:", error);
-        return NextResponse.json({
-            message: 'Lỗi máy chủ nội bộ',
-            error: error.message
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                status: true,
+                message: `Đồng bộ hoàn tất. Đã cập nhật ${result.modifiedCount} học sinh.`,
+            },
+            { status: 200 }
+        );
+
+    } catch (err) {
+        console.error('[API_SYNC_STUDENTS_ERROR]', err);
+        return NextResponse.json(
+            { status: false, message: err.message || 'Lỗi từ máy chủ.' },
+            { status: 500 }
+        );
     }
 }

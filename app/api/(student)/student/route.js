@@ -108,7 +108,7 @@ export async function POST(request) {
             status: 1,
             act: 'chờ',
             date: new Date(),
-            note: 'Tạo học sinh thành công',
+            note: 'Tạo học sinh thành công! Chờ thêm vào khóa học',
         };
         const newStudent = new PostStudent({
             ...studentData,

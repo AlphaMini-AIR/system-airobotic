@@ -17,6 +17,7 @@ import { formatDate } from '@/function';
 import ImageComponent from '@/components/(ui)/(image)';
 import BoxFile from '@/components/(ui)/(box)/file';
 import Noti from '@/components/(features)/(noti)/noti';
+import Link from 'next/link';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -399,11 +400,11 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                 <p className='text_6_400' style={{ color: 'white' }}>Tải lại dữ liệu</p>
                             </div>
                             {(params.length > 1 && !data.Status) &&
-                                <a href={`https://sys.airobotic.edu.vn/calendar/${params[1]}`} className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }}>
+                                <Link href={`/calendar/${params[1]}`} className='btn' style={{ marginTop: 8, borderRadius: 5, background: 'var(--main_d)' }}>
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width={16} height={16} fill='white'>
                                         <path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 48 0c26.5 0 48 21.5 48 48l0 48L0 160l0-48C0 85.5 21.5 64 48 64l48 0 0-32c0-17.7 14.3-32 32-32zM0 192l448 0 0 272c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 192zM312 376c13.3 0 24-10.7 24-24s-10.7-24-24-24l-176 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l176 0z" /></svg>
                                     <p className='text_6_400' style={{ color: 'white' }}>Điểm danh bù</p>
-                                </a>}
+                                </Link>}
                             {params.length == 1 &&
                                 <>
                                     {data.Status ?
