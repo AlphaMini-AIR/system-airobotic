@@ -77,7 +77,7 @@ export default function TimeLine_Dot({ course, type, index, data, props }) {
                             </p>
                         </div>
                         <p className="text_4" style={{ color: props == id ? 'var(--main_d)' : 'var(--text-primary)' }}>
-                            {data.LessonDetails.Name || 'Không có tên chủ đề'}
+                            {data?.LessonDetails?.Name || 'Không có tên chủ đề'}
                             <span className='text_6' style={{ marginLeft: 5, color: status2.color }}>({status2.text})</span>
                         </p>
                         <div className='text_6_400'>Ngày {formatDate(new Date(data.Day))}</div>
