@@ -2,7 +2,6 @@
 
 import { Schema, model, models } from 'mongoose';
 
-// TopicItemSchema không cần thay đổi
 const TopicItemSchema = new Schema({
     Name: {
         type: String,

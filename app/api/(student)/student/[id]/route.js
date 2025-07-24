@@ -7,27 +7,109 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 import mongoose from 'mongoose';
+import '@/models/book'
 
 export async function GET(request, { params }) {
-    const { id } = await params;
+    const { id } = params;
+
     try {
-        let data;
-        let message = 'Lấy dữ liệu thành công';
-        let status = 200;
         await connectDB();
-        data = await PostStudent.findById(id);
+
+        // 1. Truy vấn học sinh và populate sâu vào các khóa học và sách
+        const studentData = await PostStudent.findById(id)
+            .populate({
+                path: 'Course.course', // Populate trường 'course' bên trong mảng 'Course'
+                model: 'course',       // Chỉ định model là 'course'
+                populate: {
+                    path: 'Book',      // Populate lồng nhau, lấy thông tin 'Book' từ trong course
+                    model: 'book'
+                }
+            })
+            .populate({
+                path: 'Area', 
+                model: 'area',      
+                select: 'name '     
+            })
+            .lean();
+
+        if (!studentData) {
+            return NextResponse.json(
+                { air: 1, mes: 'Không tìm thấy học sinh.' },
+                { status: 404 }
+            );
+        }
+
+        const studentBusinessId = studentData.ID;
+
+        if (studentData.Course && Array.isArray(studentData.Course)) {
+            // 2. Dùng map để xử lý và tạo ra một mảng khóa học mới đã được làm giàu dữ liệu
+            const processedCourses = studentData.Course.map(enrollment => {
+                // Bỏ qua nếu không có dữ liệu khóa học (do lỗi tham chiếu)
+                if (!enrollment.course) {
+                    return null;
+                }
+
+                const course = enrollment.course;
+
+                // Tìm đúng dữ liệu học tập của học sinh trong khóa học hiện tại
+                const studentInCourse = course.Student?.find(
+                    s => s.ID === studentBusinessId
+                );
+
+                let mergedDetails = course.Detail; // Mặc định là danh sách buổi học gốc
+
+                // 3. Hợp nhất dữ liệu nếu tìm thấy thông tin học tập của học sinh
+                if (studentInCourse && studentInCourse.Learn?.length > 0) {
+                    const learnDataMap = new Map(
+                        studentInCourse.Learn.map(item => [String(item.Lesson), item])
+                    );
+
+                    mergedDetails = course.Detail.map(detail => {
+                        const learnRecord = learnDataMap.get(String(detail._id));
+                        if (learnRecord) {
+                            // Tách trường Image và Lesson ra
+                            const { Image: studentImage, Lesson, ...restOfLearn } = learnRecord;
+
+                            // Trả về một object mới đã được hợp nhất
+                            return {
+                                ...detail,
+                                ...restOfLearn,
+                                ImageStudent: studentImage, // Đổi tên trường Image để tránh xung đột
+                            };
+                        }
+                        return detail;
+                    });
+                }
+
+                // 4. Tạo đối tượng khóa học cuối cùng cho mảng mới
+                return {
+                    _id: course._id,
+                    ID: course.ID,
+                    Book: course.Book,
+                    Detail: mergedDetails,
+                    enrollmentStatus: enrollment.status, // Giữ lại trạng thái đăng ký của học sinh
+                    tuition: enrollment.tuition,
+                };
+
+            }).filter(Boolean); // Lọc bỏ các giá trị null có thể xảy ra
+
+            // Gán lại mảng Course đã được xử lý vào đối tượng studentData
+            studentData.Course = processedCourses;
+        }
+
         return NextResponse.json(
-            { air: status === 200 ? 2 : 1, mes: message, data },
-            { status }
+            { air: 2, mes: 'Lấy dữ liệu thành công', data: studentData },
+            { status: 200 }
         );
+
     } catch (error) {
+        console.error('API Error:', error);
         return NextResponse.json(
-            { air: 0, mes: error.message, data: null },
-            { status: error.message === 'Authentication failed' ? 401 : 500 }
+            { air: 0, mes: error.message },
+            { status: 500 }
         );
     }
 }
-
 
 async function getDriveClient() {
     const auth = new google.auth.GoogleAuth({
@@ -43,7 +125,6 @@ async function getDriveClient() {
 
 const APPSCRIPT_ID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__QRCU0Xi6-qu-HkUBx6fDHDRAYfpqM9d4SUq4YKVxpPnZtpJ_b6wg/exec';
 
-// API cập nhật thông tin học sinh
 export async function PUT(request, { params }) {
     const { id } = params;
     if (!id) {
@@ -58,13 +139,11 @@ export async function PUT(request, { params }) {
         const formData = await request.formData();
         const updateData = {};
 
-        // Tìm học sinh hiện có để lấy ID avatar cũ
         const existingStudent = await PostStudent.findById(id).lean();
         if (!existingStudent) {
             return NextResponse.json({ air: 1, mes: 'Không tìm thấy học sinh' }, { status: 404 });
         }
 
-        // 1. Xử lý tải lên avatar mới
         const avtFile = formData.get('Avt');
         if (avtFile && typeof avtFile !== 'string' && avtFile.size > 0) {
             const FOLDER_ID = '1t949fB9rVSQyaZHnCboWDtuLNBjceTl-'; // Thay bằng ID thư mục của bạn

@@ -9,7 +9,7 @@ module.exports = {
             },
             {
                 protocol: 'https',
-                hostname: 'tinhocmos.edu.vn',
+                hostname: 'drive.google.com',
                 port: '',
                 pathname: '/**',
             },

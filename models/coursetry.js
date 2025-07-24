@@ -1,5 +1,54 @@
 import { Schema, model, models } from 'mongoose';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     TrialCourse:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         rootFolderId:
+ *           type: string
+ *         sessions:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               day:
+ *                 type: string
+ *                 format: date
+ *               room:
+ *                 type: string
+ *               time:
+ *                 type: string
+ *               folderId:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               book:
+ *                 type: string
+ *               topicId:
+ *                 type: string
+ *               students:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               teacher:
+ *                 type: string
+ *               teachingAs:
+ *                 type: string
+ *               status:
+ *                 type: boolean
+ *               note:
+ *                 type: string
+ */
+
 const ImageSchema = new Schema(
     {
         id: { type: String, required: true, unique: true },

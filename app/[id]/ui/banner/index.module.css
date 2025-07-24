@@ -1,5 +1,5 @@
 .wrap {
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     border-radius: 8px;
     display: flex;
     flex-direction: column;

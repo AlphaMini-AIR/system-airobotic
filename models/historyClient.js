@@ -1,5 +1,40 @@
 import { Schema, model, models } from 'mongoose';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SendHistory:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         sentAt:
+ *           type: string
+ *           format: date-time
+ *         sentBy:
+ *           type: string
+ *         message:
+ *           type: string
+ *         labels:
+ *           type: array
+ *           items:
+ *             type: string
+ *         type:
+ *           type: string
+ *         recipients:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               phone:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               error:
+ *                 type: string
+ */
+
 const recipientStatusSchema = new Schema({
     phone: { type: String, required: true },
     status: { type: String, required: true, enum: ['success', 'failed', 'skipped'] },

@@ -1,5 +1,30 @@
 import { Schema, model, models } from 'mongoose'
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Invoice:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         studentId:
+ *           type: string
+ *         courseId:
+ *           type: string
+ *         amountInitial:
+ *           type: number
+ *         amountPaid:
+ *           type: number
+ *         paymentMethod:
+ *           type: number
+ *         discount:
+ *           type: number
+ *         createBy:
+ *           type: string
+ */
+
 const postInvoices = new Schema({
     studentId: { type: Schema.Types.ObjectId, required: true, ref: 'student' },
     courseId: { type: Schema.Types.ObjectId, required: true, ref: 'course' },

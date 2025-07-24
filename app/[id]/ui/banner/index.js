@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation"; // Import hook để lấy path hiện tại
-import AnimatedButton from "@/components/(ui)/(button)/button";
+import { usePathname } from "next/navigation";
 import { Svg_Pen } from "@/components/(icon)/svg";
 import air from "./index.module.css";
+import { Re_Student_ById } from "@/data/student";
 
 export default function Banner({ data }) {
-    const pathname = usePathname(); // Lấy đường dẫn hiện tại
+    const pathname = usePathname();
 
     let position = [0, ""];
     if (data?.Course) {
@@ -16,40 +16,35 @@ export default function Banner({ data }) {
         const lastKey = keys[keys.length - 1];
         position[1] = lastKey;
     }
+    // Re_Student_ById(data._id)
+    const avt = `https://lh3.googleusercontent.com/d/${data?.Avt}` || "https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG";
 
     return (
         <div className={air.wrap}>
             <div style={{ display: "flex", gap: 16, padding: 16 }}>
                 <Image
-                    src={data?.Avt || "/default-avatar.jpg"}
+                    src={avt}
                     width={65}
                     height={65}
                     style={{ objectFit: "cover", borderRadius: 3 }}
                     alt="avatar"
-                    priority // Ưu tiên load ảnh user
+                    priority
                 />
                 <div style={{ alignContent: "center", flex: 1 }}>
                     <p className={air.position}>ID: {data.ID}</p>
                     <p className={air.name}>{data?.Name}</p>
-                    <p className={air.position}>
-                        {position[0] === 0
-                            ? `Học sinh khóa ${position[1]}`
-                            : "Giáo viên"}
-                    </p>
+                    <p className={air.position}>Trạng thái học: {data.Status[data.Status.length - 1].status == 2 ? "Đang học" : data.Status[data.Status.length - 1].status == 1 ? "Chờ lên khóa" : "Đã nghỉ"}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "end", gap: 8 }}>
-                    <AnimatedButton>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <Svg_Pen w={18} h={18} c={"white"} />
-                            <p style={{ fontSize: 14, fontWeight: 400 }}>
-                                Cập nhật thông tin
-                            </p>
-                        </div>
-                    </AnimatedButton>
+                    <div className="btn" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <Svg_Pen w={18} h={18} c={"white"} />
+                        <p style={{ fontSize: 14, fontWeight: 400 }}>
+                            Cập nhật thông tin
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* Thanh điều hướng tab */}
             <div
                 style={{
                     display: "flex",
@@ -66,12 +61,9 @@ export default function Banner({ data }) {
                     Tổng quan
                 </Link>
 
-                {/* Link tới tab Khóa học */}
                 <Link
                     href={`/${data?._id}/courses`}
-                    className={`${air.nav} ${
-                        // Sử dụng startsWith để active cho các đường dẫn con của courses nếu có
-                        pathname.startsWith(`/${data?._id}/courses`) ? air.ac : ""
+                    className={`${air.nav} ${pathname.startsWith(`/${data?._id}/courses`) ? air.ac : ""
                         }`}
                 >
                     Khóa học

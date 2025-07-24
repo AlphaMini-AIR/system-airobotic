@@ -12,7 +12,7 @@ export async function Read_Student_All() {
 
 export async function Read_Student_ById(id) {
     let data;
-    try { data = await fetchApi(`/student/${id}`, { method: 'GET', next: { tags: [`student${id}`] }, cache: "force-cache" }) }
+    try { data = await fetchApi(`/student/${id}`, { method: 'GET', next: { tags: [`student${id}`], cache: "force-cache" } }) }
     catch (error) { data = [] }
     if (!data) data = []
     return data.data
@@ -26,7 +26,7 @@ export async function Data_Invoices(id) {
     return data.data
 }
 
-export async function Re_Student_ById() {
+export async function Re_Student_ById(id) {
     revalidateTag(`student${id}`);
 }
 

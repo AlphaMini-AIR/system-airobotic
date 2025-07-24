@@ -10,8 +10,155 @@ import authenticate from '@/utils/authenticate';
 const APPSCRIPT_URL =
     'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Courses
+ *     description: Quản lý khoá học AI Robotic
+ */
+
+/**
+ * @swagger
+ * /api/course:
+ *   get:
+ *     summary: Lấy danh sách các khoá học AI Robotic
+ *     tags: [Courses]
+ *     responses:
+ *       200:
+ *         description: Lấy dữ liệu thành công.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 mes:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Course'
+ *       500:
+ *         description: Lỗi máy chủ.
+ *   post:
+ *     summary: Tạo một khoá học mới
+ *     tags: [Courses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CourseCreationPayload'
+ *     responses:
+ *       201:
+ *         description: Tạo khóa học thành công.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                 mes:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Course'
+ *       400:
+ *         description: Dữ liệu đầu vào không hợp lệ.
+ *       401:
+ *         description: Xác thực không thành công.
+ *       403:
+ *         description: Không có quyền thực hiện chức năng.
+ *       409:
+ *         description: ID khóa học bị trùng lặp.
+ *       500:
+ *         description: Lỗi máy chủ.
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Course:
+ *       type: object
+ *       properties:
+ *         ID:
+ *           type: string
+ *         Book:
+ *           type: string
+ *         Area:
+ *           type: string
+ *         TeacherHR:
+ *           type: string
+ *         Status:
+ *           type: boolean
+ *         Type:
+ *           type: string
+ *         Detail:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               Topic:
+ *                 type: string
+ *               Day:
+ *                 type: string
+ *                 format: date-time
+ *               Room:
+ *                 type: string
+ *               Time:
+ *                 type: string
+ *               Teacher:
+ *                 type: string
+ *               TeachingAs:
+ *                 type: string
+ *     CourseCreationPayload:
+ *       type: object
+ *       required:
+ *         - code
+ *         - Detail
+ *       properties:
+ *         code:
+ *           type: string
+ *         Book:
+ *           type: string
+ *           format: ObjectId
+ *         Area:
+ *           type: string
+ *           format: ObjectId
+ *         TeacherHR:
+ *           type: string
+ *           format: ObjectId
+ *         Status:
+ *           type: boolean
+ *         Type:
+ *           type: string
+ *         Detail:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               Topic:
+ *                 type: string
+ *                 format: ObjectId
+ *               Day:
+ *                 type: string
+ *                 format: date-time
+ *               Room:
+ *                 type: string
+ *               Time:
+ *                 type: string
+ *               Teacher:
+ *                 type: string
+ *                 format: ObjectId
+ *               TeachingAs:
+ *                 type: string
+ *                 format: ObjectId
+ */
+
 // =================================================================
-// HÀM GET (KHÔNG THAY ĐỔI)
+// HÀM GET (KHÔNG THAY ĐỔI LOGIC)
 // =================================================================
 export async function GET() {
     try {
@@ -79,6 +226,9 @@ export async function GET() {
     }
 }
 
+// =================================================================
+// HÀM POST (KHÔNG THAY ĐỔI LOGIC)
+// =================================================================
 export async function POST(request) {
     try {
         // --- Phần xác thực và kiểm tra quyền (không đổi) ---

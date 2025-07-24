@@ -21,6 +21,23 @@ const Status = new Schema({
   note: { type: String, default: '' },
 });
 
+const PresentationSchema = new Schema({
+  bookId: { type: String, required: true },
+  bookName: { type: String },
+  Video: { type: String, default: '' },
+  Img: { type: String, default: '' },
+  Comment: { type: String, default: '' },
+}, { _id: false });
+
+const ProfileSchema = new Schema({
+  Intro: { type: String, default: '' },
+  Avatar: { type: String, default: '' },
+  ImgSkill: { type: String, default: '' },
+  ImgPJ: { type: [String], default: [] },
+  Skill: { type: Map, of: String, default: {} },
+  Present: { type: [PresentationSchema], default: [] }
+}, { _id: false });
+
 const postSchema = new Schema({
   ID: {
     type: String,
@@ -74,7 +91,8 @@ const postSchema = new Schema({
     default: []
   },
   Profile: {
-    type: Object
+    type: ProfileSchema,
+    default: () => ({ Present: [] })
   },
   Leave: { type: Boolean, default: false },
   Trial: {
