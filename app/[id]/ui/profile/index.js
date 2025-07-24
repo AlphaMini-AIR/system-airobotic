@@ -94,7 +94,7 @@ export default function Profile({ data, onSave }) {
             <div className={styles.header}>
                 <div className={styles.headerContent}>
                     <p className="text_3">Hồ sơ điện tử</p>
-                    <Link href={data.e || `https://eportfolio.airobotic.edu.vn/e-Portfolio/?ID=${data.ID}`} target="_blank"><Svg_link w={20} h={20} c={'blue'} /></Link>
+                    <Link href={`https://eportfolio.airobotic.edu.vn/e-Portfolio/?ID=${data._id}`} target="_blank"><Svg_link w={20} h={20} c={'blue'} /></Link>
                 </div>
                 <button onClick={handleSaveChanges} className={styles.saveButton} disabled={isSaving}><Svg_Save w={18} h={18} c={'white'} /> {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
             </div>
@@ -135,7 +135,7 @@ export default function Profile({ data, onSave }) {
 
                                             <div className={styles.presentationMedia}>
                                                 <div className={styles.mediaItem} onClick={() => handleOpenPresentVideoPopup(bookId)}>
-                                                    {presentation.Video ?  <Image src={`https://drive.google.com/thumbnail?id=${presentation.Video}`} fill alt="Thumbnail" className={styles.mediaPreview} /> : <div className={styles.mediaPlaceholder}>Chưa có video</div>}
+                                                    {presentation.Video ? <Image src={`https://drive.google.com/thumbnail?id=${presentation.Video}`} fill alt="Thumbnail" className={styles.mediaPreview} /> : <div className={styles.mediaPlaceholder}>Chưa có video</div>}
                                                     <div className={styles.editOverlay}><Svg_Pen w={18} h={18} c="white" /></div>
                                                 </div>
                                                 <div className={styles.mediaItem} onClick={() => handleOpenPresentImgPopup(bookId)}>
