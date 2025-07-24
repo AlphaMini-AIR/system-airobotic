@@ -54,12 +54,9 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     const today = new Date();
     const currentHour = today.getHours();
 
-    // THÊM MỚI: State để quản lý trạng thái sắp xếp
     const [sortConfig, setSortConfig] = useState({ key: 'Name', direction: 'ascending' });
-
-    // THÊM MỚI: Hàm xử lý khi bấm nút "Xác nhận hoàn thành"
     const handleCompleteCourse = async () => {
-        // if (!td.isCompleted) return;
+        if (!td.isCompleted) return;
 
         setLoading(true);
 
