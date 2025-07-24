@@ -59,7 +59,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
 
     // THÊM MỚI: Hàm xử lý khi bấm nút "Xác nhận hoàn thành"
     const handleCompleteCourse = async () => {
-        if (!td.isCompleted) return;
+        // if (!td.isCompleted) return;
 
         setLoading(true);
 

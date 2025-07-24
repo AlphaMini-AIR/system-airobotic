@@ -10,6 +10,7 @@ import { Types } from 'mongoose';
 import { Re_course_all, Re_course_one } from '@/data/course';
 import authenticate from '@/utils/authenticate';
 import { Re_Student_All } from '@/data/student';
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function GET(request, { params }) {
     const { id } = await params;
@@ -121,101 +122,123 @@ export async function GET(request, { params }) {
     }
 }
 
-export async function PATCH(request, { params }) {
-    const { id } = params;
 
-    if (!id) {
-        return NextResponse.json({ status: 1, mes: 'Thiếu ID của khóa học.' }, { status: 400 });
+async function generateSummaryComment(comments) {
+    if (!comments || comments.length === 0) {
+        return "Học sinh đã hoàn thành khóa học. Cần theo dõi thêm để có nhận xét chi tiết.";
+    }
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.warn("GEMINI_API_KEY chưa được cấu hình. Sử dụng nhận xét mặc định.");
+        return "Học sinh đã hoàn thành khóa học đầy đủ các buổi.";
     }
 
     try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+            Với vai trò là giáo viên nhận xét học sinh. Dựa trên danh sách các nhận xét rời rạc sau đây về một học sinh trong suốt khóa học, hãy viết một đoạn văn tổng kết dài (khoảng 400 chữ) về thái độ và kết quả học tập của học sinh này. Chỉ trả về đoạn văn, không thêm bất kỳ lời dẫn nào.
+            DỮ LIỆU NHẬN XÉT:
+            - ${comments.join('\n- ')}
+        `;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (error) {
+        console.log(error);
+        
+        console.error("Lỗi khi gọi Gemini AI:", error);
+        return "Học sinh đã hoàn thành các buổi học với sự tham gia tích cực."; 
+    }
+}
+
+
+export async function PATCH(request, { params }) {
+    const { id } = params;
+    if (!id) return NextResponse.json({ status: 1, mes: 'Thiếu ID của khóa học.' }, { status: 400 });
+
+    try {
         const { user, body } = await authenticate(request);
-        if (Object.keys(body).length === 0) {
-            return NextResponse.json({ status: 1, mes: 'Không có dữ liệu để cập nhật.' }, { status: 400 });
-        }
+        if (Object.keys(body).length === 0) return NextResponse.json({ status: 1, mes: 'Không có dữ liệu để cập nhật.' }, { status: 400 });
 
         await connectDB();
-        const course = await PostCourse.findOne({ ID: id }).select('TeacherHR').lean();
+        const course = await PostCourse.findOne({ ID: id }).populate('Book', 'ID Name').lean();
+        if (!course) return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học.' }, { status: 404 });
 
-        if (!course) {
-            return NextResponse.json({ status: 1, mes: 'Không tìm thấy khóa học.' }, { status: 404 });
-        }
-
-        const isTeacherHR = course.TeacherHR.toString() === user.id;
+        const isTeacherHR = course.TeacherHR?.toString() === user.id;
         const isAdmin = user.role?.includes('Admin');
-
-        if (!isAdmin && !isTeacherHR) {
-            return NextResponse.json({ status: 1, mes: 'Bạn không có quyền thực hiện hành động này.' }, { status: 403 });
-        }
+        if (!isAdmin && !isTeacherHR) return NextResponse.json({ status: 1, mes: 'Bạn không có quyền thực hiện hành động này.' }, { status: 403 });
 
         delete body.ID;
-        const updatedCourse = await PostCourse.findOneAndUpdate(
-            { ID: id },
-            { $set: body },
-            { new: true }
-        ).lean(); // Thêm .lean() để tối ưu
+        const updatedCourse = await PostCourse.findOneAndUpdate({ ID: id }, { $set: body }, { new: true }).populate('Book', 'ID Name').lean();
+        if (!updatedCourse) return NextResponse.json({ status: 1, mes: 'Cập nhật khóa học thất bại.' }, { status: 404 });
 
-        if (!updatedCourse) {
-            return NextResponse.json({ status: 1, mes: 'Cập nhật khóa học thất bại.' }, { status: 404 });
-        }
-
-        // --- BẮT ĐẦU LOGIC CẬP NHẬT HỌC SINH MỚI ---
-        if (body.Status === true) { // Giả định Status: true là hoàn thành, tương ứng status: 2
+        if (body.Status === true) {
             const studentIDsInCourse = updatedCourse.Student.map(s => s.ID);
-
             if (studentIDsInCourse.length > 0) {
-                const students = await PostStudent.find({ ID: { $in: studentIDsInCourse } }).select('ID Course');
-
-                const studentBulkOps = [];
+                const students = await PostStudent.find({ ID: { $in: studentIDsInCourse } }).select('ID Course Profile');
+                const bulkOperations = [];
 
                 for (const student of students) {
-                    const hasOtherActiveCourses = student.Course.some(
-                        c => c.course.toString() !== updatedCourse._id.toString() && c.status === 0
-                    );
+                    const studentInCourseData = updatedCourse.Student.find(s => s.ID === student.ID);
+                    const allComments = studentInCourseData?.Learn.flatMap(l => l.Cmt || []).filter(cmt => cmt && cmt.trim() !== '');
+                    const summaryComment = await generateSummaryComment(allComments);
 
-                    const newStatusForStudent = {
-                        status: hasOtherActiveCourses ? 2 : 1, // 2 = học, 1 = chờ
-                        act: hasOtherActiveCourses ? 'học' : 'chờ',
-                        date: new Date(),
-                        note: `Hoàn thành khóa học ${updatedCourse.ID}`,
+                    const newPresentation = {
+                        course: updatedCourse._id,
+                        bookId: updatedCourse.Book.ID,
+                        bookName: updatedCourse.Book.Name,
+                        Comment: summaryComment,
+                        Video: '',
+                        Img: ''
                     };
 
-                    studentBulkOps.push({
+                    // **BẮT ĐẦU SỬA LỖI**
+                    // 1. Lấy mảng Present hiện tại và lọc bỏ mục của khóa học này (nếu có)
+                    const currentPresentations = student.Profile?.Present || [];
+                    const otherPresentations = currentPresentations.filter(p => p.bookId !== updatedCourse.Book.ID);
+
+                    // 2. Tạo mảng Present mới bằng cách thêm mục đã cập nhật vào
+                    const newPresentArray = [...otherPresentations, newPresentation];
+                    // **KẾT THÚC SỬA LỖI**
+
+                    const hasOtherActiveCourses = student.Course.some(c => c.course.toString() !== updatedCourse._id.toString() && c.status === 0);
+                    const newStatusForStudent = {
+                        status: hasOtherActiveCourses ? 2 : 1, act: hasOtherActiveCourses ? 'học' : 'chờ',
+                        date: new Date(), note: `Hoàn thành khóa học ${updatedCourse.ID}`
+                    };
+
+                    bulkOperations.push({
                         updateOne: {
-                            filter: {
-                                _id: student._id,
-                                'Course.course': updatedCourse._id,
-                                'Course.status': 0 // Chỉ cập nhật nếu khóa học đang diễn ra
-                            },
+                            filter: { _id: student._id },
                             update: {
-                                $set: { 'Course.$.status': 2 }, // Cập nhật status khóa học thành 2 (hoàn thành)
-                                $push: { Status: newStatusForStudent } // Thêm trạng thái chung mới
-                            }
+                                // **SỬA LỖI: Dùng $set cho toàn bộ mảng Present**
+                                $set: {
+                                    'Course.$[c].status': 2,
+                                    'Profile.Present': newPresentArray
+                                },
+                                $push: { Status: newStatusForStudent }
+                            },
+                            arrayFilters: [{ 'c.course': updatedCourse._id }]
                         }
                     });
                 }
 
-                if (studentBulkOps.length > 0) {
-                    await PostStudent.bulkWrite(studentBulkOps);
+                if (bulkOperations.length > 0) {
+                    await PostStudent.bulkWrite(bulkOperations);
                 }
             }
         }
-        // --- KẾT THÚC LOGIC CẬP NHẬT HỌC SINH ---
 
         Re_course_all();
         Re_course_one(id);
         Re_Student_All();
 
-        return NextResponse.json(
-            { status: 2, mes: 'Cập nhật khóa học và trạng thái học sinh thành công.' },
-            { status: 200 }
-        );
+        return NextResponse.json({ status: 2, mes: 'Cập nhật thành công.' }, { status: 200 });
 
     } catch (error) {
         console.error('[COURSE_UPDATE_ERROR]', error);
-        return NextResponse.json(
-            { status: 1, mes: error.message },
-            { status: 500 }
-        );
+        return NextResponse.json({ status: 1, mes: error.message }, { status: 500 });
     }
 }

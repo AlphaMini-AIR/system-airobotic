@@ -22,6 +22,7 @@ const Status = new Schema({
 });
 
 const PresentationSchema = new Schema({
+  course: { type: Schema.Types.ObjectId, ref: 'course', required: true },
   bookId: { type: String, required: true },
   bookName: { type: String },
   Video: { type: String, default: '' },
