@@ -62,7 +62,7 @@ export async function GET(request, { params }) {
                 : Promise.resolve([]),
 
             studentIds.length > 0
-                ? PostStudent.find({ ID: { $in: studentIds } }).select('ID Name').lean()
+                ? PostStudent.find({ ID: { $in: studentIds } }).select('ID Name _id').lean()
                 : Promise.resolve([])
         ];
 
@@ -102,6 +102,7 @@ export async function GET(request, { params }) {
             const studentInfoMap = new Map(studentsData.map(s => [s.ID, s]));
             course.Student.forEach(studentInCourse => {
                 studentInCourse.Name = studentInfoMap.get(studentInCourse.ID)?.Name || 'Không tìm thấy';
+                studentInCourse.userId = studentInfoMap.get(studentInCourse.ID)?._id || null;
             });
         }
 

@@ -18,6 +18,7 @@ import ImageComponent from '@/components/(ui)/(image)';
 import BoxFile from '@/components/(ui)/(box)/file';
 import Noti from '@/components/(features)/(noti)/noti';
 import Link from 'next/link';
+import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -223,9 +224,16 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                     col.data === 'More' ? (
                         <Cell key="more" flex={col.flex} align={col.align}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} >
-                                <span className="wrapicon" style={{ background: 'var(--main_d)' }}>
-                                    <svg viewBox="0 0 448 512" width="14" height="14" fill="white">  <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" /></svg>
-                                </span>
+                                <Link href={`/${stu.userId}`}>
+                                    <WrapIcon
+                                        icon={<svg viewBox="0 0 448 512" width="16" height="16" fill="white">
+                                            <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3 0 498.7 13.3 512 29.7 512h388.6c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" />
+                                        </svg>}
+                                        content={"Chi tiết học sinh"}
+                                        placement='bottom'
+                                        style={{ background: 'var(--main_d)', borderRadius: 3, margin: 0 }}
+                                    />
+                                </Link>
                                 <DetailStudent data={stu} course={data.Detail} c={data} users={users} studentsx={studentsx} />
                             </div>
                         </Cell>

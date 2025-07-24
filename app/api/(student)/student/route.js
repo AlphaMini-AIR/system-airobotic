@@ -93,6 +93,23 @@ export async function POST(request) {
             ? parseInt(lastStudent.ID.slice(2), 10) + 1
             : 1;
         const newId = 'AI' + String(nextIdNumber).padStart(4, '0');
+        let Profile = {
+            Avatar: "",
+            ImgPJ: [],
+            ImgSkill: "",
+            Intro: `Xin chào! tên tôi là ${Name}, tôi là học viên của trung tâm AI ROBOTIC. Tôi rất đam mê với công nghệ và đặc biệt là trí tuệ nhân tạo với robotic vì vậy tôi đã đăng ký khóa học này để thảo mãn đam mê của mình.
+        Theo tôi đây là một khóa học vô cùng thú vị bởi vì khóa học áp dụng phương pháp STEM có lý thuyết có thức hành và mỗi buổi tôi đều có thể tạo ra được một mô hình liên quan đến chủ đề học.
+        Tôi thích từng bước của quá trình học tập AI ROBOTIC Từ lý thuyết đến lắp ráp robot rồi đến lập trình mô hình.`,
+            Present: [],
+            Skill: {
+                "Sự tiến bộ và Phát triển": "100",
+                "Kỹ năng giao tiếp": "100",
+                "Diễn giải vấn đề": "100",
+                "Tự tin năng động": "100",
+                "Đổi mới sáng tạo": "100",
+                "Giao lưu hợp tác": "100"
+            }
+        }
         const studentData = {
             Name: formData.get('Name'),
             BD: formData.get('BD'),
@@ -102,6 +119,7 @@ export async function POST(request) {
             Email: formData.get('Email'),
             Address: formData.get('Address'),
             Area: formData.get('Area'),
+            Profile
         };
 
         const initialStatus = {
@@ -197,7 +215,7 @@ export async function PUT(request) {
         }
 
         if (note !== undefined) {
-            updateFields["Trial.$[elem].note"] = String(note); 
+            updateFields["Trial.$[elem].note"] = String(note);
         }
 
         const result = await PostStudent.updateOne(

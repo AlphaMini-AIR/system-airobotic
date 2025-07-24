@@ -6,6 +6,9 @@ import { srcImage } from "@/function";
 import Update from "../update";
 import Pay from "../pay";
 import Out from "../out";
+import Link from "next/link";
+import WrapIcon from "@/components/(ui)/(button)/hoveIcon";
+import { Svg_Profile } from "@/components/(icon)/svg";
 
 export function Li_l({ data, dataArea, ReLoadData }) {
     const initialSrc = data.Avt ? srcImage(data.Avt) : 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG';
@@ -17,7 +20,7 @@ export function Li_l({ data, dataArea, ReLoadData }) {
                 display: 'flex', padding: 8, borderBottom: 'thin solid var(--border-color)',
                 background: status === 0 ? '#ffebed' : status === 1 ? '#fff9e7' : 'transparent'
             }}>
-                <div className={styles.list_li_l_hover} style={{ flex: 5, display: 'flex', cursor: 'pointer' }}>
+                <Link href={`/${data._id}`} className={styles.list_li_l_hover} style={{ flex: 5, display: 'flex', cursor: 'pointer' }}>
                     <div style={{ flex: 2, display: 'flex', gap: 8 }}>
                         <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden' }}>
                             <Image
@@ -45,14 +48,22 @@ export function Li_l({ data, dataArea, ReLoadData }) {
                         <p className="text_5_500">Nợ học phí:</p>
                         <p className="text_4_m">-</p>
                     </div>
-                </div>
+
+                </Link>
                 <div style={{ flex: 1, gap: 5, borderLeft: 'thin solid var(--border-color)' }} className="flex_center">
+                    <Link href={`https://eportfolio.airobotic.edu.vn/e-Portfolio/?ID=${data._id}`} target="_blank" >
+                        <WrapIcon
+                            icon={<Svg_Profile w={16} h={16} c={'white'} />}
+                            content={"Hô sơ điện tử"}
+                            style={{ background: 'var(--main_d)', borderRadius: 3, margin: 0 }}
+                            placement="left"
+                        />
+                    </Link>
                     <Update data={data} data_area={dataArea} reloadData={ReLoadData} />
                     <Pay data={data} />
                     {status !== 0 && (
                         <Out data={data} />
                     )}
-
                 </div>
             </div>
         </div>

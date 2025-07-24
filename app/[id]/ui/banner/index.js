@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { Svg_Pen } from "@/components/(icon)/svg";
 import air from "./index.module.css";
 import { Re_Student_ById } from "@/data/student";
+import Update from "@/app/student/list/ui/update";
 
-export default function Banner({ data }) {
+export default function Banner({ data, area }) {
     const pathname = usePathname();
 
     let position = [0, ""];
@@ -16,8 +17,7 @@ export default function Banner({ data }) {
         const lastKey = keys[keys.length - 1];
         position[1] = lastKey;
     }
-    // Re_Student_ById(data._id)
-    const avt = `https://lh3.googleusercontent.com/d/${data?.Avt}` || "https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG";
+    const avt = data.Avt ? `https://lh3.googleusercontent.com/d/${data?.Avt}` : "https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG";
 
     return (
         <div className={air.wrap}>
@@ -32,16 +32,13 @@ export default function Banner({ data }) {
                 />
                 <div style={{ alignContent: "center", flex: 1 }}>
                     <p className={air.position}>ID: {data.ID}</p>
-                    <p className={air.name}>{data?.Name}</p>
+                    <div style={{ display: 'flex',alignItems: 'center', gap: 8 }}>
+                        <p className={air.name}>{data?.Name}</p>
+                        <Update data={data} data_area={area} />
+                    </div>
                     <p className={air.position}>Trạng thái học: {data.Status[data.Status.length - 1].status == 2 ? "Đang học" : data.Status[data.Status.length - 1].status == 1 ? "Chờ lên khóa" : "Đã nghỉ"}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "end", gap: 8 }}>
-                    <div className="btn" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <Svg_Pen w={18} h={18} c={"white"} />
-                        <p style={{ fontSize: 14, fontWeight: 400 }}>
-                            Cập nhật thông tin
-                        </p>
-                    </div>
                 </div>
             </div>
 
