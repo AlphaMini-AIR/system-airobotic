@@ -8,11 +8,61 @@ import { Readable } from 'stream'
 import jsonRes from '@/utils/response'
 import mongoose from 'mongoose';
 import { Re_coursetry } from '@/data/course'
+import { NextResponse } from 'next/server';
+
+
+function calculateProfileStatus(student) {
+    const profile = student.Profile;
+
+    // Nếu không có profile, trả về false
+    if (!profile) {
+        return false;
+    }
+
+    // 1. Kiểm tra các trường cơ bản
+    const hasBasicInfo = profile.Intro && profile.Avatar && profile.ImgSkill;
+    if (!hasBasicInfo) return false;
+
+    // 2. Kiểm tra số lượng ImgPJ
+    const hasEnoughProjects = profile.ImgPJ && profile.ImgPJ.length > 2;
+    if (!hasEnoughProjects) return false;
+
+    // 3. Kiểm tra các kỹ năng (Skill)
+    const requiredSkills = [
+        "Sự tiến bộ và Phát triển", "Kỹ năng giao tiếp", "Diễn giải vấn đề",
+        "Tự tin năng động", "Đổi mới sáng tạo", "Giao lưu hợp tác"
+    ];
+    // .lean() chuyển Map thành Object, nên ta dùng Object.keys hoặc kiểm tra trực tiếp
+    const skillData = profile.Skill || {};
+    const hasAllSkills = requiredSkills.every(
+        key => skillData[key] && Number(skillData[key]) > 0
+    );
+    if (!hasAllSkills) return false;
+
+    // 4. Kiểm tra và đồng bộ Present với Course
+    const completedCourses = student.Course.filter(c => c.status === 2);
+    const presentations = profile.Present || [];
+
+    // Số lượng Present phải bằng số lượng khóa học đã hoàn thành
+    if (presentations.length !== completedCourses.length) {
+        return false;
+    }
+
+    // Tất cả các mục trong Present phải đầy đủ thông tin
+    const allPresentationsComplete = presentations.every(p =>
+        p.course && p.bookId && p.bookName && p.Video && p.Img && p.Comment
+    );
+    if (!allPresentationsComplete) return false;
+
+    // Nếu vượt qua tất cả các kiểm tra
+    return true;
+}
+
 
 export async function GET(request) {
     try {
-        await connectDB()
-        const data = await PostStudent.find({})
+        await connectDB();
+        const students = await PostStudent.find({})
             .populate({
                 path: 'Area'
             })
@@ -26,10 +76,20 @@ export async function GET(request) {
                     select: 'Name Price'
                 }
             })
-            .lean()
-        return jsonRes(200, { status: true, mes: 'Lấy danh sách học sinh thành công', data })
+            .lean();
+
+        // Thêm trường statusProfile vào mỗi học sinh
+        const dataWithProfileStatus = students.map(student => {
+            return {
+                ...student,
+                statusProfile: calculateProfileStatus(student),
+            };
+        });
+
+        return NextResponse.json({ status: true, mes: 'Lấy danh sách học sinh thành công', data: dataWithProfileStatus }, { status: 200 });
+
     } catch (error) {
-        return jsonRes(500, { status: false, mes: error.message, data: null })
+        return NextResponse.json({ status: false, mes: error.message, data: null }, { status: 500 });
     }
 }
 

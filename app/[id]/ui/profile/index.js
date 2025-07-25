@@ -33,7 +33,7 @@ const defaultProfile = {
 };
 
 export default function Profile({ data, onSave }) {
-    const [editableProfile, setEditableProfile] = useState(null); // **Bắt đầu bằng null để thể hiện trạng thái đang tải**
+    const [editableProfile, setEditableProfile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const [isAvatarPopupOpen, setIsAvatarPopupOpen] = useState(false);
@@ -45,7 +45,6 @@ export default function Profile({ data, onSave }) {
     const router = useRouter();
 
     useEffect(() => {
-        // **SỬA LỖI: Hợp nhất profile mặc định và profile từ data**
         const profile = data.Profile ? { ...defaultProfile, ...data.Profile } : defaultProfile;
 
         const completedCourses = data.Course?.filter(c => c.enrollmentStatus === 2) || [];
@@ -55,7 +54,10 @@ export default function Profile({ data, onSave }) {
             if (!course.Book?.ID) return null;
             const bookId = course.Book.ID;
             const existingPresent = presentMap.get(bookId);
-            return existingPresent || { bookId: bookId, bookName: course.Book.Name || course.Book.ID, Video: '', Img: '', Comment: '' };
+            if(!existingPresent.course) {
+                existingPresent.course = course._id;
+            }
+            return existingPresent || { bookId: bookId, bookName: course.Book.Name|| course.Book.ID, Video: '', Img: '', Comment: '', course: course._id };
         }).filter(Boolean);
 
         const parsedProfile = {

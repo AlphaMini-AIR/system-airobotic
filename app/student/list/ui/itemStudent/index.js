@@ -55,7 +55,7 @@ export function Li_l({ data, dataArea, ReLoadData }) {
                         <WrapIcon
                             icon={<Svg_Profile w={16} h={16} c={'white'} />}
                             content={"Hô sơ điện tử"}
-                            style={{ background: 'var(--main_d)', borderRadius: 3, margin: 0 }}
+                            style={{ background: data.statusProfile ? 'var(--main_d)' : 'var(--red)', borderRadius: 3, margin: 0 }}
                             placement="left"
                         />
                     </Link>

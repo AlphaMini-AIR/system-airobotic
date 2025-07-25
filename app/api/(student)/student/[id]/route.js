@@ -10,12 +10,14 @@ import mongoose from 'mongoose';
 import '@/models/book'
 
 export async function GET(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
 
     try {
         await connectDB();
 
-        // 1. Truy vấn học sinh và populate sâu vào các khóa học và sách
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ status: false, mes: 'ID không hợp lệ', data: null }, { status: 400 });
+        }
         const studentData = await PostStudent.findById(id)
             .populate({
                 path: 'Course.course', // Populate trường 'course' bên trong mảng 'Course'
@@ -26,9 +28,9 @@ export async function GET(request, { params }) {
                 }
             })
             .populate({
-                path: 'Area', 
-                model: 'area',      
-                select: 'name '     
+                path: 'Area',
+                model: 'area',
+                select: 'name '
             })
             .lean();
 

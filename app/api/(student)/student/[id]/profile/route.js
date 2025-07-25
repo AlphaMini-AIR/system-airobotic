@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
-import { Re_Student_ById } from '@/data/student';
+import { Re_Student_All, Re_Student_ById } from '@/data/student';
 import '@/models/course'
 import '@/models/book';
 
@@ -131,6 +131,7 @@ export async function PUT(request, { params }) {
             );
         }
         Re_Student_ById(id);
+        Re_Student_All();
         return NextResponse.json(
             { status: true, mes: 'Cập nhật hồ sơ thành công.', data: null },
             { status: 200, headers: corsHeaders }
