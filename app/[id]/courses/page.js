@@ -1,5 +1,5 @@
 import { Read_Student_ById } from "@/data/student";
-import CourseList from "./main"; 
+import CourseListDisplay from "./main";
 import styles from './main.module.css';
 
 export default async function CoursesTab({ params }) {
@@ -13,6 +13,7 @@ export default async function CoursesTab({ params }) {
             </div>
         );
     }
+
     const processedCourses = studentData.Course
         .map(enrollment => {
             enrollment.Detail?.sort((a, b) => new Date(a.Day) - new Date(b.Day));
@@ -27,6 +28,8 @@ export default async function CoursesTab({ params }) {
         });
 
     return (
-        <CourseList courses={processedCourses} />
+        <div className={styles.container}>
+            <CourseListDisplay courses={processedCourses} />
+        </div>
     );
 }

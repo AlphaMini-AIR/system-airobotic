@@ -29,6 +29,8 @@ const SummaryBox = ({ title, data }) => (
 );
 
 export default function DetailStudent({ data: student, course, c, users, studentsx }) {
+    console.log(c, course, student, studentsx);
+
     Object.assign(student, studentsx.find(i => i.ID === student.ID) || {})
     const allDates = c.Detail.map(item => new Date(item.Day));
     const dateRange = [formatDate(new Date(Math.min(...allDates))), formatDate(new Date(Math.max(...allDates)))];

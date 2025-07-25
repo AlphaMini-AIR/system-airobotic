@@ -7,7 +7,6 @@ import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Co
 import Menu from '../../(ui)/(button)/menu';
 import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
-import { set } from 'mongoose';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Link from 'next/link';
 

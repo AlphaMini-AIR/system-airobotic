@@ -3,10 +3,15 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import styles from './main.module.css';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 
 const buildUrl = (id) => id ? `https://lh3.googleusercontent.com/d/${id}` : '';
 
-const ArrowIcon = ({ isOpen }) => (<svg className={`${styles.arrowIcon} ${isOpen ? styles.expanded : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>);
+const ArrowIcon = ({ isOpen }) => (
+    <svg className={`${styles.arrowIcon} ${isOpen ? styles.expanded : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+);
 
 const getStatusInfo = (status, type) => {
     const classMap = {
@@ -20,38 +25,37 @@ const getStatusInfo = (status, type) => {
     return { text: textMap[type][status] || '', className: classMap[type][status] || '' };
 };
 
-// Component con cho từng buổi học (Lesson)
-const LessonItem = ({ lesson, index, isExpanded, onToggle }) => {
-    const [imageFilter, setImageFilter] = useState('all'); // 'all' hoặc 'personal'
-    const statusInfo = getStatusInfo(lesson.Checkin, 'checkin');
+export default function CourseListDisplay({ courses }) {
+    const [expandedCourseId, setExpandedCourseId] = useState(courses[0]?._id || null);
+    const [selectedLesson, setSelectedLesson] = useState(null);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-    const allImages = lesson.DetailImage || [];
-    const personalImages = lesson.ImageStudent || [];
+    const handleLessonClick = (lesson) => {
+        setSelectedLesson(lesson);
+        setIsPopupOpen(true);
+    };
+    const [imageFilter, setImageFilter] = useState('all');
+    const renderLessonDetailPopup = (lesson) => {
+        if (!lesson) return null;
 
-    const imagesToDisplay = imageFilter === 'all' ? allImages : personalImages;
 
-    return (
-        <div className={styles.lessonItem}>
-            <button className={styles.lessonHeader} onClick={onToggle}>
-                <span className={styles.lessonIndex}>Buổi {index + 1}</span>
-                <div className={styles.lessonInfo}>
-                    <span className={styles.lessonName}>{lesson.TopicName || `Chủ đề buổi ${index + 1}`}</span>
-                    <span className={styles.lessonDate}>{new Date(lesson.Day).toLocaleDateString('vi-VN')}</span>
+        const allImages = lesson.DetailImage || [];
+        const personalImages = lesson.ImageStudent || [];
+        const imagesToDisplay = imageFilter === 'all' ? allImages : personalImages;
+        const statusInfo = getStatusInfo(lesson.Checkin, 'checkin');
+
+        return (
+            <div className={styles.popupContainer}>
+                <div className={styles.popupHeader}>
+                    <h3>{lesson.TopicName || 'Chi tiết buổi học'}</h3>
+                    <div className={`${styles.lessonStatus} ${statusInfo.className}`}>{statusInfo.text}</div>
                 </div>
-                <div className={`${styles.lessonStatus} ${statusInfo.className}`}>
-                    {statusInfo.text}
-                </div>
-                <ArrowIcon isOpen={isExpanded} />
-            </button>
-            <div className={`${styles.lessonContent} ${isExpanded ? styles.expandedContent : ''}`}>
-                <div className={styles.lessonDetails}>
+                <div className={styles.popupBody}>
                     <div className={styles.commentsSection}>
                         <strong>Nhận xét buổi học:</strong>
-                        {lesson.Cmt && lesson.Cmt.length > 0 && lesson.Cmt[0] !== "" ? (
+                        {lesson.Cmt?.length > 0 && lesson.Cmt.some(c => c) ? (
                             <ul>{lesson.Cmt.map((cmt, i) => cmt && <li key={i}>{cmt}</li>)}</ul>
-                        ) : (
-                            <p className={styles.noComment}>Chưa có nhận xét.</p>
-                        )}
+                        ) : (<p className={styles.noComment}>Chưa có nhận xét.</p>)}
                     </div>
                     <div className={styles.imagesSection}>
                         <div className={styles.imageFilterGroup}>
@@ -70,22 +74,11 @@ const LessonItem = ({ lesson, index, isExpanded, onToggle }) => {
                     </div>
                 </div>
             </div>
-        </div>
-    );
-};
-
-// --- Component Chính ---
-export default function CourseList({ courses }) {
-    const [expandedCourseId, setExpandedCourseId] = useState(courses[0]?._id || null);
-    const [expandedLessonId, setExpandedLessonId] = useState(null);
-
-    const summary = useMemo(() => {
-        const completed = courses.filter(c => c.enrollmentStatus === 2).length;
-        return { completed, inProgress: courses.length - completed };
-    }, [courses]);
+        );
+    };
 
     return (
-        <div className={styles.container}>
+        <>
             <div className={styles.courseList}>
                 {courses.map(course => {
                     const isExpanded = expandedCourseId === course._id;
@@ -93,21 +86,17 @@ export default function CourseList({ courses }) {
                     const totalLessons = course.Detail.length;
                     const completedLessons = course.Detail.filter(d => d.Checkin === 1 || d.Checkin === 3).length;
                     const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-
-                    // Gán TopicName vào từng buổi học để dễ hiển thị
-                    const lessonsWithTopicNames = course.Detail.map(detail => ({
-                        ...detail,
-                        TopicName: course.Book?.Topics.find(t => t._id === detail.Topic)?.Name
-                    }));
+                    const lessonsWithTopicNames = course.Detail.map(detail => ({ ...detail, TopicName: course.Book?.Topics.find(t => t._id === detail.Topic)?.Name }));
 
                     return (
                         <div key={course._id} className={styles.courseItem}>
                             <button className={styles.courseHeader} onClick={() => setExpandedCourseId(isExpanded ? null : course._id)}>
                                 <div className={styles.courseTitle}>
-                                    <Image src={course.Book?.Image} width={50} height={50} alt={course.Book?.Name} className={styles.courseImage} />
-                                    <div>
-                                        <span className={styles.courseName}>{course.Book?.Name}</span>
-                                        <span className={`${styles.statusChip} ${statusInfo.className}`}>{statusInfo.text}</span>
+                                    <Image src={course.Book?.Image} width={60} height={60} alt={course.Book?.Name} className={styles.courseImage} />
+                                    <div style={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                                        <p className='text_6'>{course.Book?.Name}</p>
+                                        <p className='text_6'>Khóa: <span style={{ fontWeight: 400 }}>{course.ID}</span></p>
+                                        <p className='text_6'>Trạng thái: <span style={{ fontWeight: 400 }}>{statusInfo.text}</span></p>
                                     </div>
                                 </div>
                                 <div className={styles.courseProgress}>
@@ -117,20 +106,35 @@ export default function CourseList({ courses }) {
                                 <ArrowIcon isOpen={isExpanded} />
                             </button>
                             <div className={`${styles.courseContent} ${isExpanded ? styles.expandedContent : ''}`}>
-                                {lessonsWithTopicNames.map((lesson, index) => (
-                                    <LessonItem
-                                        key={lesson._id}
-                                        lesson={lesson}
-                                        index={index}
-                                        isExpanded={expandedLessonId === lesson._id}
-                                        onToggle={() => setExpandedLessonId(prev => prev === lesson._id ? null : lesson._id)}
-                                    />
-                                ))}
+                                <div className={styles.lessonList}>
+                                    {lessonsWithTopicNames.map((lesson, index) => {
+                                        const lessonStatus = getStatusInfo(lesson.Checkin, 'checkin');
+                                        return (
+                                            <button key={lesson._id} className={styles.lessonItemClickable} onClick={() => handleLessonClick(lesson)}>
+                                                <p className={styles.lessonIndex}>Buổi {index + 1}</p>
+                                                <div className={styles.lessonInfo}>
+                                                    <p className={styles.lessonName}>{lesson.TopicName || `Chủ đề buổi ${index + 1}`}</p>
+                                                    <p className={styles.lessonDate}>Thời gian học: {lesson.Time} {new Date(lesson.Day).toLocaleDateString('vi-VN')}</p>
+                                                </div>
+                                                <div className={`${styles.lessonStatus} ${lessonStatus.className}`}>{lessonStatus.text}</div>
+                                                <p className={styles.arrowIcon}>›</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     );
                 })}
             </div>
-        </div>
+            <FlexiblePopup
+                open={isPopupOpen}
+                onClose={() => setIsPopupOpen(false)}
+                title="Chi tiết buổi học"
+                data={selectedLesson}
+                renderItemList={renderLessonDetailPopup}
+                width={700}
+            />
+        </>
     );
 }

@@ -1,7 +1,10 @@
+'use client';
+
 import Login_form from "@/components/(layout)/login";
 import Image from "next/image";
 import { Svg_Facebook, Svg_Website } from "@/components/(icon)/svg";
 import Link from "next/link";
+
 
 export default function Layout_Login() {
   return (
@@ -26,10 +29,10 @@ export default function Layout_Login() {
               </div>
             </Link >
             <Link href='https://s4h.edu.vn/' target="_blank">
-            <div className="button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'start', gap: 8 }}>
-              <span></span><span></span><span></span><span style={{ background: '#696969' }}></span>
-              <Svg_Website h={20} w={20} c={'white'} />  <p className="text_5" style={{ color: 'white' }}>Website chính thức</p>
-            </div>
+              <div className="button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'start', gap: 8 }}>
+                <span></span><span></span><span></span><span style={{ background: '#696969' }}></span>
+                <Svg_Website h={20} w={20} c={'white'} />  <p className="text_5" style={{ color: 'white' }}>Website chính thức</p>
+              </div>
             </Link>
           </div>
         </div>
