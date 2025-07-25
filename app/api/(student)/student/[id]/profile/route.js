@@ -59,7 +59,10 @@ export async function GET(request, { params }) {
         const existingPresentations = new Map(
             mergedProfile.Present.map(p => [p.bookId, p])
         );
-
+        if (!student.Course || !Array.isArray(student.Course)) {
+            student.Course = [];
+        }
+        
         const finalPresent = student.Course.map(courseItem => {
             const bookInfo = courseItem.course?.Book;
 
@@ -94,6 +97,8 @@ export async function GET(request, { params }) {
         );
 
     } catch (error) {
+        console.log(error);
+        
         return NextResponse.json(
             { status: false, mes: error.message, data: null },
             { status: 500, headers: corsHeaders }
