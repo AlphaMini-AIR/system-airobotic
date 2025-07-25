@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
             populate: {
                 path: 'Book',
                 model: 'book',
-                select: 'Name ID'
+                select: 'Name ID Image'
             },
             select: 'ID Book'
         }).lean();
@@ -84,7 +84,8 @@ export async function GET(request, { params }) {
                 Present: finalPresent
             },
             name: student.Name,
-            id: student.ID
+            id: student.ID,
+            course: student.Course || []
         };
 
         return NextResponse.json(
