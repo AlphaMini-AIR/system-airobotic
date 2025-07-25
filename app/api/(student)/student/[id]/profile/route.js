@@ -11,6 +11,10 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+export async function OPTIONS(request) {
+    return new NextResponse(null, { headers: corsHeaders });
+}
+
 export async function GET(request, { params }) {
     const { id } = params;
 
@@ -30,7 +34,7 @@ export async function GET(request, { params }) {
         if (!student) {
             return NextResponse.json(
                 { status: false, mes: 'Không tìm thấy học sinh.', data: null },
-                { status: 404 }
+                { status: 404, headers: corsHeaders }
             );
         }
 
@@ -85,13 +89,13 @@ export async function GET(request, { params }) {
 
         return NextResponse.json(
             { status: true, mes: 'Lấy dữ liệu thành công.', data: responseData },
-            { status: 200 }
+            { status: 200, headers: corsHeaders }
         );
 
     } catch (error) {
         return NextResponse.json(
             { status: false, mes: error.message, data: null },
-            { status: 500 }
+            { status: 500, headers: corsHeaders }
         );
     }
 }
