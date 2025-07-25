@@ -24,20 +24,21 @@ export default function Main({ data_student, data_area }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("Tất cả");
 
-  const filteredStudents = data_student.filter(student => {
-    const matchArea = filterArea === "Tất cả" ? true : student.Area === filterArea;
+  // MỚI: Tạo danh sách các khu vực duy nhất từ data_student
+  // Sử dụng Set để đảm bảo mỗi khu vực chỉ xuất hiện một lần
+  const uniqueAreas = [...new Set(
+    data_student.map(student => student.Area?.name).filter(Boolean)
+  )];
 
-    // --- LOGIC LỌC THEO TRẠNG THÁI ĐÃ SỬA ---
+  const filteredStudents = data_student.filter(student => {
+    // SỬA ĐỔI: So sánh với student.Area.name thay vì student.Area
+    // Thêm ?. (optional chaining) để tránh lỗi nếu student.Area không tồn tại
+    const matchArea = filterArea === "Tất cả" ? true : student.Area?.name === filterArea;
+
     const matchStatus = (() => {
       if (filterStatus === "Tất cả") return true;
-
-      // Lấy trạng thái mới nhất của học sinh (phần tử cuối cùng trong mảng Status)
       const latestStatus = student.Status?.[student.Status.length - 1];
-
-      // Nếu không có trạng thái nào, không khớp
       if (!latestStatus) return false;
-
-      // So sánh dựa trên giá trị số của trạng thái
       switch (filterStatus) {
         case "Đang học":
           return latestStatus.status === 2;
@@ -49,8 +50,6 @@ export default function Main({ data_student, data_area }) {
           return false;
       }
     })();
-    // --- KẾT THÚC LOGIC SỬA ---
-
     const search = searchTerm.trim().toLowerCase();
     const matchSearch =
       search === ""
@@ -72,7 +71,8 @@ export default function Main({ data_student, data_area }) {
       </div>
       <div className={styles.list_wrap}>
         <div className={styles.list_toptab}>
-          <div style={{ width: 300 }}>
+          {/* SỬA ĐỔI: Bọc input và select trong một div để dễ dàng sắp xếp */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input
               className='input'
               name="username"
@@ -81,6 +81,20 @@ export default function Main({ data_student, data_area }) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {/* MỚI: Thêm dropdown để lọc theo khu vực */}
+            <select
+              className='input'
+              value={filterArea}
+              onChange={(e) => setFilterArea(e.target.value)}
+              style={{ width: 200 }}
+            >
+              <option value="Tất cả">Tất cả khu vực</option>
+              {uniqueAreas.map((areaName) => (
+                <option key={areaName} value={areaName}>
+                  {areaName}
+                </option>
+              ))}
+            </select>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <div className='btn' style={{ background: 'var(--main_d)', borderRadius: 5, margin: 0 }} onClick={ReLoadData}>

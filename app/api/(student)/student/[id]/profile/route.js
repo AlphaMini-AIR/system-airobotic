@@ -12,7 +12,8 @@ const corsHeaders = {
 };
 
 export async function GET(request, { params }) {
-    const { id } = await params;
+    const { id } = params;
+
     try {
         await connectDB();
         const student = await PostStudent.findById(id).populate({
@@ -20,27 +21,77 @@ export async function GET(request, { params }) {
             model: 'course',
             populate: {
                 path: 'Book',
-                model: 'book'
+                model: 'book',
+                select: 'Name ID'
             },
-            select: 'Name ID Book'
+            select: 'ID Book'
         }).lean();
 
         if (!student) {
             return NextResponse.json(
                 { status: false, mes: 'Không tìm thấy học sinh.', data: null },
-                { status: 404, headers: corsHeaders }
+                { status: 404 }
             );
         }
-        return NextResponse.json(
-            { status: true, mes: 'Lấy dữ liệu thành công.', data: { profile: student.Profile, name: student.Name, id: student.ID, course: student.Course } },
-            { status: 200, headers: corsHeaders }
+
+        const defaultProfile = {
+            Intro: "",
+            Avatar: "",
+            ImgSkill: "",
+            ImgPJ: [],
+            Skill: {
+                "Sự tiến bộ và Phát triển": "0",
+                "Kỹ năng giao tiếp": "0",
+                "Diễn giải vấn đề": "0",
+                "Tự tin năng động": "0",
+                "Đổi mới sáng tạo": "0",
+                "Giao lưu hợp tác": "0"
+            },
+            Present: []
+        };
+
+        const mergedProfile = { ...defaultProfile, ...(student.Profile || {}) };
+
+        const existingPresentations = new Map(
+            mergedProfile.Present.map(p => [p.bookId, p])
         );
+
+        const finalPresent = student.Course.map(courseItem => {
+            const bookInfo = courseItem.course?.Book;
+
+            if (!bookInfo || !bookInfo.ID) {
+                return null;
+            }
+
+            const existingData = existingPresentations.get(bookInfo.ID) || {};
+
+            return {
+                bookId: bookInfo.ID,
+                bookName: bookInfo.Name || "",
+                Video: existingData.Video || "",
+                Img: existingData.Img || "",
+                Comment: existingData.Comment || ""
+            };
+        }).filter(Boolean);
+
+        const responseData = {
+            profile: {
+                ...mergedProfile,
+                Present: finalPresent
+            },
+            name: student.Name,
+            id: student.ID
+        };
+
+        return NextResponse.json(
+            { status: true, mes: 'Lấy dữ liệu thành công.', data: responseData },
+            { status: 200 }
+        );
+
     } catch (error) {
-        console.log(error);
-        
         return NextResponse.json(
             { status: false, mes: error.message, data: null },
-            { status: 500, headers: corsHeaders }
+            { status: 500 }
         );
     }
 }

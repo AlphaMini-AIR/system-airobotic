@@ -10,6 +10,7 @@ import styles from './index.module.css';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import { Svg_Canlendar, Svg_Course, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
 import { formatDate } from '@/function';
+import Link from 'next/link';
 
 const toArr = (v) =>
     Array.isArray(v) ? v : v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
@@ -222,7 +223,13 @@ export default function DetailStudent({ data: student, course, c, users, student
             </div>
         </div>
     );
-
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(`https://airobotic.edu.vn/${student._id}${c._id}`);
+        } catch (err) {
+            console.error('Không thể sao chép: ', err);
+        }
+    };
     /* ───────── TABLE INSIDE POPUP ───────── */
     const renderItemList = () => (
         <>
@@ -283,7 +290,22 @@ export default function DetailStudent({ data: student, course, c, users, student
             <div className={styles.top}>
                 <LegendBlock />
                 <div style={{ display: 'flex', gap: 8 }}>
-                    <div className={styles.button} style={{ background: 'var(--green)', opacity: loading ? 0.6 : 1 }} onClick={loading ? undefined : handleExport}>
+                    <div className='input' style={{ display: 'flex', padding: 2, margin: 0, alignItems: 'center' }}>
+                        <p className='text_6_400' style={{ padding: 10, borderRight: 'thin solid var(--border-color)' }}>Link công khai: </p>
+                        <p className='text_6_400' style={{ padding: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>https://airobotic.edu.vn/{student._id}{c._id}</p>
+                        <div style={{ display: 'flex', gap: 2 }}>
+                            <p onClick={handleCopy} style={{ background: 'var(--border-color)', borderRadius: 5, padding: 8, display: 'flex', alignItems: 'center', color: 'var(--text-primary)', borderLeft: 'thin solid var(--border-color)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width={18} height={18} fill='var(--text-primary)'>
+                                    <path d="M480 400L288 400C279.2 400 272 392.8 272 384L272 128C272 119.2 279.2 112 288 112L421.5 112C425.7 112 429.8 113.7 432.8 116.7L491.3 175.2C494.3 178.2 496 182.3 496 186.5L496 384C496 392.8 488.8 400 480 400zM288 448L480 448C515.3 448 544 419.3 544 384L544 186.5C544 169.5 537.3 153.2 525.3 141.2L466.7 82.7C454.7 70.7 438.5 64 421.5 64L288 64C252.7 64 224 92.7 224 128L224 384C224 419.3 252.7 448 288 448zM160 192C124.7 192 96 220.7 96 256L96 512C96 547.3 124.7 576 160 576L352 576C387.3 576 416 547.3 416 512L416 496L368 496L368 512C368 520.8 360.8 528 352 528L160 528C151.2 528 144 520.8 144 512L144 256C144 247.2 151.2 240 160 240L176 240L176 192L160 192z" />
+                                </svg>
+                            </p>
+                            <Link target='_blank' href={`https://airobotic.edu.vn/${student._id}${c._id}`} style={{ background: 'var(--main_d)', borderRadius: 5, padding: 8, display: 'flex', alignItems: 'center', color: 'var(--text-primary)', borderLeft: 'thin solid var(--border-color)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width={18} height={18} fill='white'>
+                                    <path d="M384 64C366.3 64 352 78.3 352 96C352 113.7 366.3 128 384 128L466.7 128L265.3 329.4C252.8 341.9 252.8 362.2 265.3 374.7C277.8 387.2 298.1 387.2 310.6 374.7L512 173.3L512 256C512 273.7 526.3 288 544 288C561.7 288 576 273.7 576 256L576 96C576 78.3 561.7 64 544 64L384 64zM144 160C99.8 160 64 195.8 64 240L64 496C64 540.2 99.8 576 144 576L400 576C444.2 576 480 540.2 480 496L480 416C480 398.3 465.7 384 448 384C430.3 384 416 398.3 416 416L416 496C416 504.8 408.8 512 400 512L144 512C135.2 512 128 504.8 128 496L128 240C128 231.2 135.2 224 144 224L224 224C241.7 224 256 209.7 256 192C256 174.3 241.7 160 224 160L144 160z" /></svg>
+                            </Link>
+                        </div>
+                    </div>
+                    <div className={styles.button} style={{ borderRadius: 5, background: 'var(--green)', opacity: loading ? 0.6 : 1 }} onClick={loading ? undefined : handleExport}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><g fill="none"><path d="M24 0v24H0V0z" /><path fill="#FFF" d="M15 5.5a3.5 3.5 0 1 1 .994 2.443L11.67 10.21c.213.555.33 1.16.33 1.79a4.99 4.99 0 0 1-.33 1.79l4.324 2.267a3.5 3.5 0 1 1-.93 1.771l-4.475-2.346a5 5 0 1 1 0-6.963l4.475-2.347A3.524 3.524 0 0 1 15 5.5" /></g></svg>
                         <p className="text_6_400" style={{ color: '#fff' }}>{loading ? 'Đang xuất...' : 'Xuất Excel'}</p>
                     </div>
