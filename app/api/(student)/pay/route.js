@@ -7,6 +7,7 @@ import '@/models/users';
 import { NextResponse } from 'next/server';
 import authenticate from '@/utils/authenticate';
 import { revalidateTag } from 'next/cache';
+import { reloadCourse, reloadStudent } from '@/data/actions/reload';
 
 export async function GET(request, { params }) {
     try {
@@ -69,15 +70,14 @@ export async function GET(request, { params }) {
 
 export async function POST(request) {
     try {
-        const authResult = await authenticate(request);
-        if (!authResult?.user) {
+        const { user, body } = await authenticate(request);
+        if (!user) {
             return NextResponse.json(
                 { status: 1, mes: 'Xác thực không thành công.', data: [] },
                 { status: 401 }
             );
         }
 
-        const { user, body } = authResult;
         if (!user.role.includes('Admin')) {
             return NextResponse.json(
                 { status: 1, mes: 'Không có quyền truy cập chức năng này.', data: [] },
@@ -113,7 +113,8 @@ export async function POST(request) {
                 { status: 200 }
             );
         }
-        revalidateTag('student');
+        reloadCourse(courseId);
+        reloadStudent(studentId);
         return NextResponse.json(
             { status: 2, mes: 'Tạo hóa đơn và cập nhật học sinh thành công.', data: [savedInvoice] },
             { status: 201 }

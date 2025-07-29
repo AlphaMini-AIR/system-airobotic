@@ -9,12 +9,13 @@ const formatPrice = (price) => {
 
 const ProgramCard = ({ program }) => {
     const topicCount = Object.keys(program.Topics || {}).length
+    const url = program.Image.split('/').length == 5 ? program.Image : `https://lh3.googleusercontent.com/d/${program.Image}`;
 
     return (
         <Link href={`/course/book/${program._id}`} className={styles.card}>
             <div className={styles.imageWrapper}>
                 <div className={styles.imagePlaceholder}>
-                    <Image src={`${program.Image}`} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" alt={program.Name} />
+                    <Image src={url} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" alt={program.Name} />
                 </div>
             </div>
             <div className={styles.content}>

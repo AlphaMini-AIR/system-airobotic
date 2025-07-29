@@ -1,5 +1,4 @@
 'use client'
-import { useState } from 'react';
 
 export default function Nav({ data_student, setFilterStatus, currentFilterStatus }) {
     const totalStudents = data_student.length;

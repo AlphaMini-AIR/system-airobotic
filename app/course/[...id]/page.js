@@ -1,21 +1,15 @@
-
-import { Data_Course_One } from "@/data/course";
 import Timeline from "./ui/timeline";
 import Detail from "./ui/detailcourse";
-import { Data_book } from "@/data/book";
-import { Read_Student_All } from "@/data/student";
-import { Data_user } from "@/data/users";
+import { course_data, student_data, user_data } from "@/data/actions/get";
 
 export default async function OverviewTab({ params }) {
     const { id } = await params;
-    const data = await Data_Course_One(id[0]);
-    let students = await Read_Student_All()
-    const users = await Data_user()
+    const data = await course_data(id);
+    let students = await student_data();
+    const users = await user_data({})
     const tienDo = tinhTienDoHocTap(data);
-    data.Progress = tienDo;
-    console.log(data);
-    
-    
+    data.Progress = tienDo; 
+
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
             <Timeline data={data} props={id} />

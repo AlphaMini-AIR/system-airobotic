@@ -1,3 +1,4 @@
+/* --- Main Layout --- */
 .container {
     display: flex;
     width: calc(100% - 34px);
@@ -6,40 +7,14 @@
     border-radius: 8px;
     overflow: hidden;
     padding: 16px;
-    gap: 16px
+    gap: 16px;
 }
 
 .infoPanel {
     flex: 1;
     min-width: 300px;
-    /* Đảm bảo không bị co quá nhỏ */
     display: flex;
     flex-direction: column;
-}
-
-.imageContainer {
-    width: 100%;
-    border-radius: 5px;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--boxshaw2);
-    transition: transform 0.3s ease;
-
-}
-
-.bookImage {
-    width: 100%;
-    aspect-ratio: 3/4;
-    object-fit: cover;
-    display: block;
-}
-
-
-.metaInfo {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
-    gap: 2px;
 }
 
 .topicsPanel {
@@ -47,10 +22,37 @@
     min-width: 400px;
     display: flex;
     flex-direction: column;
-    border-left: thin solid var(--border-color);
+    border-left: 1px solid var(--border-color);
     padding-left: 16px;
 }
 
+/* --- Info Panel --- */
+.imageContainer {
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--boxshaw2);
+    display: flex;
+    gap: 8px;
+}
+
+.bookImage {
+    width: calc(50% - 4px);
+    height: auto;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+}
+
+.metaInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+/* --- Topics Panel --- */
 .topicsHeader {
     display: flex;
     justify-content: space-between;
@@ -60,18 +62,12 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.topicsHeader h2 {
-    font-size: 1.75rem;
-    color: var(--main_d);
-    margin: 0;
-}
-
 .topicList {
-    flex: 1;
+    flex-grow: 1;
     list-style: none;
     padding: 0;
     margin: 0;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding-right: 10px;
 }
 
@@ -101,31 +97,28 @@
     background-color: transparent;
     padding: 1rem;
     border-radius: 8px;
-    border: thin solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-left: 3px solid var(--border-color);
-    cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .topicItem:hover {
     background-color: var(--bg-secondary);
-    border-color: var(--border-color);
+}
+
+.topicImageContainer {
+    width: 100px;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--border-color);
 }
 
 .topicInfo {
     flex-grow: 1;
-}
-
-.topicKey {
-    display: inline-block;
-    background-color: var(--hover);
-    color: var(--text-secondary);
-    padding: 0.2rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 0.6rem;
-    border: 1px solid var(--border-color);
 }
 
 .topicPeriod {
@@ -134,6 +127,36 @@
     margin: 0;
 }
 
+.topicActions {
+    display: flex;
+    gap: 8px;
+}
+
+/* --- Drag and Drop --- */
+.dragItem {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    cursor: move;
+    transition: all 0.2s ease-in-out;
+}
+
+.isDragging {
+    opacity: 0.5;
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.dropPlaceholder {
+    height: 70px;
+    background: rgba(0, 123, 255, 0.1);
+    border: 2px dashed var(--main_b, #007bff);
+    border-radius: 8px;
+    margin: 4px 0;
+}
+
+
+/* --- General Buttons & Overlays --- */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -152,11 +175,6 @@
     transform: translateY(-2px);
 }
 
-.btn:active {
-    transform: translateY(0);
-    box-shadow: none;
-}
-
 .editBtn {
     border-color: var(--main_b);
     background-color: var(--main_b);
@@ -168,7 +186,6 @@
 .editBtn:hover {
     border-color: var(--main_d);
     background-color: var(--main_d);
-    transform: translateY(-2px);
 }
 
 .addBtn {
@@ -180,17 +197,33 @@
     background-color: var(--main_d);
 }
 
-.slideLinkBtn {
-    padding: 10px;
-    background-color: var(--bg-primary);
-    color: var(--text-secondary);
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
+.btnGray {
+    background: var(--gray_b, #6c757d);
+    margin: 0;
 }
 
-.slideLinkBtn:hover {
-    color: var(--main_b);
-    background-color: var(--hover);
-    box-shadow: none;
+.btnRed {
+    background: var(--red, #dc3545);
+    margin: 0;
+}
+
+.btnYellow {
+    background: var(--yellow, #ffc107);
+}
+
+.btnMain {
+    background: var(--main_b, #007bff);
+}
+
+.loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
 }

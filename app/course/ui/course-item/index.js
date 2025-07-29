@@ -70,7 +70,7 @@ export default function CourseItem({ data = {} }) {
     const studentCount = Student.length;
 
     return (
-        <Link href={`/course/${ID}`} className={styles.wrap} style={{ borderBottom: `3px solid ${data.Status ? 'var(--green)' : 'var(--main_b)'}` }}>
+        <Link href={`/course/${data._id}`} className={styles.wrap} style={{ borderBottom: `3px solid ${data.Status ? 'var(--green)' : 'var(--main_b)'}` }}>
             <div>
                 <div className={styles.title}>
                     <div className={styles.courseAvt}>

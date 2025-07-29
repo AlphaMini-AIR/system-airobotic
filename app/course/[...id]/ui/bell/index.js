@@ -6,9 +6,8 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
-import { Read_Student_All } from '@/data/student';
+import { student_data } from '@/data/actions/get';
 
-// --- Các component phụ không thay đổi ---
 const SendingSpinner = () => (
     <svg className={styles.spinner} viewBox="0 0 50 50">
         <circle className={styles.path} cx="25" cy="25" r="20" fill="none" strokeWidth="5"></circle>
@@ -86,15 +85,11 @@ function AnnounceStudent({ course, setIsSending, setProgress }) {
     useEffect(() => {
         if (isOpen && masterStudentList.length === 0) {
             setIsLoading(true);
-            Read_Student_All()
-                .then((res) => {
-                    const list = Array.isArray(res) ? res : res.data || [];
-                    setMasterStudentList(list);
-                })
-                .catch(() => {
-                    setNoti({ open: true, mes: 'Không thể tải danh sách học sinh.', status: false });
-                })
-                .finally(() => setIsLoading(false));
+            (async () => {
+                const data = await student_data();
+                setMasterStudentList(data);
+                setIsLoading(false);
+            })();
         }
     }, [isOpen, masterStudentList.length]);
 

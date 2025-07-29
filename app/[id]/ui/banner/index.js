@@ -3,9 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Svg_Pen } from "@/components/(icon)/svg";
 import air from "./index.module.css";
-import { Re_Student_ById } from "@/data/student";
 import Update from "@/app/student/list/ui/update";
 
 export default function Banner({ data, area }) {

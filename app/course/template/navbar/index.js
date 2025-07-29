@@ -6,16 +6,14 @@ import CourseItem from '../../ui/course-item';
 import Create from '../../ui/create';
 import styles from './index.module.css';
 import { useRouter } from 'next/navigation';
-import { Re_course_all } from '@/data/course';
 import ProgramList from '../../ui/book-item';
 import CourseManagementPage from '../../ui/createbook';
-import { Re_book } from '@/data/book';
 import Loading from '@/components/(ui)/(loading)/loading';
 import { Svg_Area, Svg_Course } from '@/components/(icon)/svg';
 import ListArea from '../../ui/area-item'
 import CreateArea from '../../ui/createarea';
-import { Re_Area } from '@/data/area';
 import CourseTryItem from '../../ui/coursetry-item';
+import { reloadBook, reloadCourse } from '@/data/actions/reload';
 
 function BookIcon({ active }) {
     return (
@@ -35,7 +33,7 @@ const getIsoDateString = (date) => {
     return date.toISOString().split('T')[0];
 };
 
-export default function Navbar({ data = [], book = [], user, areas = [], trys }) {
+export default function Navbar({ data = [], book = [], user, areas = [], trys, teacher }) {
     const router = useRouter();
     const [isReloading, setIsReloading] = useState(false);
     const [tab, setTab] = useState(0);
@@ -88,14 +86,14 @@ export default function Navbar({ data = [], book = [], user, areas = [], trys })
 
     const reloadData = useCallback(async () => {
         setIsReloading(true)
-        await Re_course_all()
+        await reloadCourse()
         router.refresh()
         setIsReloading(false)
     }, [router]);
 
     const reloadDatabook = useCallback(async () => {
         setIsReloading(true)
-        await Re_book()
+        await reloadBook()
         router.refresh()
         setIsReloading(false)
     }, [router]);
@@ -274,7 +272,7 @@ export default function Navbar({ data = [], book = [], user, areas = [], trys })
                                 {isReloading ? 'Đang tải...' : 'Làm mới dữ liệu'}
                             </button>}
                         {user.role.includes('Admin') || user.role.includes('Acadamic') ? <>
-                            {tab !== 3 && tab !== 2 ? <Create /> : tab === 3 ? <CourseManagementPage /> : <CreateArea />}
+                            {tab !== 3 && tab !== 2 ? <Create teachers={teacher} books={book} areas={areas} /> : tab === 3 ? <CourseManagementPage /> : <CreateArea />}
                         </> : null}
                     </div>
                 </div>
@@ -298,8 +296,8 @@ export default function Navbar({ data = [], book = [], user, areas = [], trys })
                     )}
                 </div>
             </div>
-            {isReloading && <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0, 0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Loading content="Đang tải dữ liệu..." />
+            {isReloading && <div className='loadingOverlay'>
+                <Loading content={<p className='text_6_400' style={{ color: 'white' }}>Đang tải dữ liệu...</p>} />
             </div>}
         </>
     );

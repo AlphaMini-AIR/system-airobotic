@@ -66,12 +66,12 @@ export default function ProgramList({ programs = [] }) {
                 body: JSON.stringify({
                     name: form.name.trim(),
                     color: form.color,
-                    rooms: form.rooms              // [{name}]
+                    rooms: form.rooms
                 })
             }).then((r) => r.json())
 
-            setNoti({ open: true, status: res.status === 2, mes: res.mes })
-            if (res.status === 2) router.refresh()
+            setNoti({ open: true, status: res.status, mes: res.mes })
+            if (res.status) router.refresh()
             setSelected(null)
         } catch (e) {
             setNoti({ open: true, status: false, mes: e.message })
@@ -193,7 +193,7 @@ export default function ProgramList({ programs = [] }) {
                 status={noti.status}
                 mes={noti.mes}
                 button={
-                    <button className='btn' style={{ width: '100%', borderRadius: 5 }} onClick={() => setNoti((n) => ({ ...n, open: false }))}>
+                    <button className='btn' style={{ width: '100%', borderRadius: 5, justifyContent: 'center' }} onClick={() => setNoti((n) => ({ ...n, open: false }))}>
                         Tắt thông báo
                     </button>
                 }

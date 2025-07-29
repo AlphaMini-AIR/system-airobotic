@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import styles from './main.module.css';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import { driveImage } from '@/function';
 
 const buildUrl = (id) => id ? `https://lh3.googleusercontent.com/d/${id}` : '';
 
@@ -92,7 +93,7 @@ export default function CourseListDisplay({ courses }) {
                         <div key={course._id} className={styles.courseItem}>
                             <button className={styles.courseHeader} onClick={() => setExpandedCourseId(isExpanded ? null : course._id)}>
                                 <div className={styles.courseTitle}>
-                                    <Image src={course.Book?.Image} width={60} height={60} alt={course.Book?.Name} className={styles.courseImage} />
+                                    <Image src={driveImage(course.Book?.Image)} width={60} height={60} alt={course.Book?.Name} className={styles.courseImage} />
                                     <div style={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
                                         <p className='text_6'>{course.Book?.Name}</p>
                                         <p className='text_6'>Khóa: <span style={{ fontWeight: 400 }}>{course.ID}</span></p>

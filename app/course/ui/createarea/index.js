@@ -69,9 +69,9 @@ const CreateArea = () => {
             const result = await response.json();
 
             if (result.status) {
+                router.refresh();
                 setNotification({ open: true, status: true, mes: result.mes });
             } else {
-                router.refresh();
                 setNotification({ open: true, status: false, mes: result.mes });
             }
             setIsPopupOpen(false)
@@ -161,7 +161,7 @@ const CreateArea = () => {
                 title={'Thêm khu vực'}
                 renderItemList={renderPopupContent}
             />
-            {isLoading && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {isLoading && <div className='loadingOverlay'>
                 <Loading content={<p style={{ color: 'white', }} className='text_6_400'>Đang tạo khu vực mới...</p>} />
             </div>}
             <Noti

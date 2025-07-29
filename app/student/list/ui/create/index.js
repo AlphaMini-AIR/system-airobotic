@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useRef, useImperativeHandle, useEffect } from 'react';
 import { Svg_Add } from "@/components/(icon)/svg";
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
@@ -9,24 +9,22 @@ import AlertPopup from '@/components/(features)/(noti)/alert';
 import Menu from '@/components/(ui)/(button)/menu';
 import Loading from '@/components/(ui)/(loading)/loading';
 import styles from './index.module.css';
+import { area_data } from '@/data/actions/get';
+import { useRouter } from 'next/navigation';
 
 const AddStudentForm = forwardRef(({
     onClose,
     onShowNotification,
     onShowCloseConfirm,
     data_area,
-    onRefreshData,
-    reloadData,
-    setIsLoading // Nhận trực tiếp hàm setter
+    setIsLoading
 }, ref) => {
-
     const [formData, setFormData] = useState({
         studentName: '', dob: '', school: '', parentName: '',
-        area: '',
-        areaId: '',
+        area: '', areaId: '',
         phone: '', email: '', address: ''
     });
-
+    const router = useRouter();
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const fileInputRef = useRef(null);
@@ -67,31 +65,26 @@ const AddStudentForm = forwardRef(({
             areaId: 'Khu vực',
             phone: 'Số điện thoại'
         };
-
         for (const field in requiredFields) {
             if (!formData[field]) {
                 onShowNotification(`Vui lòng điền đầy đủ thông tin: ${requiredFields[field]}.`, false);
                 return false;
             }
         }
-
         const phoneRegex = /^0\d{9}$/;
         if (!phoneRegex.test(formData.phone)) {
             onShowNotification('Số điện thoại không hợp lệ. Vui lòng nhập 10 chữ số và bắt đầu bằng số 0.', false);
             return false;
         }
-
         return true;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm() || isSubmitting) {
-            return;
-        }
+        if (!validateForm() || isSubmitting) return;
 
         setIsSubmitting(true);
-        setIsLoading(true); // Bật loading
+        setIsLoading(true);
 
         const submissionData = new FormData();
         submissionData.append('Name', formData.studentName);
@@ -111,25 +104,18 @@ const AddStudentForm = forwardRef(({
                 method: 'POST',
                 body: submissionData,
             });
-
             const result = await response.json();
-
+            router.refresh();
             if (!response.ok) {
                 throw new Error(result.mes || 'Có lỗi xảy ra trong quá trình tạo học sinh.');
             }
-
             onShowNotification(result.mes, true);
-            if (onRefreshData) {
-                onRefreshData();
-            }
             onClose();
-
         } catch (error) {
             onShowNotification(error.message, false);
         } finally {
             setIsSubmitting(false);
-            setIsLoading(false); // Luôn tắt loading khi xong
-            reloadData();
+            setIsLoading(false);
         }
     };
 
@@ -177,23 +163,11 @@ const AddStudentForm = forwardRef(({
                 <TextNoti mes={<p>Các thông tin có đánh dấu <span className={styles.requiredMark}>*</span> là bắt buộc.</p>} title={'Lưu ý khi thêm học sinh'} color={'yellow'} />
             </div>
             <div className={styles.formRow}>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageChange}
-                    accept=".jpg,.jpeg,.png"
-                    className={styles.hiddenInput}
-                />
-                <div
-                    onClick={handleImageClick}
-                    className={styles.imageUploadBox}
-                    style={{ background: avatarPreview ? `url(${avatarPreview}) center/cover` : 'transparent' }}
-                >
+                <input type="file" ref={fileInputRef} onChange={handleImageChange} accept=".jpg,.jpeg,.png" className={styles.hiddenInput} />
+                <div onClick={handleImageClick} className={styles.imageUploadBox} style={{ background: avatarPreview ? `url(${avatarPreview}) center/cover` : 'transparent' }}>
                     {!avatarPreview && (
                         <>
-                            <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path>
-                            </svg>
+                            <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
                             <p className='text_4_m'>Hình ảnh đại diện</p>
                             <p className={`text_7_400 ${styles.textCenter}`}>Chỉ chấp nhận .jpg, .jpeg, .png</p>
                         </>
@@ -237,10 +211,7 @@ const AddStudentForm = forwardRef(({
                             menuItems={areaMenuItems}
                             menuPosition="top"
                             customButton={
-                                <div
-                                    onClick={() => setIsAreaMenuOpen(o => !o)}
-                                    className={`input ${styles.fullWidthInput} ${styles.selectBtn}`}
-                                >
+                                <div onClick={() => setIsAreaMenuOpen(o => !o)} className={`input ${styles.fullWidthInput} ${styles.selectBtn}`}>
                                     {formData.area || 'Chọn khu vực'}
                                 </div>
                             }
@@ -270,15 +241,11 @@ const AddStudentForm = forwardRef(({
 });
 AddStudentForm.displayName = 'AddStudentForm';
 
-
-// ==================================================================================
-// COMPONENT CHA: Create (Export Default)
-// ==================================================================================
-export default function Create({ data_area, onStudentCreated, reloadData }) {
+export default function Create() {
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [notification, setNotification] = useState({ open: false, status: false, mes: '' });
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // State boolean cho loading
+    const [isLoading, setIsLoading] = useState(false);
     const formRef = useRef(null);
 
     const handleOpenPopup = () => setIsPopupOpen(true);
@@ -322,7 +289,6 @@ export default function Create({ data_area, onStudentCreated, reloadData }) {
                 <p className={`text_6_400`} style={{ color: 'white' }}>Thêm học sinh mới</p>
             </div>
 
-            {/* Lớp phủ loading toàn màn hình */}
             {isLoading && (
                 <div className={styles.loadingOverlay}>
                     <Loading content={<p className='text_6_400' style={{ color: 'white' }}>Đang thực thi...</p>} />
@@ -333,19 +299,18 @@ export default function Create({ data_area, onStudentCreated, reloadData }) {
                 open={isPopupOpen}
                 onClose={triggerFormCloseCheck}
                 title="Thêm học sinh mới"
-                renderItemList={() => (
+                width={700}
+                fetchData={area_data}
+                renderItemList={(fetchedAreaData) => (
                     <AddStudentForm
                         ref={formRef}
                         onClose={handleClosePopup}
                         onShowNotification={handleShowNotification}
                         onShowCloseConfirm={handleShowCloseConfirm}
-                        data_area={data_area}
-                        onRefreshData={onStudentCreated}
-                        reloadData={reloadData}
-                        setIsLoading={setIsLoading} // Truyền hàm setter
+                        data_area={fetchedAreaData}
+                        setIsLoading={setIsLoading}
                     />
                 )}
-                width={700}
             />
 
             <Noti

@@ -20,7 +20,7 @@ export default function Timeline({ data = [], props }) {
             <div style={{
                 borderRadius: '8px', padding: 16, background: 'linear-gradient(90deg, rgba(32,97,165,1) 0%, rgba(18,57,98,1) 100%)',
                 boxShadow: 'var(--box)', overflow: 'hidden',
-            }}><Link href={`/course/${data.ID}`}>
+            }}><Link href={`/course/${data._id}`}>
                     <div className="text_4_m" style={{ color: 'white', fontWeight: '500' }}>{data.Type}</div>
                     <div className="text_2" style={{ margin: '4px 0', color: 'white' }}>Lớp: {data.ID}</div>
                     <div className="text_4_m" style={{ color: 'white' }}>Từ {dateRange[0]} đến {dateRange[1]}</div>
@@ -37,9 +37,9 @@ export default function Timeline({ data = [], props }) {
                     })
                     return (
                         i == data.Detail.length - 1 ?
-                            <Dot key={i} props={props} course={data.ID} type="end" index={i} data={datalesson} /> :
-                            i == 0 ? <Dot key={i} props={props} course={data.ID} type="center" index={i} data={datalesson} /> :
-                                <Dot key={i} props={props} course={data.ID} type="main" index={i} data={datalesson} />
+                            <Dot key={i} props={props} course={data._id} type="end" index={i} data={datalesson} /> :
+                            i == 0 ? <Dot key={i} props={props} course={data._id} type="center" index={i} data={datalesson} /> :
+                                <Dot key={i} props={props} course={data._id} type="main" index={i} data={datalesson} />
                     )
                 })}
             </div>

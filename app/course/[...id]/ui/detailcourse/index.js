@@ -9,7 +9,6 @@ import Image from 'next/image';
 import { Svg_Area, Svg_Canlendar, Svg_Course, Svg_Map, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
 import AnnounceStudent from '../bell';
 import Report from '../Report';
-import { Re_course_one } from '@/data/course';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/(ui)/(loading)/loading';
 import CommentPopup from '../cmt';
@@ -19,6 +18,8 @@ import BoxFile from '@/components/(ui)/(box)/file';
 import Noti from '@/components/(features)/(noti)/noti';
 import Link from 'next/link';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
+import { reloadCourse } from '@/data/actions/reload';
+import Pay from '@/app/student/list/ui/pay';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -44,7 +45,6 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     const listColumnsConfig = { mobile: 3, tablet: 5, desktop: 6 };
 
     const [loading, setLoading] = useState(false);
-    // THÊM MỚI: State để quản lý thông báo
     const [notification, setNotification] = useState({
         open: false,
         status: true,
@@ -57,11 +57,9 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     const [sortConfig, setSortConfig] = useState({ key: 'Name', direction: 'ascending' });
     const handleCompleteCourse = async () => {
         if (!td.isCompleted) return;
-
         setLoading(true);
-
         try {
-            const response = await fetch(`/api/course/${data.ID}`, {
+            const response = await fetch(`/api/course/${data._id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Status: true }),
@@ -231,6 +229,15 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                         style={{ background: 'var(--main_d)', borderRadius: 3, margin: 0 }}
                                     />
                                 </Link>
+                                <Link href={`https://eportfolio.airobotic.edu.vn/e-Portfolio/?ID=${stu.userId}`} target='_blank'>
+                                    <WrapIcon
+                                        icon={<Svg_Profile w={16} h={16} c='white' />}
+                                        content={"Hồ sơ điện tử"}
+                                        placement='bottom'
+                                        style={{ background: stu.StatusProfile ? 'var(--main_d)' : 'var(--red)', borderRadius: 3, margin: 0 }}
+                                    />
+                                </Link>
+                                <Pay _id={stu.userId} courseId={data._id} status={stu.StatusCourse} />
                                 <DetailStudent data={stu} course={data.Detail} c={data} users={users} studentsx={studentsx} />
                             </div>
                         </Cell>
@@ -282,7 +289,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     )
     const reload = async () => {
         setLoading(true);
-        await Re_course_one(data.ID)
+        await reloadCourse(data._id);
         router.refresh();
         setLoading(false);
     }

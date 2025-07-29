@@ -14,71 +14,6 @@
     height: max-content;
 }
 
-.over_main {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-}
-
-.over_button {
-    width: calc(100% - 32px);
-    padding: 10px 16px;
-    border-radius: 5px;
-    background: unset;
-    cursor: pointer;
-    transition: all .2s linear;
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-
-.over_button.ac {
-    background: var(--hover)
-}
-
-.over_button:hover {
-    background: var(--hover);
-}
-
-.over_title {
-    padding-bottom: 8px;
-    border-bottom: thin solid var(--border-color);
-}
-
-.over_chart1 {
-    padding: 16px;
-    border-radius: 8px;
-    flex: 1;
-    border: thin solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    gap: 8px
-}
-
-
-.list_li {
-    border-radius: 4px;
-    transition: all .3s linear;
-    cursor: pointer;
-    padding: 10px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.list_li:hover {
-    background: var(--hover);
-}
-
-.list_menuwrap {
-    margin: 0;
-    width: 100%;
-    border-radius: 6px;
-    background: var(--bg-primary);
-    margin-top: 8px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 3px 0px, rgba(0, 0, 0, 0.05) 0px 0px 1px 0px
-}
-
 .list_wrap {
     flex: 1;
     border-radius: 8px;
@@ -88,6 +23,7 @@
     overflow: hidden;
 }
 
+/* --- Top Tab & Controls --- */
 .list_toptab {
     height: 44px;
     border-bottom: 2px solid var(--border-color);
@@ -97,10 +33,49 @@
     align-items: center;
 }
 
+.filterControls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.searchInput {
+    width: 300px;
+}
+
+.areaSelect {
+    width: 200px;
+}
+
+.actionControls {
+    display: flex;
+    gap: 8px;
+}
+
+.reloadButton {
+    background: var(--main_d);
+    border-radius: 5px;
+    margin: 0;
+}
+
+.reloadButtonText {
+    color: white;
+}
+
+
 .list_main {
     flex: 1;
 }
 
-.list_li_l_w:hover {
-    background: var(--hover);
+.loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }

@@ -1,8 +1,8 @@
-import { Data_user_report } from "@/data/users";
 import Report from "../ui/report";
+import { user_data } from "@/data/actions/get";
 
 export default async function TeacherPage() {
-    let data = await Data_user_report();
+    let data = await user_data({ type: 'report' });
     return (
         <Report initialReports={data} />
     );

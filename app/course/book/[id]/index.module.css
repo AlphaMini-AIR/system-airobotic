@@ -6,15 +6,20 @@
     padding: 16px;
 }
 
-.formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
 .formLabel {
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+.fileUploader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: sans-serif;
+    width: calc(100% - 8px);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px;
 }
 
 .formInput {
@@ -61,4 +66,51 @@
 
 .cancelBtn:hover {
     background-color: var(--hover);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.formGroup input {
+    padding: 8px 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: var(--main);
+}
+
+.hiddenInput {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.customButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: var(--main_d);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
 }

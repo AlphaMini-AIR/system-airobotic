@@ -60,7 +60,7 @@ export function Li_l({ data, dataArea, ReLoadData }) {
                         />
                     </Link>
                     <Update data={data} data_area={dataArea} reloadData={ReLoadData} />
-                    <Pay data={data} />
+                    <Pay _id={data._id} />
                     {status !== 0 && (
                         <Out data={data} />
                     )}

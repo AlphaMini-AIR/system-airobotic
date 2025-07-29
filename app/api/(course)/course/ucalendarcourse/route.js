@@ -4,6 +4,7 @@ import PostCourse from '@/models/course';
 import Area from '@/models/area'; // Import model Area để tra cứu
 import { NextResponse } from 'next/server';
 import { Types, isValidObjectId } from 'mongoose';
+import { reloadCourse } from '@/data/actions/reload';
 
 const APPSCRIPT = 'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
 const CREATE_LESSON_REQUIRED = ['Day', 'Topic', 'Room', 'Time', 'Teacher'];
@@ -39,15 +40,11 @@ export async function POST(request) {
         }
 
         await connectDB();
-
-        // --- Handle 'Học bù' or 'Học thử' ---
-        if (type === 'Học bù' || type === 'Học thử') {
+        if (type === 'Học bù') {
             const missing = CREATE_LESSON_REQUIRED.filter(k => !(k in data));
             if (missing.length) {
                 return NextResponse.json({ status: 1, mes: `Thiếu trường khi tạo buổi học: ${missing.join(', ')}` }, { status: 400 });
             }
-
-            // --- SỬA LỖI: Tìm Room ID từ tên ---
             const roomId = await findRoomIdByName(data.Room);
             if (!roomId) {
                 return NextResponse.json({ status: 1, mes: `Phòng học '${data.Room}' không tồn tại` }, { status: 404 });
@@ -188,7 +185,7 @@ export async function POST(request) {
                 );
             }
         }
-
+        reloadCourse(courseId);
         return NextResponse.json({ status: 2, mes: 'Cập nhật buổi học thành công', data: courseAfterUpdate }, { status: 200 });
 
     } catch (err) {

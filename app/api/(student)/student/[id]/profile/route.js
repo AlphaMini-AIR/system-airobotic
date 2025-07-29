@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/config/connectDB';
 import PostStudent from '@/models/student';
-import { Re_Student_All, Re_Student_ById } from '@/data/student';
+import { Re_Student_All, Re_Student_ById } from '@/data/database/student';
 import '@/models/course'
 import '@/models/book';
+import { reloadStudent } from '@/data/actions/reload';
+import authenticate from '@/utils/authenticate';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -15,6 +17,7 @@ export async function OPTIONS(request) {
     return new NextResponse(null, { headers: corsHeaders });
 }
 
+// Lấy thông tin hồ sơ điện tử học sinh
 export async function GET(request, { params }) {
     const { id } = await params;
 
@@ -62,7 +65,7 @@ export async function GET(request, { params }) {
         if (!student.Course || !Array.isArray(student.Course)) {
             student.Course = [];
         }
-        
+
         const finalPresent = student.Course.map(courseItem => {
             const bookInfo = courseItem.course?.Book;
 
@@ -98,7 +101,7 @@ export async function GET(request, { params }) {
 
     } catch (error) {
         console.log(error);
-        
+
         return NextResponse.json(
             { status: false, mes: error.message, data: null },
             { status: 500, headers: corsHeaders }
@@ -106,10 +109,12 @@ export async function GET(request, { params }) {
     }
 }
 
+// Cập nhập thông tin hồ sơ điện tử học sinh
 export async function PUT(request, { params }) {
     const { id } = await params;
+
     try {
-        const body = await request.json();
+        const { user, body } = await authenticate(request);
         if (!body || Object.keys(body).length === 0) {
             return NextResponse.json(
                 { status: false, mes: 'Dữ liệu profile không được để trống.', data: null },
@@ -130,8 +135,7 @@ export async function PUT(request, { params }) {
                 { status: 404, headers: corsHeaders }
             );
         }
-        Re_Student_ById(id);
-        Re_Student_All();
+        reloadStudent(id);
         return NextResponse.json(
             { status: true, mes: 'Cập nhật hồ sơ thành công.', data: null },
             { status: 200, headers: corsHeaders }

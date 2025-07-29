@@ -39,7 +39,7 @@ const BookSchema = new Schema({
     },
     Topics: {
         type: [TopicItemSchema],
-        default: [],            
+        default: [],
     },
     Price: {
         type: Number,
@@ -49,7 +49,12 @@ const BookSchema = new Schema({
     Image: {
         type: String,
         required: false,
-    }
+    },
+    Badge: { type: String },
+    Describe: {
+        type: String,
+        default: 'null',
+    },
 }, { timestamps: true, });
 
 const Book = models.book || model('book', BookSchema);

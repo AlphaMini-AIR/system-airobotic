@@ -1,10 +1,12 @@
-import { Read_Student_ById } from "@/data/student";
+import { Read_Student_ById } from "@/data/database/student";
 import CourseListDisplay from "./main";
 import styles from './main.module.css';
+import { student_data } from "@/data/actions/get";
 
 export default async function CoursesTab({ params }) {
     const { id } = params;
-    const studentData = await Read_Student_ById(id);
+    const studentData = await student_data(id);
+    
 
     if (!studentData || !studentData.Course || studentData.Course.length === 0) {
         return (
@@ -13,7 +15,7 @@ export default async function CoursesTab({ params }) {
             </div>
         );
     }
-
+    
     const processedCourses = studentData.Course
         .map(enrollment => {
             enrollment.Detail?.sort((a, b) => new Date(a.Day) - new Date(b.Day));

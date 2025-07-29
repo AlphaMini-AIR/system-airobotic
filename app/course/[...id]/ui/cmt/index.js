@@ -8,7 +8,6 @@ import Title from '@/components/(features)/(popup)/title';
 import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
 import TextNoti from '@/components/(features)/(noti)/textnoti';
-import { Re_course_one } from '@/data/course';
 import { useRouter } from 'next/navigation';
 
 export default function CommentPopup({ data, course, lesson }) {

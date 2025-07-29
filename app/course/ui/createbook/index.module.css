@@ -13,6 +13,47 @@
     cursor: pointer;
 }
 
+.fileUploader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: sans-serif;
+    width: calc(100% - 8px);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.hiddenInput {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+/* Tạo kiểu cho nút bấm giả (chính là thẻ label) */
+.customButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: var(--main_d);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.fileName {
+    font-size: 14px;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .bnt {
     width: calc(100% - 24px);
     justify-content: center;

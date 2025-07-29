@@ -39,9 +39,16 @@ export function srcImage(id) {
 }
 
 export function formatCurrencyVN(number) {
-  if (typeof number !== 'number' || isNaN(number)) {
-    return '0 VNĐ'; 
-  }
-  const formattedNumber = number.toLocaleString('vi-VN');
-  return `${formattedNumber} VNĐ`;
+    if (typeof number !== 'number' || isNaN(number)) {
+        return '0 VNĐ';
+    }
+    const formattedNumber = number.toLocaleString('vi-VN');
+    return `${formattedNumber} VNĐ`;
+}
+
+export const truncateString = (str, start, end) => !str ? "" : str.length > start + end ? `${str.slice(0, start)}...${str.slice(-end)}` : str;
+export const driveImage = (id) => {
+    if (!id) return null;
+    if (id.startsWith('https://lh3.googleusercontent.com/d/')) return id;
+    return `https://lh3.googleusercontent.com/d/${id}`;
 }

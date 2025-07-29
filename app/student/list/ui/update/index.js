@@ -9,7 +9,6 @@ import AlertPopup from '@/components/(features)/(noti)/alert';
 import Menu from '@/components/(ui)/(button)/menu';
 import Loading from '@/components/(ui)/(loading)/loading';
 import styles from './index.module.css';
-import { Re_Student_All } from '@/data/student';
 import { useRouter } from 'next/navigation';
 
 const formatDateForInput = (dateString) => {

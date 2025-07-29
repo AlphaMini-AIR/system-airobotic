@@ -1,12 +1,13 @@
-import { Read_Student_ById } from "@/data/student";
 import Banner from "./ui/banner";
-import { Read_Area } from "@/data/area";
 import { formatDate } from "@/function";
+import { area_data, student_data } from "@/data/actions/get";
 
 export default async function UserLayout({ children, params }) {
     const { id } = await params;
-    const data = await Read_Student_ById(id);
-    const area = await Read_Area();
+    const data = await student_data(id)
+    if (!data) { return (<div>Không tìm thấy thông tin sinh viên</div>) }
+    const area = await area_data();
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
             <Banner data={data} area={area} />
