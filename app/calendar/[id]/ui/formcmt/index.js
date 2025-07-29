@@ -50,6 +50,16 @@ export default function CommentForm({
     const [kqht, setKqht] = useState(init.filter((v) => KQHT_OPTIONS.includes(v)));
     const [dcct, setDcct] = useState(init.filter((v) => DCCT_OPTIONS.includes(v)));
 
+    // --- MỚI: Logic để khởi tạo và quản lý state cho textarea ---
+    const initialOtherComment = useMemo(() => {
+        if (!Array.isArray(initialComment)) return '';
+        const allOptions = [...TDHT_OPTIONS, ...KQHT_OPTIONS, ...DCCT_OPTIONS];
+        return initialComment.find(comment => !allOptions.includes(comment)) || '';
+    }, [initialComment]);
+
+    const [otherComment, setOtherComment] = useState(initialOtherComment);
+    // --- KẾT THÚC PHẦN MỚI ---
+
     // State kiểm soát việc mở/đóng cho từng Menu
     const [isTdhtMenuOpen, setTdhtMenuOpen] = useState(false);
     const [isKqhtMenuOpen, setKqhtMenuOpen] = useState(false);
@@ -59,13 +69,13 @@ export default function CommentForm({
         setTdht([]);
         setKqht([]);
         setDcct([]);
+        setOtherComment(''); // <-- SỬA: Reset cả state của textarea
     };
 
     // Hàm chung để xử lý khi chọn một mục
     const handleSelect = (setter, setMenuOpen, option) => {
-        // Thêm mục mới vào mảng state mà không xóa các mục đã có
         setter(prev => [...prev, option]);
-        setMenuOpen(false); // Đóng menu lại ngay sau khi chọn
+        setMenuOpen(false);
     };
 
     // Hàm chung để xử lý khi xóa một mục (chip)
@@ -107,7 +117,8 @@ export default function CommentForm({
                             <p className='text_6'>Tên học sinh: <span> {student?.Name}</span></p>
                             <p className='text_6'>ID học sinh: <span> {student?.ID}</span></p>
                         </div>
-                        <button type="button" onClick={handleReset} disabled={!tdht.length && !kqht.length && !dcct.length} className={styles.resetButton}>
+                        {/* --- SỬA: Cập nhật điều kiện disabled cho nút Reset --- */}
+                        <button type="button" onClick={handleReset} disabled={!tdht.length && !kqht.length && !dcct.length && !otherComment.length} className={styles.resetButton}>
                             <p className='text_6_400'>Reset</p>
                         </button>
                     </div>
@@ -122,7 +133,7 @@ export default function CommentForm({
                             customButton={
                                 <div
                                     className={`${styles.inputBox} ${isTdhtMenuOpen ? styles.focus : ''}`}
-                                    onClick={() => setTdhtMenuOpen(true)} // <-- SỬA LỖI TẠI ĐÂY
+                                    onClick={() => setTdhtMenuOpen(true)}
                                 >
                                     {tdht.length === 0 ? <span className={`${styles.placeholder} text_7_400`}>Chọn nhận xét</span> : tdht.map(v => (
                                         <span key={v} className={`${styles.chip} text_7_400`} onClick={e => e.stopPropagation()}>
@@ -181,6 +192,15 @@ export default function CommentForm({
                             }
                         />
                     </div>
+                    <p className='text_6' style={{ padding: '8px 0 2px 0', marginBottom: 8 }}>Nhận xét khác</p>
+                    {/* --- SỬA: Gán value và onChange cho textarea --- */}
+                    <textarea
+                        placeholder="Nhập nội dung nhận xét tại đây..."
+                        className='input'
+                        style={{ resize: 'none', height: 100, width: 'calc(100% - 26px)' }}
+                        value={otherComment}
+                        onChange={(e) => setOtherComment(e.target.value)}
+                    />
                 </div>
 
                 {/* --- Nút bấm xác nhận và thoát --- */}
@@ -188,7 +208,11 @@ export default function CommentForm({
                     <button className={styles.cancel} onClick={onCancel}>
                         <p>Thoát</p>
                     </button>
-                    <button className={styles.save} onClick={() => onSave([...tdht, ...kqht, ...dcct])}>
+                    {/* --- SỬA: Cập nhật hàm onClick để bao gồm giá trị từ textarea --- */}
+                    <button className={styles.save} onClick={() => {
+                        const finalComments = [...tdht, ...kqht, ...dcct, otherComment.trim()].filter(Boolean);
+                        onSave(finalComments);
+                    }}>
                         <p>Xác nhận</p>
                     </button>
                 </div>
