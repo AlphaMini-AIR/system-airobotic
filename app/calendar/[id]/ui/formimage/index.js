@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import styles from './index.module.css';
 import Loading from '@/components/(ui)/(loading)/loading'; // <-- Hãy chắc chắn đường dẫn này là chính xác
-import { Re_course_one, Re_lesson } from '@/data/course'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import { Re_lesson } from '@/data/course'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import Noti from '@/components/(features)/(noti)/noti'; // <-- Hãy chắc chắn đường dẫn này là chính xác
 import { Svg_Pen } from '@/components/(icon)/svg';
 import Link from 'next/link';
@@ -423,7 +423,6 @@ export default function ImageUploader({ session, courseId, Version }) {
     }, [session?.DetailImage]);
 
     const handleUploadFinish = async () => {
-        await Re_course_one(courseId);
         await Re_lesson(session._id);
         router.refresh();
     };

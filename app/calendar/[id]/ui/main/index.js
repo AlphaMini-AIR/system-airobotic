@@ -161,7 +161,7 @@ export default function Main({ data }) {
                 <header className={styles.header}>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                         <p className="text_3" style={{ color: '#fff' }}>{course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}</p>
-                        <Link href={`/course/${course.ID}`} className='btn' style={{ background: 'white', margin: '0' }}>
+                        <Link href={`/course/${course._id}`} className='btn' style={{ background: 'white', margin: '0' }}>
                             <Svg_Detail w={16} h={16} c={'var(--main_d)'} />
                             <p className='text_6_400'>Chi tiết khóa học</p>
                         </Link>

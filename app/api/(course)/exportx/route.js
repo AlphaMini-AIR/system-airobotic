@@ -88,3 +88,65 @@ export async function POST(request) {
         return jsonRes({ status: 0, mes: `Lỗi: ${err.message}` }, 500);
     }
 }
+export async function PUT(request) {
+    try {
+        const body = await request.json();
+        const { students, courseId, courseName } = body;
+
+        if (!students || !students.length) {
+            return jsonRes({ status: 0, mes: 'Thiếu danh sách học sinh (students)' }, 400);
+        }
+
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Danh sach hoc sinh');
+
+        // Tạo tiêu đề cho file
+        const title = `Danh_sach_hoc_sinh_khoa_${courseId}`;
+
+        // Định nghĩa các cột
+        ws.columns = [
+            { header: 'STT', key: 'stt', width: 5 },
+            { header: 'ID', key: 'id', width: 15 },
+            { header: 'Name', key: 'name', width: 30 },
+            { header: 'Mã khóa học', key: 'courseId', width: 20 },
+            { header: 'Tên khóa học', key: 'courseName', width: 40 },
+            { header: 'Trạng thái học phí', key: 'feeStatus', width: 25 },
+            { header: 'ePortfolio', key: 'eport', width: 50 },
+        ];
+
+        // Thêm dữ liệu học sinh
+        students.forEach(student => {
+            ws.addRow({
+                ...student,
+                eport: {
+                    text: 'Xem hồ sơ',
+                    hyperlink: student.eport
+                }
+            });
+        });
+
+        // Định dạng hyperlink
+        ws.getColumn('eport').eachCell({ includeEmpty: false }, (cell) => {
+            cell.font = { color: { argb: 'FF0000FF' }, underline: true };
+        });
+
+
+        // Xuất buffer Excel
+        const uint8 = await wb.xlsx.writeBuffer();
+        const buf = Buffer.from(uint8);
+
+        const asciiName = `${toAscii(title)}.xlsx`;
+        const utfName = encodeURIComponent(`${title}.xlsx`);
+
+        return new Response(buf, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${utfName}`,
+            },
+        });
+    } catch (err) {
+        console.error(err);
+        return jsonRes({ status: 0, mes: `Lỗi: ${err.message}` }, 500);
+    }
+}

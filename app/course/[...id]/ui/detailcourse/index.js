@@ -20,6 +20,7 @@ import Link from 'next/link';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import { reloadCourse } from '@/data/actions/reload';
 import Pay from '@/app/student/list/ui/pay';
+import Export from '../exportStudents';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
@@ -450,6 +451,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
                                             </svg>
                                             <p className='text_6_400' style={{ color: 'white' }}> Xác nhận hoàn thành</p>
                                         </div>}
+                                    <Export />
                                 </>
 
                             }
@@ -552,7 +554,7 @@ const title = [
     { content: 'Không phép', flex: 0.5, data: 'k', align: 'center' },
     { content: 'Có phép', flex: 0.5, data: 'c', align: 'center' },
     { content: 'Buổi bù', flex: 0.5, data: 'b', align: 'center' },
-    { content: 'Thêm', flex: .5, data: 'More', align: 'center' },
+    { content: 'Thêm', flex: 1, data: 'More', align: 'center' },
 ]
 
 function enrichStudents(course, now = new Date()) {

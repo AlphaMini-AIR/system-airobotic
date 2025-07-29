@@ -8,7 +8,7 @@ import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
 import styles from './index.module.css';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
-import { Svg_Canlendar, Svg_Course, Svg_Profile, Svg_Student } from '@/components/(icon)/svg';
+import { Svg_Canlendar, Svg_Course, Svg_Profile } from '@/components/(icon)/svg';
 import { formatDate } from '@/function';
 import Link from 'next/link';
 
