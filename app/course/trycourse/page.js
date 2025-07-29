@@ -1,14 +1,8 @@
 import { Data_coursetry } from "@/data/course";
 import Link from "next/link";
 import CourseTryPages from "./main";
-import { Data_book } from "@/data/book";
-import { Read_Student_All } from "@/data/database/student";
-import { Data_user } from "@/data/users";
-import { Read_Area } from "@/data/area";
-
 import CourseTryFilter from "./filter";
 import { area_data, book_data, student_data, user_data } from "@/data/actions/get";
-import { use } from "react";
 
 export default async function CourseTryPage() {
     let [data, book, student, teacher, area] = await Promise.all([

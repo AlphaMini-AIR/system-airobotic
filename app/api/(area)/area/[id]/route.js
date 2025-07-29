@@ -1,7 +1,5 @@
-import { NextResponse } from 'next/server'
 import connectDB from '@/config/connectDB'
 import Area from '@/models/area'
-import { Re_Area } from '@/data/area'
 import authenticate from '@/utils/authenticate'
 import jsonRes from '@/utils/response'
 import { reloadArea } from '@/data/actions/reload'
