@@ -1,6 +1,5 @@
 'use client';
-
-import { useState, useEffect, useMemo, startTransition } from 'react';
+import { useState, useEffect, useMemo, startTransition, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import air from './index.module.css';
 import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting } from '../../(icon)/svg';
@@ -9,10 +8,15 @@ import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Link from 'next/link';
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 
+const Svg_More = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" {...props}>
+    <path d="M8 256a56 56 0 1 1 112 0A56 56 0 1 1 8 256zm160 0a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm216-56a56 56 0 1 1 0 112 56 56 0 1 1 0-112z" />
+  </svg>
+);
 const ITEM_HEIGHT = 82;
-
-const navItems = [
+const initialNavItems = [
   { href: '/student/list', icon: <Svg_Student w={24} h={24} c={'var(--text-secondary)'} />, content: 'Học sinh' },
   {
     href: '/teacher', icon: <div style={{ marginBottom: 1 }}>
@@ -21,16 +25,8 @@ const navItems = [
       </svg>
     </div>, content: 'Giáo viên'
   },
-  {
-    href: '/course', icon: <div style={{ marginBottom: 1 }}>
-      <Svg_Course w={20} h={19} c={'var(--text-secondary)'} />
-    </div>, content: 'Khóa học'
-  },
-  {
-    href: '/calendar', icon: <div style={{ marginBottom: 1 }}>
-      <Svg_Canlendar w={20} h={19} c={'var(--text-secondary)'} />
-    </div>, content: 'Lịch dạy'
-  },
+  { href: '/course', icon: <div style={{ marginBottom: 1 }}><Svg_Course w={20} h={19} c={'var(--text-secondary)'} /></div>, content: 'Khóa học' },
+  { href: '/calendar', icon: <div style={{ marginBottom: 1 }}><Svg_Canlendar w={20} h={19} c={'var(--text-secondary)'} /></div>, content: 'Lịch dạy' },
   {
     href: '/client', icon: <div style={{ marginBottom: 1 }}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height={19} width={20} fill={'var(--text-secondary)'} >
@@ -43,24 +39,49 @@ const navItems = [
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [orderedItems, setOrderedItems] = useState(initialNavItems);
+  const [visibleCount, setVisibleCount] = useState(initialNavItems.length);
+  const [isMorePopupOpen, setIsMorePopupOpen] = useState(false);
+  const navContainerRef = useRef(null);
+  const draggedItem = useRef(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
-  const activeIndex = useMemo(() => {
-    let bestMatchIndex = -1;
-    navItems.forEach((item, index) => {
-      if (item.href === '/') {
-        if (pathname === '/') {
-          if (bestMatchIndex === -1 || item.href.length > navItems[bestMatchIndex].href.length) {
-            bestMatchIndex = index;
+  useEffect(() => {
+    try {
+      const savedOrder = localStorage.getItem('navItemOrder');
+      if (savedOrder) {
+        const orderedHrefs = JSON.parse(savedOrder);
+        const newOrderedItems = orderedHrefs
+          .map(href => initialNavItems.find(item => item.href === href))
+          .filter(Boolean);
+        initialNavItems.forEach(item => {
+          if (!newOrderedItems.find(i => i.href === item.href)) {
+            newOrderedItems.push(item);
           }
-        }
-      } else if (pathname.startsWith(item.href)) {
-        if (bestMatchIndex === -1 || item.href.length > navItems[bestMatchIndex].href.length) {
-          bestMatchIndex = index;
-        }
+        });
+        setOrderedItems(newOrderedItems);
       }
-    });
-    return bestMatchIndex === -1 ? 0 : bestMatchIndex;
-  }, [pathname]);
+    } catch (e) {
+      console.error("Failed to parse nav item order from localStorage", e);
+      setOrderedItems(initialNavItems);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (navContainerRef.current) {
+      const containerHeight = navContainerRef.current.clientHeight;
+      const maxItemsThatFit = Math.floor(containerHeight / ITEM_HEIGHT);
+      setVisibleCount(maxItemsThatFit);
+    }
+  }, []);
+
+  const showMoreButton = orderedItems.length > visibleCount;
+  const itemsToDisplay = showMoreButton ? orderedItems.slice(0, visibleCount - 1) : orderedItems;
+  const activeIndex = useMemo(() => {
+    const activeItem = orderedItems.find(item => pathname.startsWith(item.href) && item.href !== '/') ||
+      (pathname === '/' && orderedItems.find(item => item.href === '/'));
+    return activeItem ? orderedItems.findIndex(i => i.href === activeItem.href) : -1;
+  }, [pathname, orderedItems]);
 
   const targetOffset = activeIndex * ITEM_HEIGHT;
   const [barOffset, setBarOffset] = useState(targetOffset);
@@ -71,8 +92,8 @@ export default function Nav() {
 
   const [activeMenu, setActiveMenu] = useState(1);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const [isDark, setIsDark] = useState(false);
+
   useEffect(() => {
     const theme = localStorage.getItem('theme');
     if (theme === 'dark') {
@@ -94,32 +115,87 @@ export default function Nav() {
       return newTheme;
     });
   };
+
   const [load, setload] = useState(false);
   const logout = async () => {
     setload(true);
     try {
-      const res = await fetch('/api/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      await fetch('/api/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       setload(false);
       window.location.reload();
     }
-  }
+  };
+
+  const handleDragStart = (e, position) => {
+    draggedItem.current = position;
+  };
+
+  const handleDragEnter = (e, position) => {
+    if (draggedItem.current === null || dragOverIndex === position) return;
+    setDragOverIndex(position);
+  };
+
+  const handleDrop = () => {
+    if (draggedItem.current === null || dragOverIndex === null) return;
+    const newItems = [...orderedItems];
+    const draggedItemContent = newItems[draggedItem.current];
+    newItems.splice(draggedItem.current, 1);
+    newItems.splice(dragOverIndex, 0, draggedItemContent);
+    draggedItem.current = null;
+    setDragOverIndex(null);
+    setOrderedItems(newItems);
+    localStorage.setItem('navItemOrder', JSON.stringify(newItems.map(item => item.href)));
+  };
+
+  const handleDragEnd = () => {
+    draggedItem.current = null;
+    setDragOverIndex(null);
+  };
+
+  const renderReorderList = (items) => (
+    <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onDragEnd={handleDragEnd}>
+      <p className={air.popupDescription}>Kéo và thả để sắp xếp lại menu.</p>
+      <div>
+        {items.reduce((acc, item, index) => {
+          const isDragging = draggedItem.current === index;
+          const isDropTarget = dragOverIndex === index;
+          if (isDropTarget) {
+            acc.push(<div key={`placeholder-${index}`} className={air.placeholder} />);
+          }
+          acc.push(
+            <div
+              key={item.href}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragEnter={(e) => handleDragEnter(e, index)}
+              className={`${air.reorderItem} ${isDragging ? air.isDragging : ''}`}
+            >
+              {item.icon}
+              <span className='text_5_400'>{item.content}</span>
+            </div>
+          );
+          return acc;
+        }, [])}
+        {dragOverIndex === items.length && (
+          <div key="placeholder-end" className={air.placeholder} />
+        )}
+        <div
+          className={air.lastDropZone}
+          onDragEnter={() => {
+            if (draggedItem.current !== null) {
+              setDragOverIndex(items.length);
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
 
   const menuItems = (
-    <div style={{
-      listStyle: 'none',
-      margin: 0,
-      width: 180,
-      borderRadius: 12,
-      background: 'var(--bg-secondary)',
-      boxShadow: 'var(--boxshaw)',
-      marginBottom: 8
-    }}>
+    <div style={{ listStyle: 'none', margin: 0, width: 180, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw)', marginBottom: 8 }}>
       <div style={{ padding: 8, gap: 3 }} className='flex_col'>
         <Link href={'/setting'} className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
           <Svg_Setting w={16} h={16} c={'var(--text-secondary)'} />Cài đặt
@@ -128,7 +204,6 @@ export default function Nav() {
           <Svg_Mode w={16} h={16} c={'var(--text-secondary)'} />Giao diện
         </p>
       </div>
-
       <div style={{ padding: 8, borderTop: 'thin solid var(--border-color)' }} onClick={logout}>
         <p className={`${air.menu_li} ${air.logout} text_5_400`}>
           <Svg_Logout w={16} h={16} c={'white'} />Đăng xuất
@@ -138,15 +213,7 @@ export default function Nav() {
   );
 
   const menuMode = (
-    <div style={{
-      listStyle: 'none',
-      margin: 0,
-      width: 210,
-      borderRadius: 12,
-      background: 'var(--bg-secondary)',
-      boxShadow: 'var(--boxshaw)',
-      marginBottom: 8
-    }}>
+    <div style={{ listStyle: 'none', margin: 0, width: 210, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw)', marginBottom: 8 }}>
       <div style={{ padding: 8, borderBottom: 'thin solid var(--border-color)', justifyContent: 'start', gap: 8 }} className='flex_center'>
         <div onClick={() => setActiveMenu(1)}>
           <WrapIcon icon={<Svg_Left w={12} h={12} c={'var(--text-secondary)'} />} w={'32px'} />
@@ -155,18 +222,12 @@ export default function Nav() {
         <Svg_Mode w={16} h={16} c={'var(--text-secondary)'} />
       </div>
       <div style={{ padding: 8 }}>
-        <div className={`${air.menu_li} text_5_400`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-          onClick={toggleTheme}>
+        <div className={`${air.menu_li} text_5_400`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={toggleTheme}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Svg_Dark w={18} h={18} c={'var(--text-secondary)'} />
             <p style={{ flex: 1, marginLeft: 8 }}>Giao diện Tối</p>
           </div>
-          <Switch
-            checked={isDark}
-            size="small"
-            activeColor="#ffffff"
-            inactiveColor="#ddd"
-          />
+          <Switch checked={isDark} size="small" activeColor="#ffffff" inactiveColor="#ddd" />
         </div>
       </div>
     </div>
@@ -175,31 +236,44 @@ export default function Nav() {
   return (
     <>
       <div className='flex_col' style={{ justifyContent: 'space-between', height: '100%', alignItems: 'center' }}>
-        <div style={{ height: 100, width: 100 }} className="flex_center">
+        <div style={{ height: 100, width: 100, minHeight: 100 }} className="flex_center">
           <p className="text_1">
             <span style={{ color: 'var(--main_d)' }}> AI</span>
             <span>R</span>
           </p>
         </div>
-        <div className={air.container}>
-          <div
-            className={air.highlight}
-            style={{
-              transform: `translateY(${barOffset}px)`,
-              transition: 'transform .2s .1s ease'
-            }}
-          />
-          {navItems.map(({ href, icon: Icon, content }) => (
+        <div className={air.container} ref={navContainerRef}>
+          {activeIndex !== -1 && itemsToDisplay.some(item => orderedItems[activeIndex].href === item.href) && (
+            <div
+              className={air.highlight}
+              style={{ transform: `translateY(${barOffset}px)`, transition: 'transform .3s ease-in-out' }}
+            />
+          )}
+          {itemsToDisplay.map(({ href, icon, content }) => (
             <div
               key={href}
               className={air.navItem}
               onClick={() => startTransition(() => router.push(href))}
             >
-              {Icon}
+              {icon}
               <p className={air.navText}>{content}</p>
             </div>
           ))}
+          {showMoreButton && (
+            <div className={air.navItem} onClick={() => setIsMorePopupOpen(true)}>
+              <Svg_More height={22} width={22} fill={'var(--text-primary)'} />
+              <p className={air.navText} style={{ marginTop: 2 }}>Thêm</p>
+            </div>
+          )}
         </div>
+        <FlexiblePopup
+          open={isMorePopupOpen}
+          onClose={() => setIsMorePopupOpen(false)}
+          data={orderedItems}
+          renderItemList={renderReorderList}
+          title="Tùy chỉnh Menu"
+          width={400}
+        />
         <div>
           <Menu
             isOpen={isMenuOpen}

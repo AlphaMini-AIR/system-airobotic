@@ -284,6 +284,7 @@ export default function Create() {
             <div
                 className={`btn ${styles.createButton}`}
                 onClick={handleOpenPopup}
+                style={{ margin: 0, background: 'var(--main_d)' }}
             >
                 <Svg_Add w={18} h={18} c={'var(--bg-primary)'} />
                 <p className={`text_6_400`} style={{ color: 'white' }}>Thêm học sinh mới</p>

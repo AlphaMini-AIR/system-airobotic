@@ -8,15 +8,12 @@ import Loading from '@/components/(ui)/(loading)/loading';
 const ANIMATION_DURATION = 300;
 
 export default function FlexiblePopup({
-    // primary
     open,
     onClose,
     fetchData = null,
     data: providedData = null,
     renderItemList = () => null,
     title = 'Danh sách',
-
-    // secondary
     secondaryOpen = false,
     onCloseSecondary = () => { },
     fetchDataSecondary = null,

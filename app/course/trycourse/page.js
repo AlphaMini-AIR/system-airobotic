@@ -16,7 +16,6 @@ export default async function CourseTryPage() {
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', flex: 1.6 }}>
-
                 <div style={{
                     borderRadius: '8px', padding: 16, background: 'linear-gradient(90deg, var(--yellow) 0%, rgb(249, 174, 0) 100%)',
                     boxShadow: 'var(--box)', overflow: 'hidden',

@@ -6,6 +6,17 @@
     align-items: center;
     width: 100px;
     position: relative;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.container::-webkit-scrollbar {
+    width: 0;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 0;
 }
 
 .loading {
@@ -47,6 +58,7 @@
     align-items: center;
     justify-content: center;
     transition: all .2s linear;
+    min-height: 74px;
 }
 
 .navItem:hover {
@@ -69,7 +81,6 @@
     align-items: center;
 }
 
-
 .menu_li:hover {
     background: var(--hover);
 }
@@ -81,4 +92,47 @@
 
 .menu_li.logout:hover {
     background-color: rgb(233, 146, 146);
+}
+
+.popupDescription {
+    padding: 8px 16px 12px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.reorderItem {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 4px 8px;
+    border-radius: 8px;
+    cursor: grab;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    gap: 12px;
+    transition: opacity 0.2s ease-in-out;
+    user-select: none;
+}
+
+.reorderItem:active {
+    cursor: grabbing;
+}
+
+.isDragging {
+    opacity: 0.4;
+}
+
+.placeholder {
+    height: 49px;
+    margin: 4px 8px;
+    border-radius: 8px;
+    background: rgba(100, 150, 255, 0.08);
+    border: 2px dashed var(--main_d);
+}
+
+.lastDropZone {
+    height: 40px;
+    width: 100%;
 }

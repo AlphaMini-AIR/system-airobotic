@@ -5,7 +5,14 @@ import { area_data, student_data } from "@/data/actions/get";
 export default async function UserLayout({ children, params }) {
     const { id } = await params;
     const data = await student_data(id)
-    if (!data) { return (<div>Không tìm thấy thông tin sinh viên</div>) }
+    if (!data) {
+        return (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+                <div style={{ width: 125, height: 125, background: 'url(https://www.voca.vn/assets/images/library/library-workplace.svg)', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}></div>
+                <p className="text_4_400">Không tìm thấy thông tin học sinh.</p>
+            </div>
+        )
+    }
     const area = await area_data();
 
     return (
