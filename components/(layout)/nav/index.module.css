@@ -95,7 +95,7 @@
 }
 
 .popupDescription {
-    padding: 8px 16px 12px;
+    padding: 12px 16px;
     font-size: 13px;
     color: var(--text-tertiary);
     border-bottom: 1px solid var(--border-color);
@@ -125,7 +125,7 @@
 }
 
 .placeholder {
-    height: 49px;
+    height: 50px;
     margin: 4px 8px;
     border-radius: 8px;
     background: rgba(100, 150, 255, 0.08);
@@ -135,4 +135,72 @@
 .lastDropZone {
     height: 40px;
     width: 100%;
+}
+
+.searchContainer {
+    padding: 8px;
+    height: calc(100vh - 52.8px - 16px);
+    display: flex;
+    flex-direction: column;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+}
+
+.searchInput:focus {
+    border-color: var(--main_d);
+}
+
+.resultsContainer {
+    margin-top: 8px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.ItemWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.ItemWrap:hover {
+    background: var(--hover);
+}
+
+.searchLoading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.searchResultItem {
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: background-color 0.2s;
+}
+
+.resultName {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.resultSubtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
 }

@@ -2,19 +2,28 @@
 import { useState, useEffect, useMemo, startTransition, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import air from './index.module.css';
-import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting } from '../../(icon)/svg';
+import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting, Svg_History } from '../../(icon)/svg';
 import Menu from '../../(ui)/(button)/menu';
 import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Link from 'next/link';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
+import { student_data, user_data } from '@/data/actions/get';
+import Image from 'next/image';
+import { driveImage } from '@/function';
 
 const Svg_More = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" {...props}>
     <path d="M8 256a56 56 0 1 1 112 0A56 56 0 1 1 8 256zm160 0a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm216-56a56 56 0 1 1 0 112 56 56 0 1 1 0-112z" />
   </svg>
 );
+const Svg_Search = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" {...props}>
+    <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376C296.3 401.1 253.9 416 208 416C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+  </svg>
+);
+
 const ITEM_HEIGHT = 82;
 const initialNavItems = [
   { href: '/student/list', icon: <Svg_Student w={24} h={24} c={'var(--text-secondary)'} />, content: 'Học sinh' },
@@ -33,7 +42,9 @@ const initialNavItems = [
         <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c10 0 18.8-4.9 24.2-12.5l-99.2-99.2c-14.9-14.9-23.3-35.1-23.3-56.1l0-33c-15.9-4.7-32.8-7.2-50.3-7.2l-91.4 0zM384 224c-17.7 0-32 14.3-32 32l0 82.7c0 17 6.7 33.3 18.7 45.3L478.1 491.3c18.7 18.7 49.1 18.7 67.9 0l73.4-73.4c18.7-18.7 18.7-49.1 0-67.9L512 242.7c-12-12-28.3-18.7-45.3-18.7L384 224zm24 80a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z" />
       </svg>
     </div>, content: 'Chăm sóc'
-  }
+  },
+  { href: '/search', icon: <Svg_Search height={22} width={22} fill={'var(--text-secondary)'} />, content: 'Tìm kiếm' },
+  { href: '/history', icon: <Svg_History h={22} w={22} c={'var(--text-secondary)'} />, content: 'Lịch sử' }
 ];
 
 export default function Nav() {
@@ -42,14 +53,19 @@ export default function Nav() {
   const [orderedItems, setOrderedItems] = useState(initialNavItems);
   const [visibleCount, setVisibleCount] = useState(initialNavItems.length);
   const [isMorePopupOpen, setIsMorePopupOpen] = useState(false);
+  const [isSearchPopupOpen, setIsSearchPopupOpen] = useState(false);
   const navContainerRef = useRef(null);
   const draggedItem = useRef(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
-    try {
-      const savedOrder = localStorage.getItem('navItemOrder');
-      if (savedOrder) {
+    const savedOrder = localStorage.getItem('navItemOrder');
+    if (savedOrder) {
+      try {
         const orderedHrefs = JSON.parse(savedOrder);
         const newOrderedItems = orderedHrefs
           .map(href => initialNavItems.find(item => item.href === href))
@@ -60,12 +76,49 @@ export default function Nav() {
           }
         });
         setOrderedItems(newOrderedItems);
+      } catch (e) {
+        console.error("Failed to parse nav item order from localStorage", e);
+        setOrderedItems(initialNavItems);
       }
-    } catch (e) {
-      console.error("Failed to parse nav item order from localStorage", e);
+    } else {
       setOrderedItems(initialNavItems);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isSearchPopupOpen) return;
+    const handler = setTimeout(async () => {
+      if (searchTerm.trim() === '') {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const [students, users] = await Promise.all([student_data(), user_data({})]);
+        const lowerCaseTerm = searchTerm.toLowerCase();
+        const filteredStudents = students
+          .filter(s => s.Name.toLowerCase().includes(lowerCaseTerm))
+          .map(s => ({ ...s, type: 'Học sinh' }));
+        const filteredUsers = users
+          .filter(u => u.name.toLowerCase().includes(lowerCaseTerm))
+          .map(u => ({ ...u, type: 'Giáo viên' }));
+        setSearchResults([...filteredStudents, ...filteredUsers]);
+      } catch (error) {
+        console.error("Error fetching search data:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm, isSearchPopupOpen]);
+
+  useEffect(() => {
+    if (!isSearchPopupOpen) {
+      setSearchTerm('');
+      setSearchResults([]);
+    }
+  }, [isSearchPopupOpen]);
 
   useEffect(() => {
     if (navContainerRef.current) {
@@ -78,7 +131,7 @@ export default function Nav() {
   const showMoreButton = orderedItems.length > visibleCount;
   const itemsToDisplay = showMoreButton ? orderedItems.slice(0, visibleCount - 1) : orderedItems;
   const activeIndex = useMemo(() => {
-    const activeItem = orderedItems.find(item => pathname.startsWith(item.href) && item.href !== '/') ||
+    const activeItem = orderedItems.find(item => pathname.startsWith(item.href) && item.href !== '/' && item.href !== '/search') ||
       (pathname === '/' && orderedItems.find(item => item.href === '/'));
     return activeItem ? orderedItems.findIndex(i => i.href === activeItem.href) : -1;
   }, [pathname, orderedItems]);
@@ -129,6 +182,16 @@ export default function Nav() {
     }
   };
 
+  const handleNavItemClick = (href) => {
+    if (href === '/search') {
+      setIsMorePopupOpen(false);
+      setIsSearchPopupOpen(true);
+    } else {
+      startTransition(() => router.push(href));
+      setIsMorePopupOpen(false);
+    }
+  };
+
   const handleDragStart = (e, position) => {
     draggedItem.current = position;
   };
@@ -171,6 +234,7 @@ export default function Nav() {
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragEnter={(e) => handleDragEnter(e, index)}
+              onClick={() => handleNavItemClick(item.href)}
               className={`${air.reorderItem} ${isDragging ? air.isDragging : ''}`}
             >
               {item.icon}
@@ -190,6 +254,39 @@ export default function Nav() {
             }
           }}
         />
+      </div>
+    </div>
+  );
+
+  const renderSearchContent = () => (
+    <div className={air.searchContainer}>
+      <input
+        type="text"
+        placeholder="Tìm kiếm theo tên..."
+        className='input'
+        value={searchTerm}
+        style={{ width: 'calc(100% - 24px)', marginBottom: 8 }}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        autoFocus
+      />
+      <div className={air.resultsContainer}>
+        {isSearching ? (
+          <div className={air.searchLoading}>
+            <Loading content={<p className='text_6_400' style={{ color: 'var(--text-primary)' }}>Đang tìm kiếm...</p>} />
+          </div>
+        ) : (
+          searchResults.map((result) => {
+            return <Link href={`/${result._id}`} className={air.ItemWrap} key={result._id} onClick={() => setIsSearchPopupOpen(false)}>
+              <div style={{ width: 36, height: 36, marginRight: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 3, overflow: 'hidden' }}>
+                <Image width={36} height={36} src={driveImage(result.Avt) || driveImage(result.avt) || 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'} alt={result.Name || result.name} style={{ objectFit: 'cover' }} />
+              </div>
+              <div className={air.searchResultItem}>
+                <p className={air.resultName}>{result.Name || result.name}</p>
+                <p className={air.resultSubtitle}>{result.type}</p>
+              </div>
+            </Link>
+          })
+        )}
       </div>
     </div>
   );
@@ -253,7 +350,7 @@ export default function Nav() {
             <div
               key={href}
               className={air.navItem}
-              onClick={() => startTransition(() => router.push(href))}
+              onClick={() => handleNavItemClick(href)}
             >
               {icon}
               <p className={air.navText}>{content}</p>
@@ -272,6 +369,13 @@ export default function Nav() {
           data={orderedItems}
           renderItemList={renderReorderList}
           title="Tùy chỉnh Menu"
+          width={400}
+        />
+        <FlexiblePopup
+          open={isSearchPopupOpen}
+          onClose={() => setIsSearchPopupOpen(false)}
+          renderItemList={renderSearchContent}
+          title="Tìm kiếm"
           width={400}
         />
         <div>

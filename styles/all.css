@@ -268,18 +268,19 @@ a {
 
 .input {
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
-  background: #f8fafc;
+  background: var(--bg-primary);
   font-size: 14px;
   outline: none;
   transition: all 0.2s;
   font-family: 'Roboto', sans-serif;
+  color: var(--text-primary);
 }
 
 .input:focus {
   border-color: var(--main_b);
-  background: white;
+  background: var(--bg-primary);
 }
 
 .chip {

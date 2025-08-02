@@ -56,7 +56,7 @@
 
 .titleText1 {
     font-weight: bold;
-    color: var(--text);
+    color: #656565;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,7 +64,7 @@
 }
 
 .courseName {
-    color: var(--text_400);
+    color: #656565;
     font-size: 14px;
     font-weight: 500;
     margin-top: 4px;
@@ -78,11 +78,11 @@
 }
 
 .label {
-    color: var(--text);
+    color: #656565;
 }
 
 .value {
-    color: var(--text_400);
+    color: #656565;
 }
 
 .progressBar {

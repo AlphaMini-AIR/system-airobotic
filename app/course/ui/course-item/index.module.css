@@ -1,10 +1,10 @@
 /* Khung ngoài của card */
 .wrap {
-    background: #ffffff;
+    background: var(--bg-primary);
     border-radius: 8px;
     padding: 16px;
-    width: calc(25% - (16px * 3 / 4) - 32px);
-    box-shadow: var(--boxshaw2);
+    width: calc(25% - (16px * 3 / 4) - 34px);
+    border: thin solid var(--border-color);
     transition: box-shadow 0.3s linear;
     display: flex;
     flex-direction: column;

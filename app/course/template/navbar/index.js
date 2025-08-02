@@ -202,14 +202,15 @@ export default function Navbar({ data = [], book = [], user, areas = [], trys, t
                         {tab !== 3 && tab !== 2 ? (
                             <>
                                 <input
-                                    className={`${styles.searchInput} text_6_400`}
+                                    className={`input text_6_400`}
                                     placeholder="Nhập ID khóa học hoặc tên GVCN"
                                     value={search}
+                                    style={{ width: 300 }}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
 
                                 <select
-                                    className={styles.areaSelect}
+                                    className='input'
                                     style={{ color: 'var(--text-primary)' }}
                                     value={area}
                                     onChange={(e) => setArea(e.target.value)}
@@ -223,10 +224,9 @@ export default function Navbar({ data = [], book = [], user, areas = [], trys, t
                                         )
                                     )}
                                 </select>
-
                                 {/* BỘ LỌC THỜI GIAN MỚI */}
                                 <select
-                                    className={styles.areaSelect}
+                                    className='input'
                                     value={timeRange}
                                     onChange={(e) => setTimeRange(e.target.value)}
                                 >

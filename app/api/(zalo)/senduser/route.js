@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import PostStudent from '@/models/student';
 import connectToDB from '@/config/connectDB';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx17JMuK_X-OhUAjin3IlDTAvhBgOOocoWMrTqT7q7_lWNq0eES-GHLwD4MKMIQ43p9eg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPF49FIUFKMoGshlLpERTLx1tuW3txICdlrBGUyomMYWhgANSwY0oTNV_Eppqmo5Mruw/exec';
 
 export async function POST(request) {
     let body;
@@ -24,9 +24,7 @@ export async function POST(request) {
 
     try {
         await connectToDB();
-
         const student = await PostStudent.findOne({ ID: id }).lean();
-
         if (!student) {
             return NextResponse.json(
                 { message: 'Không tìm thấy học sinh với ID này.' },

@@ -43,10 +43,10 @@ export default async function UserLayout({ children, params }) {
                         <p style={{ paddingBottom: 8, borderBottom: 'thin solid var(--border-color)' }}
                             className="text_4">Thông tin khóa học</p>
                         <div style={{ padding: '8px 0', fontSize: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <p>Tổng số khóa tham gia: {data?.Course.length || 0}</p>
-                            <p>Tổng số khóa hoàn thành: {data?.Course.filter(course => course.enrollmentStatus === 2).length || 0}</p>
-                            <p>Tổng số khóa đang diễn ra: {data?.Course.filter(course => course.enrollmentStatus === 0).length || 0}</p>
-                            <p>Tổng số khóa bảo lưu: {data?.Course.filter(course => course.enrollmentStatus === 1).length || 0}</p>
+                            <p>Tổng số khóa tham gia: {data?.Course?.length ?? 0}</p>
+                            <p>Tổng số khóa hoàn thành: {data?.Course?.filter(course => course.enrollmentStatus === 2).length ?? 0}</p>
+                            <p>Tổng số khóa đang diễn ra: {data?.Course?.filter(course => course.enrollmentStatus === 0).length ?? 0}</p>
+                            <p>Tổng số khóa bảo lưu: {data?.Course?.filter(course => course.enrollmentStatus === 1).length ?? 0}</p>
                         </div>
                     </div>
                 </div>
