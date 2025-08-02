@@ -21,7 +21,7 @@ import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
 import { reloadCourse } from '@/data/actions/reload';
 import Pay from '@/app/student/list/ui/pay';
 import Export from '../exportStudents';
-import SendCmt from '../sencmt/page';
+import SendCmt from '../sencmt';
 
 const SortIcon = ({ direction }) => {
     if (!direction) {
