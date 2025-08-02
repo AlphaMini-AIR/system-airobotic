@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import styles from './index.module.css'; // Import CSS Module
 
-// API để tạo nhận xét chung từ AI
+// --- Các hàm API không thay đổi ---
 const fetchStudentCommentsAPI = async (cmtArray) => {
     try {
         const response = await fetch('/api/cmt', {
@@ -21,7 +21,6 @@ const fetchStudentCommentsAPI = async (cmtArray) => {
     }
 };
 
-// API gửi nhận xét cho từng học sinh
 const sendCommentAPI = async (studentId, comment) => {
     try {
         const response = await fetch('/api/cmt', {
@@ -51,9 +50,17 @@ export default function SendCmt({ data, lesson }) {
     const [sendResults, setSendResults] = useState(null);
     const [showResultsPopup, setShowResultsPopup] = useState(false);
 
+    // [MỚI] State để lưu danh sách ID học sinh bị loại trừ
+    const [excludedStudentIds, setExcludedStudentIds] = useState(new Set());
+
     const filteredStudents = useMemo(() => {
         return data?.Student.filter(student => student.Learn?.some(item => item.Lesson === lesson && item.Checkin == 1)) ?? [];
     }, [data, lesson]);
+
+    // [MỚI] Tính toán danh sách học sinh sẽ thực sự được gửi nhận xét
+    const studentsToSend = useMemo(() => {
+        return filteredStudents.filter(student => !excludedStudentIds.has(student._id));
+    }, [filteredStudents, excludedStudentIds]);
 
     const baseContentTemplate = useMemo(() => {
         const foundItem = data.Detail.find(item => item._id === lesson);
@@ -109,15 +116,32 @@ export default function SendCmt({ data, lesson }) {
         }
     }, [selectedStudentId, apiComment, isLoading, filteredStudents, baseContentTemplate]);
 
+    // [MỚI] Hàm để bật/tắt việc loại trừ một học sinh
+    const handleToggleExclude = (studentId) => {
+        setExcludedStudentIds(prevExcluded => {
+            const newExcluded = new Set(prevExcluded);
+            if (newExcluded.has(studentId)) {
+                newExcluded.delete(studentId); // Hoàn tác: xóa khỏi danh sách loại trừ
+            } else {
+                newExcluded.add(studentId);    // Thêm vào danh sách loại trừ
+            }
+            return newExcluded;
+        });
+        // Cập nhật preview cho học sinh vừa click
+        setSelectedStudentId(studentId);
+    };
+
     const handleSendAllComments = async () => {
         setIsSending(true);
-        setSendProgress({ current: 0, total: filteredStudents.length });
+        // [SỬA] Gửi tiến trình dựa trên danh sách `studentsToSend`
+        setSendProgress({ current: 0, total: studentsToSend.length });
         setShowResultsPopup(false);
 
         const results = { success: [], failure: [] };
 
-        for (let i = 0; i < filteredStudents.length; i++) {
-            const student = filteredStudents[i];
+        // [SỬA] Lặp qua danh sách học sinh đã được lọc (không bao gồm học sinh bị loại)
+        for (let i = 0; i < studentsToSend.length; i++) {
+            const student = studentsToSend[i];
             const detailComment = apiComment || 'Chưa có nhận xét.';
             const studentComment = baseContentTemplate
                 .replace(/{namestudent}/g, student.Name)
@@ -132,7 +156,7 @@ export default function SendCmt({ data, lesson }) {
             }
 
             await new Promise(res => setTimeout(res, 50));
-            setSendProgress({ current: i + 1, total: filteredStudents.length });
+            setSendProgress({ current: i + 1, total: studentsToSend.length });
         }
 
         setSendResults(results);
@@ -152,8 +176,11 @@ export default function SendCmt({ data, lesson }) {
         setShowResultsPopup(false);
         setSendResults(null);
         setSendProgress({ current: 0, total: 0 });
+        // [MỚI] Reset danh sách loại trừ khi đóng popup
+        setExcludedStudentIds(new Set());
     };
 
+    // --- Các component ProgressPopup và ResultsPopup không thay đổi ---
     const ProgressPopup = () => (
         <div className={styles.overlay}>
             <div className={styles.popup}>
@@ -162,7 +189,7 @@ export default function SendCmt({ data, lesson }) {
                 <div className={styles.progressContainer}>
                     <div
                         className={styles.progressBar}
-                        style={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
+                        style={{ width: sendProgress.total > 0 ? `${(sendProgress.current / sendProgress.total) * 100}%` : '0%' }}
                     ></div>
                 </div>
             </div>
@@ -243,23 +270,43 @@ export default function SendCmt({ data, lesson }) {
                         <p className='text_6' style={{ padding: '8px 0', flexShrink: 0 }}>Danh sách học sinh sẽ gửi</p>
                         <div style={{ width: '100%', overflowY: 'auto', marginTop: '16px' }}>
                             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                {students.map(student => (
-                                    <li key={student._id}
-                                        onClick={() => setSelectedStudentId(student._id)}
-                                        style={{ padding: '12px 10px', cursor: 'pointer', backgroundColor: selectedStudentId === student._id ? '#e9ecef' : 'transparent', fontWeight: selectedStudentId === student._id ? 'bold' : 'normal', borderBottom: '1px solid #f0f0f0', borderRadius: '4px' }}
-                                    >
-                                        {student.Name}
-                                    </li>
-                                ))}
+                                {/* [SỬA] Cập nhật logic render danh sách */}
+                                {students.map(student => {
+                                    const isExcluded = excludedStudentIds.has(student._id);
+                                    return (
+                                        <li key={student._id}
+                                            onClick={() => handleToggleExclude(student._id)}
+                                            style={{
+                                                padding: '12px 10px',
+                                                cursor: 'pointer',
+                                                // Nền xám khi được chọn (và không bị loại), nếu không thì trong suốt
+                                                backgroundColor: selectedStudentId === student._id && !isExcluded ? '#e9ecef' : 'transparent',
+                                                // Chữ đậm khi được chọn (và không bị loại)
+                                                fontWeight: selectedStudentId === student._id && !isExcluded ? 'bold' : 'normal',
+                                                borderBottom: '1px solid #f0f0f0',
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s ease-in-out',
+                                                // Style cho học sinh bị loại trừ
+                                                color: isExcluded ? 'var(--red)' : 'inherit',
+                                                textDecoration: isExcluded ? 'line-through' : 'none',
+                                                opacity: isExcluded ? 0.6 : 1,
+                                            }}
+                                        >
+                                            {student.Name}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>
                         <div style={{ paddingTop: 16, borderTop: '1px solid #eee', textAlign: 'right', flexShrink: 0 }}>
                             <button
                                 className={styles.actionButton}
                                 onClick={handleSendAllComments}
-                                disabled={isLoading || isSending || students.length === 0}
+                                // [SỬA] Vô hiệu hóa nút khi không có học sinh nào được chọn
+                                disabled={isLoading || isSending || studentsToSend.length === 0}
                             >
-                                {isSending ? `Đang gửi...` : `Xác nhận & Gửi cho tất cả (${students.length})`}
+                                {/* [SỬA] Hiển thị số lượng học sinh sẽ gửi */}
+                                {isSending ? `Đang gửi...` : `Xác nhận & Gửi cho (${studentsToSend.length})`}
                             </button>
                         </div>
                     </div>
