@@ -1,10 +1,14 @@
-const SCRIPT_URL_SEND_MESSAGE = 'https://script.google.com/macros/s/AKfycbxPF49FIUFKMoGshlLpERTLx1tuW3txICdlrBGUyomMYWhgANSwY0oTNV_Eppqmo5Mruw/exec';
+const SCRIPT_URL_SEND_MESSAGE = 'https://script.google.com/macros/s/AKfycbzhEEvakm6VzGRpNNORT9jZ3A8gYya2Bd5zjuTbpAgr8ZYaHO-0LB_DKibXyEHuo3ROfw/exec';
 const SCRIPT_URL_GET_UID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__QRCU0Xi6-qu-HkUBx6fDHDRAYfpqM9d4SUq4YKVxpPnZtpJ_b6wg/exec';
 
 export async function senMesByPhone({ message, uid, phone }) {
+    console.log(uid, message);
+
     const url = new URL(SCRIPT_URL_SEND_MESSAGE);
     url.searchParams.set('mes', message);
-    if (uid) { url.searchParams.set('uid', `[${uid},' - ']`) }
+    if (uid) {
+        url.searchParams.set('uid', uid)
+    }
     else if (phone) {
         url.searchParams.set('phone', phone);
     } else {
