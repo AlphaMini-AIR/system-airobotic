@@ -227,6 +227,7 @@ export default function SendCmt({ data, lesson }) {
                 onClose={handleClosePopup}
                 title="Gửi nhận xét cho học sinh"
                 width={600}
+                data={filteredStudents}
                 renderItemList={students => students.length > 0 ? (
                     <div style={{ padding: '8px 16px', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
