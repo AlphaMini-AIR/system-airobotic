@@ -229,8 +229,8 @@ export default function SendCmt({ data, lesson }) {
                 width={600}
                 data={filteredStudents}
                 renderItemList={students => students.length > 0 ? (
-                    <div style={{ padding: '8px 16px', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
+                    <div style={{ padding: '8px 16px', height: 'calc(100vh - 52.8px - 16px)', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ width: '100%', height: 'max-content', display: 'flex', flexDirection: 'column' }}>
                             <p className='text_6' style={{ padding: '8px 0', flexShrink: 0 }}>Nội dung xem trước</p>
                             <textarea
                                 className='input'
@@ -240,8 +240,8 @@ export default function SendCmt({ data, lesson }) {
                                 readOnly={isLoading || isSending}
                             />
                         </div>
-                        <div style={{ width: '100%', overflowY: 'auto', flexGrow: 1, marginTop: '16px' }}>
-                            <p className='text_6' style={{ padding: '8px 0', flexShrink: 0 }}>Danh sách học sinh sẽ gửi</p>
+                        <p className='text_6' style={{ padding: '8px 0', flexShrink: 0 }}>Danh sách học sinh sẽ gửi</p>
+                        <div style={{ width: '100%', overflowY: 'auto', marginTop: '16px' }}>
                             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                 {students.map(student => (
                                     <li key={student._id}
