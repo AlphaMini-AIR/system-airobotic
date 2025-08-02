@@ -15,6 +15,9 @@ const TopicItemSchema = new Schema({
         type: String,
         required: true,
     },
+    Content: {
+        type: String
+    },
     Status: {
         type: Boolean,
         default: true,

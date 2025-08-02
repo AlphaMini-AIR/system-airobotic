@@ -28,6 +28,11 @@ const EditTopicForm = ({ initialData, onSave, onCancel }) => {
                 <input id="Period" name="Period" type="number" value={formData.Period} onChange={handleChange} className='input' />
             </div>
             <div className={styles.formGroup}>
+                <label className='text_6' htmlFor="Content">Giới thiệu chủ đề, kỹ năng đạt được</label>
+                <textarea id="Content" name="Content" value={formData.Content} onChange={handleChange} className='input'
+                    style={{ height: 150, resize: 'none' }} />
+            </div>
+            <div className={styles.formGroup}>
                 <label className='text_6' htmlFor="Slide">Link Google Slide</label>
                 <input id="Slide" name="Slide" value={formData.Slide} onChange={handleChange} className='input' />
             </div>

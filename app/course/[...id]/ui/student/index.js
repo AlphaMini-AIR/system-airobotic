@@ -7,19 +7,15 @@ import CenterPopup from '@/components/(features)/(popup)/popup_center';
 import Menu from '@/components/(ui)/(button)/menu';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Noti from '@/components/(features)/(noti)/noti';
-import AlertPopup from '@/components/(features)/(noti)/alert'; // Đảm bảo đường dẫn này đúng
+import AlertPopup from '@/components/(features)/(noti)/alert';
 import Title from '@/components/(features)/(popup)/title';
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon';
-import { Svg_Add, Svg_Pay, Svg_Student } from '@/components/(icon)/svg';
+import { Svg_Add, Svg_Student } from '@/components/(icon)/svg';
 import styles from './index.module.css';
 import { course_data, student_data } from '@/data/actions/get';
 import { reloadCourse } from '@/data/actions/reload';
-import Pay from '@/app/student/list/ui/pay';
-
 
 export default function Student({ course }) {
-    console.log(course);
-
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [courseStudentSearch, setCourseStudentSearch] = useState('');
@@ -202,7 +198,6 @@ export default function Student({ course }) {
                                 <p className="text_6" style={{ flex: 1, padding: 8 }}>Hành động</p>
                             </div>
                             {reversedShow.map((s, index) => {
-                                console.log(s);
                                 const studentName = studentNameMap.get(s.ID) || 'Không có tên';
                                 return (
                                     <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} key={index}>
