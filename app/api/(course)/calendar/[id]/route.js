@@ -28,7 +28,7 @@ const roomName = async rid =>
 const buildStudents = (raw, mapById, lessonId) =>
     raw.map(st => {
         console.log(st);
-        
+
         const info = mapById.get(st.studentId || st.ID) || {}
         const a = st.attendance || st
         return {
@@ -54,13 +54,10 @@ export async function GET(_req, { params }) {
 
     try {
         await connect()
-
-        /* ───── Khóa chính thức ───── */
         const c = await Course.findOne(
             { 'Detail._id': id },
             { ID: 1, Version: 1, Area: 1, Student: 1, Detail: { $elemMatch: { _id: id } } }
         ).lean()
-
         if (c) {
             const ses = c.Detail[0]
 
@@ -79,14 +76,13 @@ export async function GET(_req, { params }) {
             const sMap = new Map(studs.map(s => [s.ID, s]))
 
             const students = buildStudents(
-                c.Student.map(s => ({
-                    ...s,
-                    attendance: s.Learn.find(lr => lr.Lesson.toString() === id) || {}
-                })),
+                c.Student.flatMap(s => {
+                    const attendance = s.Learn.find(lr => lr.Lesson.toString() === id);
+                    return attendance ? [{ ...s, attendance }] : [];
+                }),
                 sMap,
                 id
-            )
-
+            );
             return NextResponse.json({
                 success: true,
                 data: {

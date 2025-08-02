@@ -2,19 +2,13 @@
 
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
-import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; 
 import styles from './index.module.css';
-import Loading from '@/components/(ui)/(loading)/loading'; // <-- Hãy chắc chắn đường dẫn này là chính xác
-import { Re_lesson } from '@/data/course'; // <-- Hãy chắc chắn đường dẫn này là chính xác
-import Noti from '@/components/(features)/(noti)/noti'; // <-- Hãy chắc chắn đường dẫn này là chính xác
+import Loading from '@/components/(ui)/(loading)/loading'; 
+import { Re_lesson } from '@/data/course'; 
+import Noti from '@/components/(features)/(noti)/noti'; 
 import { Svg_Pen } from '@/components/(icon)/svg';
 import Link from 'next/link';
-
-
-// ================================================================
-// COMPONENT Lightbox và MediaGallery (KHÔNG THAY ĐỔI)
-// ... (Giữ nguyên code của Lightbox và MediaGallery như bạn đã cung cấp)
-// ================================================================
 
 function Lightbox({ mediaItem, onClose, onUpdateSuccess }) {
     const [isLoading, setIsLoading] = useState(false);

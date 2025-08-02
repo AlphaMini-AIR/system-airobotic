@@ -6,7 +6,8 @@ import Loading from '@/components/(ui)/(loading)/loading';         // <-- Đư�
 import Noti from '@/components/(features)/(noti)/noti';                  // <-- Đường dẫn đến component Noti
 import styles from './index.module.css';
 import { useRouter } from 'next/navigation';
-import { Re_course_one, Re_lesson } from '@/data/course';               // <-- File CSS Module
+import { Re_lesson } from '@/data/course';               // <-- File CSS Module
+import { reloadCourse } from '@/data/actions/reload';
 
 
 const getDriveImageUrl = (id, size = 200) => `https://lh3.googleusercontent.com/d/${id}=w${size}`;
@@ -119,7 +120,7 @@ export default function StudentImageSelectionManager({ studentInfo, courseInfo, 
             if (!response.ok) {
                 throw new Error(result.message || 'Lỗi từ server');
             }
-            await Re_course_one(course.ID);
+            await reloadCourse(course._id); 
             await Re_lesson(courseInfo._id);
             router.refresh();
 

@@ -344,10 +344,9 @@ export async function DELETE(request) {
             console.warn(`Không thể xóa file ${id} khỏi DB, nhưng không thể xóa khỏi Drive:`, driveError.message);
         }
 
-        // --- Prepare data for response: Return the _id of the affected Detail object if deletedFromDetail is true ---
         let affectedDetailIds = [];
         if (deletedFromDetail) {
-            affectedDetailIds.push(affectedDetailObjectId.toString()); // Convert ObjectId to string
+            affectedDetailIds.push(affectedDetailObjectId.toString());
         }
 
         return NextResponse.json({ status: 2, mes: 'Xóa file thành công.', data: affectedDetailIds }, { status: 200 });

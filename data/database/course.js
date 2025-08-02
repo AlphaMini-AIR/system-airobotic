@@ -9,6 +9,8 @@ import { CheckProfileDone } from '@/function/server';
 import mongoose from 'mongoose';
 
 export async function dataCourse(_id) {
+    console.log(_id);
+    
     try {
         await connectDB();
         if (!_id) {
@@ -59,7 +61,6 @@ export async function dataCourse(_id) {
             lessonIds.length > 0 ? Book.find({ 'Topics._id': { $in: lessonIds.map(lid => new mongoose.Types.ObjectId(lid)) } }).lean() : Promise.resolve([]),
             studentIds.length > 0 ? Student.find({ ID: { $in: studentIds } }).select('ID Name _id Profile Course').lean() : Promise.resolve([])
         ]);
-
         const userDetailsMap = new Map(usersData.map(u => [u._id.toString(), u]));
         const lessonDetailsMap = new Map();
         if (relevantBooks.length > 0) {
@@ -83,7 +84,6 @@ export async function dataCourse(_id) {
                 }
             });
         }
-
         if (studentsData.length > 0) {
             const studentInfoMap = new Map(studentsData.map(s => [s.ID, s]));
             course.Student.forEach(student => {

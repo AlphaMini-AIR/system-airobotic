@@ -6,6 +6,7 @@ import PostStudent from '@/models/student'
 import mongoose from 'mongoose'
 import { revalidateTag } from 'next/cache'
 import { Re_coursetry } from '@/data/course'
+import { reloadCourse, reloadCoursetry } from '@/data/actions/reload'
 
 export async function GET(req) {
   try {
@@ -127,8 +128,9 @@ export async function POST(req) {
         )
       }
     }
-    Re_coursetry();
+    reloadCoursetry();
     revalidateTag(`data_lesson${sessionId}`);
+    reloadCourse(courseId);
     return NextResponse.json({ status: 2, mes: 'Cập nhật điểm danh thành công!' })
   } catch (err) {
     console.error('Checkin update error:', err)

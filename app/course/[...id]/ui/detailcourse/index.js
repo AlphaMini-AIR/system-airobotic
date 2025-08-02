@@ -250,7 +250,9 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
 
     const detaillesson = (
         <> {data.Student.map(stu => {
+            
             if (!params[1]) return null;
+            if (stu.Learn.filter(t => t.Lesson.toString() === params[1].toString()).length === 0) return null;
             return (
                 <div key={stu._id || stu.ID} style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }} >
                     {title.map(col => {
@@ -290,7 +292,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
     )
     const reload = async () => {
         setLoading(true);
-        await reloadCourse(data._id);
+        reloadCourse(data._id);
         router.refresh();
         setLoading(false);
     }

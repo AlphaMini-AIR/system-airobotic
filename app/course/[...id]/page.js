@@ -4,12 +4,12 @@ import { course_data, student_data, user_data } from "@/data/actions/get";
 
 export default async function OverviewTab({ params }) {
     const { id } = await params;
-    const data = await course_data(id);
+    const data = await course_data(id[0]);
     let students = await student_data();
     const users = await user_data({})
     const tienDo = tinhTienDoHocTap(data);
     data.Progress = tienDo; 
-
+    
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
             <Timeline data={data} props={id} />

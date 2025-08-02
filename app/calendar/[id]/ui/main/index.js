@@ -27,8 +27,6 @@ const updateAttendance = async (courseId, sessionId, attendanceData) => {
 
 export default function Main({ data }) {
     const { course, session, students } = data;
-    console.log(students);
-    
     const [showComment, setShowComment] = useState(false);
     const [selStu, setSelStu] = useState(null);
     const [att, setAtt] = useState({});
@@ -216,7 +214,6 @@ export default function Main({ data }) {
                                     </div>
                                     {roll.map(stu => {
                                         if (stu.Checkin == '-1') return null;
-                                        console.log(stu);
                                         
                                         const currentCheckinValue = cur(stu);
                                         let displayValue = currentCheckinValue;
