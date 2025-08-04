@@ -11,7 +11,11 @@ export default async function CourseTryPage() {
         student_data(),
         user_data({}),
         area_data(),
-    ])
+    ]);
+
+    if (data?.sessions && Array.isArray(data.sessions)) {
+        data.sessions.sort((a, b) => new Date(b.day) - new Date(a.day));
+    }
 
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', gap: 16 }}>
@@ -19,7 +23,8 @@ export default async function CourseTryPage() {
                 <div style={{
                     borderRadius: '8px', padding: 16, background: 'linear-gradient(90deg, var(--yellow) 0%, rgb(249, 174, 0) 100%)',
                     boxShadow: 'var(--box)', overflow: 'hidden',
-                }}><Link href={`/course/trycourse`}>
+                }}>
+                    <Link href={`/course/trycourse`}>
                         <div className="text_4_m" style={{ color: 'white', fontWeight: '500' }}>AI Robotic</div>
                         <div className="text_2" style={{ margin: '4px 0', color: 'white' }}>Lớp: HỌC THỬ</div>
                         <div className="text_4_m" style={{ color: 'white' }}>Học thử miễn phí AI Robotic</div>

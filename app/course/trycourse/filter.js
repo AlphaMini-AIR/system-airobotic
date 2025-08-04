@@ -25,6 +25,8 @@ const statusOf = s => {
 }
 
 export default function CourseTryFilter({ data, student, teacher = [], area = [], book = [] }) {
+    console.log(data);
+
     const [statusFilter, setStatusFilter] = useState('all')
     const [teacherFilter, setTeacherFilter] = useState('all')
     const [activeSessionId, setActiveSessionId] = useState(null)
@@ -80,9 +82,9 @@ export default function CourseTryFilter({ data, student, teacher = [], area = []
                 if (teacherFilter !== 'all' && String(s.teacher?._id) !== teacherFilter) return false
                 return true
             })
-            .sort((a, b) =>
-                a._st.weight !== b._st.weight ? a._st.weight - b._st.weight : a._st.end - b._st.end
-            )
+            // --- DÒNG ĐÃ THAY ĐỔI ---
+            .sort((a, b) => new Date(b.day) - new Date(a.day))
+        // --- KẾT THÚC THAY ĐỔI ---
     }, [data, statusFilter, teacherFilter])
 
     const activeSession = useMemo(() => {
