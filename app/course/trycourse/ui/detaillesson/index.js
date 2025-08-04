@@ -85,7 +85,7 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                     <Row icon={<Svg_Course w={16} h={16} c='var(--text-primary)' />} label='Thời gian' val={timeLabel} />
                     <div style={{ display: 'flex', gap: 16 }}>
                         <Row icon={<Svg_Course w={16} h={16} c='var(--text-primary)' />} label='Link drive' val={truncateString(`https://drive.google.com/drive/folders/${session.folderId}`, 20, 1) || 'Không có'} />
-                        <Link className='input' style={{ padding: '5px 16px' }} href={`https://drive.google.com/drive/folders/${session.folderId}` || '#'}>Đi đến</Link>
+                        <Link target='_blank' className='input' style={{ padding: '5px 16px' }} href={`https://drive.google.com/drive/folders/${session.folderId}` || '#'}>Đi đến</Link>
                     </div>
                 </div>
                 <div style={{ flex: 0.5, display: 'flex', gap: 8, height: '100%', justifyContent: 'end' }}>
