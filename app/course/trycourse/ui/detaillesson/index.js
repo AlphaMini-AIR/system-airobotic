@@ -8,11 +8,12 @@ import Loading from '@/components/(ui)/(loading)/loading'
 import Menu from '@/components/(ui)/(button)/menu'
 import WrapIcon from '@/components/(ui)/(button)/hoveIcon'
 import { Svg_Add, Svg_Course, Svg_Delete, Svg_Pen, Svg_Profile, Svg_Student } from '@/components/(icon)/svg'
-import { formatDate } from '@/function'
+import { formatDate, truncateString } from '@/function'
 import { attendInfo } from '../student'
 import styles from './index.module.css'
 import ResponsiveGrid from '@/components/(ui)/grid'
 import ImageComponent from '@/components/(ui)/(image)'
+import Link from 'next/link'
 
 // Helper functions
 const buildDate = (d, h, m) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m)
@@ -82,6 +83,10 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
                     <Row icon={<Svg_Profile w={16} h={16} c='var(--text-primary)' />} label='Giáo viên' val={`${session.teacher?.name || '–––'} – ${session.teacher?.phone || ''}`} />
                     <Row icon={<Svg_Student w={18} h={18} c='var(--text-primary)' />} label='Số học sinh' val={session.students.length} />
                     <Row icon={<Svg_Course w={16} h={16} c='var(--text-primary)' />} label='Thời gian' val={timeLabel} />
+                    <div style={{ display: 'flex', gap: 16 }}>
+                        <Row icon={<Svg_Course w={16} h={16} c='var(--text-primary)' />} label='Link drive' val={truncateString(`https://drive.google.com/drive/folders/${session.folderId}`, 20, 1) || 'Không có'} />
+                        <Link className='input' style={{ padding: '5px 16px' }} href={`https://drive.google.com/drive/folders/${session.folderId}` || '#'}>Đi đến</Link>
+                    </div>
                 </div>
                 <div style={{ flex: 0.5, display: 'flex', gap: 8, height: '100%', justifyContent: 'end' }}>
                     <div className={styles.trigger} style={isPastSession ? { opacity: 0.5, cursor: 'not-allowed' } : {}} onClick={() => !isPastSession && setSec('stu')}><Svg_Student w={24} h={24} c='var(--text-primary)' /><p className="text_7">Học sinh</p></div>
@@ -122,14 +127,14 @@ export default function SessionPopup({ open, onClose, session, student = [], tea
         const imageItems = images.map((item) => (
             <ImageComponent key={item.id} imageInfo={item} refreshData={reload} width="100%" width2={500} />
         ));
-        
+
         return (
             <section className={styles.block}>
                 <header className={styles.blockHead}>
-                    <p className='text_4'>Hình ảnh buổi học ({images.length})</p>
+                    <p className='text_4' style={{ marginBottom: 16 }}>Hình ảnh buổi học ({images.length})</p>
                 </header>
                 {images.length > 0 ? (
-                    <ResponsiveGrid items={imageItems} columns={listColumnsConfig} type="list" width={500}/>
+                    <ResponsiveGrid items={imageItems} columns={listColumnsConfig} type="list" width={500} />
                 ) : (
                     <p className='text_6_400' style={{ paddingTop: 16 }}>Không có hình ảnh nào.</p>
                 )}
