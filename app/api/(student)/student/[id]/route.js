@@ -9,15 +9,30 @@ import jsonRes from '@/utils/response';
 import { uploadImageToDrive, deleteImageFromDrive } from '@/function/drive/image';
 import { getZaloUid } from '@/function/drive/appscript';
 import { reloadStudent } from '@/data/actions/reload';
+import { course_data, student_data } from '@/data/actions/get';
+
+async function getTeacherList(fullCourse) {
+    let teacher = [];
+    for (const c of fullCourse) {
+        let t = await course_data(c._id);
+        teacher.push(t.TeacherHR._id);
+    }
+    return teacher;
+}
 
 // Cập nhập thông tin học sinh
 export async function PUT(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!id) { return jsonRes(400, { status: false, mes: 'Thiếu ID học sinh' }); }
     let newUploadedFileId = null;
     try {
         const { user } = await authenticate(request);
-        if (!user.role.includes('Admin') && !user.role.includes('Academic')) {
+        const student = await student_data(id);
+        let fullCourse = student.Course.filter(c => c.enrollmentStatus === 0);
+        let teacher = await getTeacherList(fullCourse)
+        if (!user.role.includes('Admin') &&
+            !user.role.includes('Academic') &&
+            !teacher.includes(user.id)) {
             return jsonRes(403, { status: false, mes: 'Bạn không có quyền truy cập chức năng này.' });
         }
         await connectDB();
