@@ -16,7 +16,6 @@ const Trials = new Schema({
 
 const Status = new Schema({
   status: { type: Number, required: true },
-  act: { type: String, required: true, enum: ['học', 'chờ', 'nghỉ'] },
   date: { type: Date, required: true },
   note: { type: String, default: '' },
 });

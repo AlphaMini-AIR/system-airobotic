@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, startTransition, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import air from './index.module.css';
-import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting, Svg_History } from '../../(icon)/svg';
+import { Svg_Dark, Svg_Left, Svg_Logout, Svg_Menu, Svg_Mode, Svg_Student, Svg_Course, Svg_Canlendar, Svg_Setting, Svg_History, Svg_Chart } from '../../(icon)/svg';
 import Menu from '../../(ui)/(button)/menu';
 import Switch from "@/components/(ui)/(button)/swith";
 import WrapIcon from '../../(ui)/(button)/hoveIcon';
@@ -44,6 +44,7 @@ const initialNavItems = [
     </div>, content: 'Chăm sóc'
   },
   { href: '/search', icon: <Svg_Search height={22} width={22} fill={'var(--text-secondary)'} />, content: 'Tìm kiếm' },
+  { href: '/', icon: <Svg_Chart h={22} w={22} c={'var(--text-secondary)'} />, content: 'Thống kê' },
   { href: '/history', icon: <Svg_History h={22} w={22} c={'var(--text-secondary)'} />, content: 'Lịch sử' }
 ];
 

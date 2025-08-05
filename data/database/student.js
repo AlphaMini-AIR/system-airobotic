@@ -15,8 +15,6 @@ async function dataStudent(_id) {
             studentQuery.populate({ path: 'Course.course', model: 'course', populate: { path: 'Book', model: 'book', select: 'ID Name Price Topics Image' } })
         }
         const students = await studentQuery.lean()
-        console.log(students);
-         
         if (_id && students.length === 0) return null
         const processedStudents = students.map((student) => {
             if (_id && student.Course?.length) {

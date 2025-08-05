@@ -53,3 +53,7 @@ export const driveImage = (id) => {
     if (id.startsWith('https://lh3.googleusercontent.com/d/')) return id;
     return `https://lh3.googleusercontent.com/d/${id}`;
 }
+
+function getCssVariable(variableName) {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+}

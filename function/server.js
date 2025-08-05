@@ -1,4 +1,7 @@
 
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+
 // CheckProfileDone: Hàm kiểm tra xem học sinh đã hoàn thành hồ sơ điện tử hay chưa
 export function CheckProfileDone(student) {
     const profile = student.Profile;
@@ -30,6 +33,7 @@ export function CheckProfileDone(student) {
     return true;
 }
 
+// CheckSlide: Hàm kiểm tra đường dẫn Google Slides
 export async function CheckSlide(url) {
     if (!url) return { isValid: true };
 
@@ -51,4 +55,12 @@ export async function CheckSlide(url) {
         console.error("Lỗi khi kiểm tra URL Slide:", error);
         return { isValid: false, message: 'Không thể xác thực được URL của Slide do lỗi mạng.' };
     }
+}
+
+// CheckRole: Hàm kiểm tra token lấy role người dùng
+export async function CheckRole() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(process.env.token)?.value;
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    return token ? decodedToken : null;
 }
