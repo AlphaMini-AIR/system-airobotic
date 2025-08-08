@@ -44,8 +44,7 @@ const initialNavItems = [
     </div>, content: 'Chăm sóc'
   },
   { href: '/search', icon: <Svg_Search height={22} width={22} fill={'var(--text-secondary)'} />, content: 'Tìm kiếm' },
-  { href: '/', icon: <Svg_Chart h={22} w={22} c={'var(--text-secondary)'} />, content: 'Thống kê' },
-  { href: '/history', icon: <Svg_History h={22} w={22} c={'var(--text-secondary)'} />, content: 'Lịch sử' }
+  { href: '/', icon: <Svg_Chart h={22} w={22} c={'var(--text-secondary)'} />, content: 'Thống kê' }
 ];
 
 export default function Nav() {
@@ -239,7 +238,7 @@ export default function Nav() {
               className={`${air.reorderItem} ${isDragging ? air.isDragging : ''}`}
             >
               {item.icon}
-              <span className='text_5_400'>{item.content}</span>
+              <h6>{item.content}</h6>
             </div>
           );
           return acc;
@@ -293,9 +292,9 @@ export default function Nav() {
   );
 
   const menuItems = (
-    <div style={{ listStyle: 'none', margin: 0, width: 180, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw)', marginBottom: 8 }}>
+    <div style={{ listStyle: 'none', margin: 0, width: 180, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw2)', marginBottom: 8 }}>
       <div style={{ padding: 8, gap: 3 }} className='flex_col'>
-        <Link href={'/setting'} className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
+        <Link href={'/setting'} className={`${air.menu_li} text_5_400`}>
           <Svg_Setting w={16} h={16} c={'var(--text-secondary)'} />Cài đặt
         </Link>
         <p className={`${air.menu_li} text_5_400`} onClick={() => setActiveMenu(2)}>
@@ -311,19 +310,19 @@ export default function Nav() {
   );
 
   const menuMode = (
-    <div style={{ listStyle: 'none', margin: 0, width: 210, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw)', marginBottom: 8 }}>
+    <div style={{ listStyle: 'none', margin: 0, width: 210, borderRadius: 12, background: 'var(--bg-secondary)', boxShadow: 'var(--boxshaw2)', marginBottom: 8 }}>
       <div style={{ padding: 8, borderBottom: 'thin solid var(--border-color)', justifyContent: 'start', gap: 8 }} className='flex_center'>
         <div onClick={() => setActiveMenu(1)}>
           <WrapIcon icon={<Svg_Left w={12} h={12} c={'var(--text-secondary)'} />} w={'32px'} />
         </div>
-        <p className="text_5">Chế độ giao diện</p>
+        <h5>Chế độ giao diện</h5>
         <Svg_Mode w={16} h={16} c={'var(--text-secondary)'} />
       </div>
       <div style={{ padding: 8 }}>
         <div className={`${air.menu_li} text_5_400`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={toggleTheme}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Svg_Dark w={18} h={18} c={'var(--text-secondary)'} />
-            <p style={{ flex: 1, marginLeft: 8 }}>Giao diện Tối</p>
+            <h6 style={{ flex: 1, marginLeft: 8 }}>Giao diện Tối</h6>
           </div>
           <Switch checked={isDark} size="small" activeColor="#ffffff" inactiveColor="#ddd" />
         </div>
@@ -370,14 +369,14 @@ export default function Nav() {
           data={orderedItems}
           renderItemList={renderReorderList}
           title="Tùy chỉnh Menu"
-          width={400}
+          width={'400px'}
         />
         <FlexiblePopup
           open={isSearchPopupOpen}
           onClose={() => setIsSearchPopupOpen(false)}
           renderItemList={renderSearchContent}
           title="Tìm kiếm"
-          width={400}
+          width={'400px'}
         />
         <div>
           <Menu

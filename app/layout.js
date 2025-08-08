@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import Layout_Login from '@/app/(auth)/login';
 import Nav from '@/components/(layout)/nav';
 import '@/styles/all.css'
+import '@/styles/font.css';
 import air from './layout.module.css'
 
 export const metadata = {

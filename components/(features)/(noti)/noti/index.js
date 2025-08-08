@@ -41,23 +41,22 @@ export default function Noti({ open, onClose, status, mes, button, width }) {
           zIndex: 10,
         }}
       >
-        <p
+        <h4
           style={{
             marginTop: 16,
-            marginBottom: -12,
+            marginBottom: -16,
             textAlign: 'center',
             color: status ? 'var(--green)' : 'var(--red)',
-            fontWeight: 'bold',
           }}
         >
           {status ? 'THÀNH CÔNG' : 'THẤT BẠI'}
-        </p>
+        </h4>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
           {status ? <IconSuccess /> : <IconFailure />}
         </div>
-        <p style={{ padding: '0 16px 8px 16px', textAlign: 'center', marginTop: -12 }}>
+        <h5 style={{ padding: '0 16px 8px 16px', textAlign: 'center', marginTop: -12 }}>
           {mes}
-        </p>
+        </h5>
         <div>
           {button}
         </div>

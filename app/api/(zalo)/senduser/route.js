@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import PostStudent from '@/models/student';
 import connectToDB from '@/config/connectDB';
+import { senMesByPhone } from '@/function/drive/appscript';
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPF49FIUFKMoGshlLpERTLx1tuW3txICdlrBGUyomMYWhgANSwY0oTNV_Eppqmo5Mruw/exec';
 
@@ -49,40 +50,28 @@ export async function POST(request) {
             personalizedMessage = personalizedMessage.replaceAll('{nameparents}', student.ParentName || '');
         }
 
-        const url = new URL(SCRIPT_URL);
-        url.searchParams.set('mes', personalizedMessage);
+        const response = await senMesByPhone({
+            uid: student.Uid,
+            phone: student.Phone,
+            message: personalizedMessage
+        });
 
-        if (student.Uid) {
-            url.searchParams.set('uid', `[${student.Uid},' - ']`);
-        } else {
-            url.searchParams.set('phone', student.Phone);
-        }
-
-        const response = await fetch(url.toString());
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Google Script trả về lỗi HTTP: ${response.status} - ${errorText}`);
-        }
-
-        const gscriptResponse = await response.json();
-
-        if (gscriptResponse.status === 2) {
-            if (!student.Uid && student.Phone && gscriptResponse.data?.uid) {
+        if (response.status === 2) {
+            if (!student.Uid && student.Phone && response.data?.uid) {
                 await PostStudent.updateOne(
                     { ID: id },
-                    { $set: { Uid: gscriptResponse.data.uid } }
+                    { $set: { Uid: response.data.uid } }
                 );
             }
 
             return NextResponse.json({
                 status: 2,
-                message: gscriptResponse.mes || 'Gửi tin nhắn thành công',
-                data: gscriptResponse.data,
+                message: response.mes || 'Gửi tin nhắn thành công',
+                data: response.data,
             }, { status: 200 });
 
         } else {
-            throw new Error(gscriptResponse.mes || 'Google Script xử lý thất bại.');
+            throw new Error(response.mes || 'Google Script xử lý thất bại.');
         }
 
     } catch (error) {

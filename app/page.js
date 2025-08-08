@@ -7,7 +7,7 @@ export default async function Home() {
   const user = await CheckRole();
   return (
     <>
-      {user.role == 'Admin' ? <AdminPage /> : <TeacherPage data={await user_data(user.id)} />}
+      {user.role == 'Admin' ? <AdminPage /> : <TeacherPage data={await user_data({ _id: user.id })} />}
     </>
   )
 }

@@ -37,10 +37,23 @@ export async function reloadCoursetry() {
 }
 
 // Cập nhập dữ liệu người dùng (tag: users/user:{_id}/users:report)
-export async function reloadUser(type) {
-    if (type === 'report') {
-        revalidateTag('users:report')
-    } else {
-        revalidateTag('users')
-    }
+export async function reloadUser(_id) {
+    if (_id) { revalidateTag(`user:${_id}`) }
+    revalidateTag('users')
+}
+
+// Cập nhập dữ liệu form nhận thông tin khách hàng (tag: forms)
+export async function reloadForm() {
+    revalidateTag('forms')
+}
+
+
+// Cập nhập dữ liệu form nhận thông tin khách hàng (tag: zalo)
+export async function reloadZalo() {
+    revalidateTag('zalo')
+}
+
+// Cập nhập dữ liệu form nhận thông tin khách hàng (tag: zalo)
+export async function reloadLabel() {
+    revalidateTag('labels')
 }

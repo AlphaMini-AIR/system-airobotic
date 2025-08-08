@@ -3,8 +3,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './index.module.css';  
 
-const ANIMATION_DURATION = 300;
-
 export default function CenterPopup({
     open,
     onClose,

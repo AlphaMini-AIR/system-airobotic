@@ -3,10 +3,22 @@ import connectDB from '@/config/connectDB'
 import { cacheData } from '@/lib/cache'
 import { getCourseAll } from './course';
 
-async function dataUser() {
+async function dataUser(_id) {
     try {
         await connectDB()
-        const data = await User.find({ uid: { $exists: true, $ne: null } }, { uid: 0 }).lean().exec();
+        let query = _id ? { _id } : {}
+        let data = {}
+        if (_id) {
+            data = await User.find(query).populate({
+                path: 'zalo',
+                select: 'name _id phone avt action',
+                populate: {
+                    path: 'action'
+                }
+            }).lean();
+        } else {
+            data = await User.find(query, { uid: { $exists: true, $ne: null } }, { uid: 0 }).lean().exec();
+        }
         return JSON.parse(JSON.stringify(data))
     } catch (error) {
         console.error('Lỗi trong dataUser:', error)
@@ -69,6 +81,16 @@ async function dataUserreport() {
 export async function getUserAll() {
     try {
         const cachedFunction = cacheData(() => dataUser(), ['user'])
+        return await cachedFunction()
+    } catch (error) {
+        console.error('Lỗi trong UserAll:', error)
+        return null
+    }
+}
+
+export async function getUserOne(_id) {
+    try {
+        const cachedFunction = cacheData(() => dataUser(_id), [`user:${_id}`])
         return await cachedFunction()
     } catch (error) {
         console.error('Lỗi trong UserAll:', error)

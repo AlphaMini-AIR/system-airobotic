@@ -54,6 +54,3 @@ export const driveImage = (id) => {
     return `https://lh3.googleusercontent.com/d/${id}`;
 }
 
-function getCssVariable(variableName) {
-    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
-}

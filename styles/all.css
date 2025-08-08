@@ -6,6 +6,7 @@ body {
   height: 100vh;
   font-family: 'Roboto';
   color: var(--text-primary);
+  font-size: var(--font-size-base);
 }
 
 
@@ -16,16 +17,17 @@ p {
 
 .loadingOverlay {
   position: fixed;
+  bottom: 0;
+  right: 0;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
 }
 
 :root {
@@ -33,9 +35,10 @@ p {
   --bg-primary: #ffffff;
   --text-primary: #656565;
   --border-color: #e0e0e0;
-  --main_b: #1cb0f6;
+  --main_b: #1688eb;
   --main_d: #0374da;
-  --bg-secondary: #e9ecef;
+  --bg-secondary: #f2f4f7;
+  --bg-btn: #e2e5e9;
   --text-secondary: #666666;
   --red: #dc3545;
   --green: #28a745;
@@ -45,23 +48,22 @@ p {
   --boxshaw2: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
 }
 
-
-
 .dark {
-  --bg-primary: #1c1c1d;
-  --text-primary: #ffffff;
-  --border-color: #333333;
-  --main_b: #1cb0f6;
-  --main_d: #0374da;
-  --bg-secondary: #262626;
+  --bg-primary: #252728;
+  --text-primary: #e4e6ea;
+  --border-color: #404244;
+  --bg-secondary: #1c1c1d;
+  --bg-btn: #3b3d3e;
   --text-secondary: #b3b3b3;
   --red: #dc3545;
   --green: #28a745;
   --yellow: #ffc107;
-  --hover: #6d6d6d;
+  --hover: #4d4d4d;
   --boxshaw: rgba(0, 0, 0, 0.2) 0px 2px 8px 0px;
   --boxshaw2: rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em;
 }
+
+
 
 a {
   text-decoration: unset;
@@ -276,7 +278,19 @@ a {
   transition: all 0.2s;
   font-family: 'Roboto', sans-serif;
   color: var(--text-primary);
+  resize: none;
 }
+
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active,
+.input:-internal-autofill-selected {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+  box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+}
+
 
 .input:focus {
   border-color: var(--main_b);
@@ -341,7 +355,7 @@ a {
   align-items: center;
   gap: 8px;
   width: max-content;
-  border-radius: 8px;
+  border-radius: 5px;
   color: #fff;
   font-size: 14px;
   font-weight: 500;
@@ -349,12 +363,52 @@ a {
   border: none;
   transition: all 0.1s linear;
   margin-top: 8px;
+  justify-content: center;
 }
 
 .btn:hover {
   background: var(--main_d);
   transform: translateY(-2px);
 }
+
+.btn_s {
+  padding: 8px 12px;
+  border-radius: 5px;
+  background: var(--bg-btn);
+  outline: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s linear;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn_s:hover {
+  background: var(--hover);
+}
+
+.btn_s_b {
+  padding: 8px 12px;
+  border-radius: 5px;
+  background: var(--main_d);
+  outline: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s linear;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn_s_b:hover {
+  background: var(--main_b);
+}
+
 
 .trigger {
   display: flex;
@@ -391,4 +445,12 @@ a {
 
 .btn-1:hover {
   background-color: var(--hover);
+}
+
+.deleteIcon {
+  background-color: var(--red);
+}
+
+.mainIcon {
+  background-color: var(--bg-btn);
 }

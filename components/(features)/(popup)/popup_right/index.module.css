@@ -21,7 +21,6 @@
     right: 0;
     height: 100%;
     width: 500px;
-    max-width: 80%;
     background: var(--bg-primary);
     display: flex;
     flex-direction: column;
@@ -47,7 +46,7 @@
     height: 100%;
     width: 500px;
     max-width: 80%;
-    background: #fff;
+    background: var(--bg-primary);
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
@@ -84,4 +83,10 @@
 
 .error {
     color: red;
+}
+
+@media (max-width: 768px) {
+    .popup{
+        width: 100vw !important;
+    }
 }

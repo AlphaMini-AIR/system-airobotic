@@ -31,7 +31,9 @@ export default function FlexiblePopup({
     const [mounted, setMounted] = useState(false);
     const [visible, setVisible] = useState(false);
     const [showContent, setShowContent] = useState(false);
-
+    if (typeof width === 'number') {
+        width = `${width}px`
+    }
     // secondary state
     const [data2, setData2] = useState([]);
     const [loading2, setLoading2] = useState(false);
@@ -167,14 +169,14 @@ export default function FlexiblePopup({
             ${styles.popup}
             
           `}
-                    style={{ zIndex: globalZIndex, width: width, transform: visible2 ? `translateX(-${width2}px)` : visible ? 'translateX(0)' : `translateX(${width}px)` }}
+                    style={{ zIndex: globalZIndex, width: width, transform: visible2 ? `translateX(-${width2})` : visible ? 'translateX(0)' : `translateX(${width})` }}
                     onMouseDown={e => e.stopPropagation()}
                 >
                     <div className={styles.header}>
-                        <h3>{title}</h3>
+                        <h4 className='text_w_400'>{title}</h4>
                         <button className={styles.closeBtn} onClick={onClose}>&times;</button>
                     </div>
-                    <div className={styles.body}>
+                    <div className='scroll' style={{ flex: 1 }}>
                         {loading && <Loading content="Đang tải" />}
                         {error && <p className={styles.error}>{error}</p>}
                         {!loading && !error && showContent && renderItemList(data)}
@@ -199,7 +201,7 @@ export default function FlexiblePopup({
                         onMouseDown={e => e.stopPropagation()}
                     >
                         <div className={styles.header}>
-                            <h3>{secondaryTitle}</h3>
+                            <h4 className='text_w_400'>{secondaryTitle}</h4>
                             <button className={styles.closeBtn} onClick={onCloseSecondary}>&times;</button>
                         </div>
                         <div className={styles.body}>

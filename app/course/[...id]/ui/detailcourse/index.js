@@ -12,7 +12,7 @@ import Report from '../Report';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/(ui)/(loading)/loading';
 import CommentPopup from '../cmt';
-import { formatDate } from '@/function';
+import { driveImage, formatDate } from '@/function';
 import ImageComponent from '@/components/(ui)/(image)';
 import BoxFile from '@/components/(ui)/(box)/file';
 import Noti from '@/components/(features)/(noti)/noti';
@@ -332,7 +332,7 @@ export default function Detail({ data = [], params, book, users, studentsx }) {
         <div className={styles.container}>
             <div className={styles.box} style={{ padding: 16, gap: 16 }}>
                 <div className={styles.ImageBook}>
-                    <Image priority={true} src={data.Book.Image} fill alt={data.Book.Name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                    <Image priority={true} src={driveImage(data.Book.Image)} fill alt={data.Book.Name} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                 </div>
                 <div style={{ flex: 1 }}>
                     <p className="text_4" style={{ marginBottom: 8 }}>{params.length == 1 ? 'Thông tin khóa học' : `Thông tin buổi học (${lesson.Type || 'Chính thức'})`}</p>

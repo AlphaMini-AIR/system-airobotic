@@ -38,6 +38,13 @@ const ProfileSchema = new Schema({
   Present: { type: [PresentationSchema], default: [] }
 }, { _id: false });
 
+const LearnDetailSchema = new Schema({
+  care: { type: Array, default: [] },
+  trials: { type: [{ type: Schema.Types.ObjectId, ref: 'trialCourse' }], default: [] },
+  // 0: chưa có kết quả, 1: nhập học, 2: không nhập học
+  result: { type: Number, default: 0 },
+}, { _id: false });
+
 const postSchema = new Schema({
   ID: {
     type: String,
@@ -58,9 +65,6 @@ const postSchema = new Schema({
   Area: {
     type: Schema.Types.ObjectId,
     ref: 'area',
-  },
-  Type: {
-    type: Boolean
   },
   Address: {
     type: String
@@ -98,7 +102,8 @@ const postSchema = new Schema({
   Trial: {
     type: [Trials],
     default: []
-  }
+  },
+  Note: { type: [LearnDetailSchema], default: [] }
 }, { versionKey: false })
 
 const PostStudent = models.student || model('student', postSchema)

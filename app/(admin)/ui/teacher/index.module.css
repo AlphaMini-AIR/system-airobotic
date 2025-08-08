@@ -14,7 +14,7 @@
 .kpiGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 12px;
 }
 
 .kpiCard {
@@ -23,9 +23,9 @@
     align-items: center;
     justify-content: center;
     padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
     text-align: center;
     gap: 4px;
 }
@@ -54,10 +54,10 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background-color: var(--bg-primary);
+    background-color: #ffffff;
     padding: 12px;
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
 }
 
 .leaderboardItem {
@@ -114,15 +114,9 @@
 }
 
 .timePeriodGroup {
-    flex: 1;
+    flex: 2;
     display: flex;
     gap: 8px;
-}
-
-.chartWrapper {
-    flex-grow: 1;
-    position: relative;
-    min-height: 500px;
 }
 
 .menulist {

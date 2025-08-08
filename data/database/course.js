@@ -9,8 +9,6 @@ import { CheckProfileDone } from '@/function/server';
 import mongoose from 'mongoose';
 
 export async function dataCourse(_id) {
-    console.log(_id);
-    
     try {
         await connectDB();
         if (!_id) {

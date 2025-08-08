@@ -6,7 +6,10 @@ import { getAreaOne, getAreaAll } from '@/data/database/area'
 import { getCourseOne, getCourseAll } from '@/data/database/course'
 import { getBookOne, getBookAll } from '@/data/database/book'
 import { getCourseTry } from '../database/coursetry'
-import { getUserAll, getUserReport } from '@/data/database/user'
+import { getUserAll, getUserOne, getUserReport } from '@/data/database/user'
+import { getLabelAll } from '../database/label'
+import { getFormAll } from '../database/form'
+import { getZaloAll, getZaloOne } from '../database/zalo'
 
 export async function student_data(_id) {
     let data = _id ? await getStudentOne(_id) : await getStudentAll()
@@ -33,13 +36,32 @@ export async function book_data(_id) {
     return data || null
 }
 
+export async function zalo_data(_id) {
+    let data = _id ? await getZaloOne(_id) : await getZaloAll()
+    return data || null
+}
+
 export async function coursetry_data() {
     let data = await getCourseTry()
     return data || null
 }
 
-export async function user_data({ type = null }) {
+export async function user_data({ type = null, _id = null }) {
     if (type === 'report') {
         return await getUserReport()
-    } else { return await getUserAll() }
+    } else {
+        if (_id) {
+            return await getUserOne(_id)
+        } else {
+            return await getUserAll()
+        }
+    }
+}
+
+export async function label_data() {
+    return await getLabelAll()
+}
+
+export async function form_data() {
+    return await getFormAll()
 }

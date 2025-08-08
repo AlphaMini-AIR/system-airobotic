@@ -77,7 +77,7 @@ export default function TeacherPage({ teachers, courses }) {
                 if (lessonDate < startDate || lessonDate > endDate) return;
                 const teacherId = lesson.Teacher?._id;
                 const taId = lesson.TeachingAs?._id;
-                if (teacherId && stats.has(teacherId)) stats.get(teacherId).teachingSessions++;
+                if (teacherId && stats.has(teacherId) && lessonDate <= now) stats.get(teacherId).teachingSessions++;
                 if (taId && stats.has(taId)) stats.get(taId).taSessions++;
                 if (lessonDate < now && teacherId && stats.has(teacherId)) {
                     let attendanceViolated = false, commentViolated = false, evidenceViolated = false;
@@ -203,10 +203,7 @@ export default function TeacherPage({ teachers, courses }) {
                     {topViolations.length > 0 ? topViolations.map((t, i) => <div key={i} className={styles.leaderboardItem}><span>{t.name}</span><strong className={styles.violations}>{t.totalViolations} lỗi</strong></div>) : <p className={styles.noData}>Không có vi phạm</p>}</div>
             </div>
             <div className={styles.mainContent}>
-
-                <div className={styles.chartWrapper}>
-                    <Bar data={chartData} options={chartOptions} />
-                </div>
+                <Bar data={chartData} options={chartOptions} />
             </div>
         </div>
     );
