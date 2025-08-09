@@ -65,7 +65,7 @@ function CustomerUpdateForm({ formAction, initialData, onClose, isAnyActionPendi
     );
 }
 
-export default function CustomerRow({ customer, index, isSelected, onSelect, visibleColumns, user }) {
+export default function CustomerRow({ customer, index, isSelected, onSelect, visibleColumns, user, viewMode }) {
     const router = useRouter();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [notification, setNotification] = useState({ open: false, status: true, mes: '' });
@@ -133,8 +133,8 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
     };
     return (
         <>
-            <div className={`${styles.row} ${isAnyActionPending ? styles.disabledRow : ''}`} onClick={handleOpenPopup}>
-                <div className={`${styles.td} ${styles.fixedColumn}`}>
+            <div className={`${styles.row} ${isAnyActionPending ? styles.disabledRow : ''} ${viewMode === 'manage' ? '' : styles.manageRow}`} onClick={handleOpenPopup}>
+                {viewMode === 'manage' && <div className={`${styles.td} ${styles.fixedColumn}`}>
                     <label className={styles.checkboxContainer}>
                         <input
                             type="checkbox"
@@ -145,7 +145,7 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                         />
                         <span className={styles.checkmark}></span>
                     </label>
-                </div>
+                </div>}
                 <div className={`${styles.td} ${styles.fixedColumn}`}><h6>{index}</h6></div>
                 {visibleColumns.map(colKey => (
                     <div key={colKey} className={styles.td}>

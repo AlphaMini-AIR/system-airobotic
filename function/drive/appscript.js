@@ -1,5 +1,8 @@
+import { content } from "googleapis/build/src/apis/content";
+
 const SCRIPT_URL_SEND_MESSAGE = 'https://script.google.com/macros/s/AKfycbzhEEvakm6VzGRpNNORT9jZ3A8gYya2Bd5zjuTbpAgr8ZYaHO-0LB_DKibXyEHuo3ROfw/exec';
 const SCRIPT_URL_GET_UID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__QRCU0Xi6-qu-HkUBx6fDHDRAYfpqM9d4SUq4YKVxpPnZtpJ_b6wg/exec';
+const SCRIPT_URL_ACTION = 'https://script.google.com/macros/s/AKfycbzx1a6gX1qnGFupAzroSsi6lDkLfw4QpM5lmAG8rEQIJxML90WmCB4reFFBXddoU1MB7A/exec'
 
 export async function senMesByPhone({ message, uid, phone }) {
     console.log(uid, message);
@@ -39,5 +42,20 @@ export async function getZaloUid(phone) {
         return { uid: null, success: false, message: result.mes || 'Không tìm thấy UID, vui lòng kiểm tra lại số điện thoại.' };
     } catch (error) {
         return { uid: null, success: false, message: 'Đã xảy ra lỗi trong quá trình lấy Zalo UID.' };
+    }
+}
+
+export async function actionZalo({ phone, uidPerson = '', actionType, message = '', uid }) {
+    if (!uid && !actionType) {
+        return { status: false, message: 'Cần cung cấp UID hoặc actionType để thực hiện hành động.', content: '' };
+    }
+    try {
+        const url = `${SCRIPT_URL_ACTION}?phone=${encodeURIComponent(phone)}&uidPerson=${encodeURIComponent(uidPerson)}&actionType=${encodeURIComponent(actionType)}&message=${encodeURIComponent(message)}&uid=${encodeURIComponent(uid)}`;
+        const response = await fetch(url);
+        if (!response.ok) return { status: false, message: 'Lỗi trước khi thực hiện hành động (lỗi gọi appscript)', content: '' };
+        const result = await response.json();
+        return result
+    } catch (error) {
+        return { status: false, message: `${error}`, content: '' };
     }
 }

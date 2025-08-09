@@ -7,17 +7,20 @@
     border-radius: 5px;
     position: relative;
     overflow: hidden;
+    flex: 1;
 }
 
 .tableWrapper {
-    flex-grow: 1;
-    overflow: auto;
+    flex: 1;
+    height: calc(100% - 60px);
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
-    /* Bỏ table-layout: fixed để cột tự điều chỉnh */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .header {
@@ -37,6 +40,11 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+}
+
+.header.manageRow>div:nth-child(2) {
+    justify-content: flex-start !important;
+    flex: 1 !important;
 }
 
 .th {
@@ -68,6 +76,10 @@
     padding: 0;
 }
 
+.row.manageRow>div:nth-child(2) {
+    flex: 1 !important;
+    justify-content: flex-start !important;
+}
 
 .row:hover {
     background-color: var(--hover);

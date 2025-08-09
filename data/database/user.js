@@ -13,7 +13,17 @@ async function dataUser(_id) {
                 path: 'zalo',
                 select: 'name _id phone avt action',
                 populate: {
-                    path: 'action'
+                    path: 'action',
+                    populate: [
+                        {
+                            path: 'zaloAccount',
+                            select: 'name _id phone avt',
+                        },
+                        {
+                            path: 'createdBy',  
+                            select: 'name _id phone avt',
+                        },
+                    ],
                 }
             }).lean();
         } else {

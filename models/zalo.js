@@ -8,6 +8,10 @@ const ZaloAccountSchema = new Schema(
         avt: { type: String },
         rateLimitPerHour: { type: Number, required: true, default: 30 },
         action: { type: [{ type: Schema.Types.ObjectId, ref: 'scheduledjob' }], default: [] },
+        roles: {
+            type: [{ type: Schema.Types.ObjectId, ref: 'user' }],
+            default: []
+        },
     },
     { timestamps: true },
 );

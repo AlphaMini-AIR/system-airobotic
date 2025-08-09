@@ -23,6 +23,7 @@ export async function getCombinedData(params) {
             let pipeline = [];
             let modelToUse;
             let shouldPopulate = false;
+
             if (currentParams.type === 'true') {
                 modelToUse = Student;
                 const filterConditions = [];
@@ -41,7 +42,7 @@ export async function getCombinedData(params) {
                     matchStage,
                     { $lookup: { from: 'forms', localField: 'Source', foreignField: '_id', as: 'sourceInfo' } },
                     { $unwind: { path: '$sourceInfo', preserveNullAndEmptyArrays: true } },
-                    { $project: { _id: 1, name: "$Name", bd: "$bd", email: "$Email", phone: "$Phone", nameparent: "$NameParent", area: "$Area", uid: "$uid", createAt: "$createAt", type: { $literal: true }, source: "$sourceInfo.name", status: { $literal: null }, care: { $literal: [] } } }
+                    { $project: { _id: 1, name: "$Name", bd: "$bd", email: "$Email", phone: "$Phone", nameparent: "$NameParent", area: "$Area", uid: "$uid", createAt: "$createAt", type: { $literal: true }, source: "$sourceInfo.name", status: { $literal: null }, care: { $literal: [] }, roles: { $literal: [] } } }
                 ];
             } else {
                 shouldPopulate = true;
@@ -77,6 +78,13 @@ export async function getCombinedData(params) {
                 if (currentParams.label && mongoose.Types.ObjectId.isValid(currentParams.label)) {
                     filterConditions.push({ labels: new mongoose.Types.ObjectId(currentParams.label) });
                 }
+                // --- THÊM LOGIC LỌC TẠI ĐÂY ---
+                // Lọc những khách hàng có user ID trong mảng 'roles'
+                if (currentParams.user && mongoose.Types.ObjectId.isValid(currentParams.user)) {
+                    filterConditions.push({ roles: new mongoose.Types.ObjectId(currentParams.user) });
+                }
+                // ------------------------------------
+
                 const matchStage = filterConditions.length > 0 ? { $match: { $and: filterConditions } } : { $match: {} };
                 pipeline = [
                     matchStage,
@@ -87,26 +95,44 @@ export async function getCombinedData(params) {
                     { $project: { sourceInfo: 0 } }
                 ];
             }
+
             const commonStages = [
                 { $sort: { createAt: -1, _id: -1 } },
                 { $facet: { paginatedResults: [{ $skip: skip }, { $limit: limit }], totalCount: [{ $count: 'count' }] } }
             ];
             pipeline.push(...commonStages);
+
             const results = await modelToUse.aggregate(pipeline).exec();
             let paginatedData = results[0]?.paginatedResults || [];
+
             if (shouldPopulate && paginatedData.length > 0) {
                 const userIds = new Set();
                 paginatedData.forEach(customer => {
+                    // Populate cho `care.createBy`
                     customer.care?.forEach(note => { if (note.createBy) userIds.add(note.createBy.toString()); });
+                    // Populate cho `roles`
+                    customer.roles?.forEach(roleId => userIds.add(roleId.toString()));
                 });
+
                 if (userIds.size > 0) {
                     const users = await User.find({ _id: { $in: Array.from(userIds) } }).select('name avt').lean();
                     const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
                     paginatedData.forEach(customer => {
-                        customer.care?.forEach(note => { if (note.createBy && userMap.has(note.createBy.toString())) { note.createBy = userMap.get(note.createBy.toString()); } });
+                        // Gán thông tin user cho `care.createBy`
+                        customer.care?.forEach(note => {
+                            if (note.createBy && userMap.has(note.createBy.toString())) {
+                                note.createBy = userMap.get(note.createBy.toString());
+                            }
+                        });
+                        // Thay thế mảng `roles` từ ID thành object user đầy đủ
+                        if (customer.roles) {
+                             customer.roles = customer.roles.map(roleId => userMap.get(roleId.toString())).filter(Boolean);
+                        }
                     });
                 }
             }
+            
             const phoneNumbers = paginatedData.map(p => p.phone).filter(Boolean);
             if (phoneNumbers.length > 0) {
                 const scheduledTasksRaw = await ScheduledJob.aggregate([
@@ -126,12 +152,18 @@ export async function getCombinedData(params) {
             } else {
                 paginatedData.forEach(person => { person.statusaction = null; });
             }
+
             if (currentParams.campaignStatus) {
                 paginatedData = paginatedData.filter(p => currentParams.campaignStatus === 'true' ? p.statusaction !== null : p.statusaction === null);
             }
-            if (currentParams.user && mongoose.Types.ObjectId.isValid(currentParams.user)) {
-                paginatedData = paginatedData.filter(p => p.statusaction?.createdBy?._id.toString() === currentParams.user);
-            }
+
+            // --- XÓA ĐOẠN LỌC SAI Ở ĐÂY ---
+            // Đoạn code này đã được xóa vì việc lọc đã được thực hiện ở truy vấn database
+            // if (currentParams.user && mongoose.Types.ObjectId.isValid(currentParams.user)) {
+            //     paginatedData = paginatedData.filter(p => p.statusaction?.createdBy?._id.toString() === currentParams.user);
+            // }
+            // ------------------------------------
+
             const plainData = JSON.parse(JSON.stringify(paginatedData));
             return {
                 data: plainData,
@@ -143,7 +175,6 @@ export async function getCombinedData(params) {
     );
     return cachedData(params);
 }
-
 export async function revalidateData() {
     revalidateTag('combined-data');
 }
@@ -197,9 +228,14 @@ export async function addCareNoteAction(previousState, formData) {
 }
 
 export async function updateCustomerStatusAction(previousState, formData) {
+    const user = await checkAuthToken();
+    if (!user || !user.id) return { message: 'Bạn cần đăng nhập để thực hiện hành động này.', status: false };
+    if (!user.role.includes('Admin') && !user.role.includes('Sale')) {
+        return { message: 'Bạn không có quyền thực hiện chức năng này', status: false };
+    }
     const customerId = formData.get('customerId');
     const newStatusStr = formData.get('status');
-    
+
     if (!customerId || !newStatusStr) {
         return { success: false, error: 'Thiếu thông tin cần thiết.' };
     }
@@ -220,12 +256,17 @@ export async function updateCustomerStatusAction(previousState, formData) {
         return { success: true, message: 'Cập nhật trạng thái thành công!' };
     } catch (error) {
         console.log(error);
-        
+
         return { success: false, error: 'Lỗi server khi cập nhật trạng thái.' };
     }
 }
 
 export async function convertToStudentAction(previousState, formData) {
+    const user = await checkAuthToken();
+    if (!user || !user.id) return { message: 'Bạn cần đăng nhập để thực hiện hành động này.', status: false };
+    if (!user.role.includes('Admin') && !user.role.includes('Sale')) {
+        return { message: 'Bạn không có quyền thực hiện chức năng này', status: false };
+    }
     const customerId = formData.get('customerId');
     if (!customerId) {
         return { success: false, error: 'Thiếu ID khách hàng.' };
@@ -267,5 +308,49 @@ export async function convertToStudentAction(previousState, formData) {
     } catch (error) {
         console.error('Lỗi khi chuyển đổi khách hàng:', error);
         return { success: false, error: 'Không thể chuyển đổi khách hàng. Lỗi server.' };
+    }
+}
+
+export async function assignRoleToCustomersAction(prevState, formData) {
+    const user = await checkAuthToken();
+    if (!user || !user.id) return { message: 'Bạn cần đăng nhập để thực hiện hành động này.', status: false };
+    if (!user.role.includes('Admin') && !user.role.includes('Sale')) {
+        return { message: 'Bạn không có quyền thực hiện chức năng này', status: false };
+    }
+    const customersJSON = formData.get('selectedCustomersJSON');
+    const userId = formData.get('userId');
+
+    // --- Validation ---
+    if (!userId || !customersJSON) {
+        return { success: false, error: 'Dữ liệu không hợp lệ. Vui lòng chọn người phụ trách và danh sách khách hàng.' };
+    }
+
+    let customerIds;
+    try {
+        customerIds = JSON.parse(customersJSON).map(c => c._id);
+        if (!Array.isArray(customerIds) || customerIds.length === 0) {
+            return { success: false, error: 'Không có khách hàng nào được chọn.' };
+        }
+    } catch (e) {
+        console.error("Lỗi parsing JSON khách hàng:", e);
+        return { success: false, error: 'Định dạng danh sách khách hàng không đúng.' };
+    }
+
+    try {
+        await connectDB();
+        const result = await Customer.updateMany(
+            { _id: { $in: customerIds } },
+            { $addToSet: { roles: new mongoose.Types.ObjectId(userId) } }
+        );
+
+        if (result.modifiedCount === 0 && result.matchedCount > 0) {
+            return { success: true, message: `Các khách hàng này đã được gán cho người dùng được chọn từ trước. Không có gì thay đổi.` };
+        }
+        revalidateData();
+        return { success: true, message: `Đã gán thành công ${result.modifiedCount} khách hàng.` };
+
+    } catch (error) {
+        console.error("Lỗi gán người phụ trách hàng loạt:", error);
+        return { success: false, error: 'Đã xảy ra lỗi phía máy chủ. Vui lòng thử lại.' };
     }
 }

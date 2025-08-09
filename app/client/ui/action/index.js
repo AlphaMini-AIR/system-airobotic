@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect, useMemo, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import styles from './index.module.css';
 import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import AlertPopup from '@/components/(features)/(noti)/alert';
 import Noti from '@/components/(features)/(noti)/noti';
 import Loading from '@/components/(ui)/(loading)/loading';
-import { cancelScheduleAction } from '@/app/actions/schedule.actions'; // Import action mới
+import { cancelScheduleAction } from '@/app/actions/schedule.actions';
 
+// --- Sub-Components & Helpers (Không thay đổi nhiều) ---
 function formatRemainingTime(ms) {
     if (ms <= 0) return 'Đã hoàn thành';
     const totalSeconds = Math.floor(ms / 1000);
@@ -17,7 +18,8 @@ function formatRemainingTime(ms) {
     let result = 'Còn lại ';
     if (hours > 0) result += `${hours} giờ `;
     if (minutes > 0) result += `${minutes} phút`;
-    if (hours === 0 && minutes === 0) result += `${totalSeconds} giây`;
+    if (hours === 0 && minutes === 0 && totalSeconds > 0) result += `${totalSeconds} giây`;
+    if (result.trim() === 'Còn lại') return 'Sắp xong...';
     return result.trim();
 }
 const getActionTypeName = (type) => {
@@ -35,41 +37,55 @@ const formatDateTime = (isoString) => {
 function SubmitButton({ text = 'Thực hiện' }) {
     const { pending } = useFormStatus();
     return (
-        <button type="submit" disabled={pending} className='btn'>
-            {pending ? 'Đang xử lý...' : text}
+        <button type="submit" disabled={pending} className='btn_s_b' >
+            <h5>{text}</h5>
         </button>
     );
 }
+// Component nút trượt mới
+function ModeToggleSwitch({ mode, onModeChange }) {
+    return (
+        <div className={styles.toggleContainer}>
+            <button
+                className={`${styles.toggleOption} ${mode === 'current' ? styles.toggleActive : ''}`}
+                onClick={() => onModeChange('current')}>
+                Zalo hiện tại
+            </button>
+            <button
+                className={`${styles.toggleOption} ${mode === 'all' ? styles.toggleActive : ''}`}
+                onClick={() => onModeChange('all')}>
+                Tất cả
+            </button>
+        </div>
+    );
+}
 function ActionDetailItem({ job, onShowDetails, onCancel }) {
-    const [remainingTime, setRemainingTime] = useState('');
+    const [remainingTime, setRemainingTime] = useState(() => formatRemainingTime(new Date(job.estimatedCompletionTime).getTime() - Date.now()));
     const { total, completed, failed } = job.statistics;
     const successPercent = total > 0 ? (completed / total) * 100 : 0;
     const failedPercent = total > 0 ? (failed / total) * 100 : 0;
     useEffect(() => {
         const completionDate = new Date(job.estimatedCompletionTime);
-        const updateTimer = () => {
+        const intervalId = setInterval(() => {
             const msLeft = completionDate.getTime() - new Date().getTime();
             setRemainingTime(formatRemainingTime(msLeft));
-        };
-        updateTimer();
-        const intervalId = setInterval(updateTimer, 1000);
+        }, 1000);
         return () => clearInterval(intervalId);
     }, [job.estimatedCompletionTime]);
     return (
         <div className={styles.detailItem}>
-            <div className={styles.detailHeader}><h5>{job.jobName}</h5><h6>{getActionTypeName(job.actionType)}</h6></div>
-            <div className={styles.progressInfo}><h6>Tiến độ: {completed}/{total}</h6><h6 className={styles.timer}>{remainingTime}</h6></div>
-            <div className={styles.progressBar}><div className={styles.success} style={{ width: `${successPercent}%` }}></div><div className={styles.failed} style={{ width: `${failedPercent}%` }}></div></div>
-            <div className={styles.jobMetaGrid}>
-                <div><h6>Tài khoản chạy</h6><h5>{job.zaloAccount?.name || 'Không rõ'}</h5></div>
-                <div><h6>Người tạo</h6><h5>{job.createdBy?.name || 'Không rõ'}</h5></div>
-                <div><h6>Thời gian tạo</h6><h5>{formatDateTime(job.createdAt)}</h5></div>
-                <div><h6>Dự kiến xong</h6><h5>{formatDateTime(job.estimatedCompletionTime)}</h5></div>
+            <div className={styles.detailHeader}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <h5>{job.jobName}</h5> <h6> Người tạo: {job.createdBy?.name || 'Không rõ'}</h6>
+                </div>
+                <h6>{job.zaloAccount?.name || 'Không rõ'} - {getActionTypeName(job.actionType)}</h6>
             </div>
-            {job.actionType === 'sendMessage' && job.config.messageTemplate && (<div className={styles.messageContent}><h6>Nội dung tin nhắn:</h6><blockquote>{job.config.messageTemplate}</blockquote></div>)}
+            <div className={styles.progressInfo}><h6>Tiến độ: {completed}/{total}</h6><h6 className={styles.timer}>{remainingTime}</h6></div>
+            <div className={styles.progressBar}><div className={styles.success} style={{ width: `${successPercent}%` }}></div><div className={styles.failed} style={{ width: `${failedPercent}%`, left: `${successPercent}%` }}></div></div>
+            {job.actionType === 'sendMessage' && job.config.messageTemplate && (<div className={styles.messageContent}><h5>Nội dung tin nhắn:</h5><blockquote style={{ marginTop: 5 }}>{job.config.messageTemplate}</blockquote></div>)}
             <div className={styles.detailActions}>
-                <button className='btn_s' onClick={() => onShowDetails(job)}><h6>Chi tiết danh sách</h6></button>
-                <button className='btn_s_w' onClick={() => onCancel(job)}><h6>Hủy bỏ lịch</h6></button>
+                <button className='btn_s' onClick={() => onShowDetails(job)}><h6 style={{ color: 'var(--text-primary)' }}>Chi tiết danh sách</h6></button>
+                <button className='btn_s_b' style={{ background: 'var(--red)' }} onClick={() => onCancel(job)}><h6 style={{ color: 'white' }}>Hủy bỏ lịch</h6></button>
             </div>
         </div>
     );
@@ -87,29 +103,58 @@ function TaskItem({ task }) {
         </div>
     );
 }
-export default function RunningActions({ user }) {
+
+// --- Component Chính (Đã cập nhật) ---
+export default function RunningActions({ user, running = [] }) {
     const router = useRouter();
-    const actions = user?.[0]?.zalo?.action || [];
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [viewingDetailsFor, setViewingDetailsFor] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
     const [jobToCancel, setJobToCancel] = useState(null);
     const [notification, setNotification] = useState({ open: false, status: true, mes: '' });
     const [cancelState, cancelAction, isCancelPending] = useActionState(cancelScheduleAction, { success: null, message: null, error: null });
+
+    // State cho các bộ lọc mới
+    const [displayMode, setDisplayMode] = useState('current');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedDate, setSelectedDate] = useState('');
+
+    const currentZaloId = user?.[0]?.zalo?._id;
+    const currentZaloJobs = useMemo(() => {
+        if (!currentZaloId) return [];
+        return running.filter(job => job.zaloAccount?._id === currentZaloId);
+    }, [running, currentZaloId]);
+
+    // Logic lọc và hiển thị
+    const jobsToDisplay = useMemo(() => {
+        let list = displayMode === 'current' ? currentZaloJobs : running;
+        if (searchTerm) {
+            const lowercasedFilter = searchTerm.toLowerCase();
+            list = list.filter(job =>
+                job.jobName.toLowerCase().includes(lowercasedFilter) ||
+                job.zaloAccount?.name.toLowerCase().includes(lowercasedFilter)
+            );
+        }
+        if (selectedDate) {
+            list = list.filter(job => {
+                const jobDate = new Date(job.createdAt).toISOString().split('T')[0];
+                return jobDate === selectedDate;
+            });
+        }
+        return list;
+    }, [displayMode, currentZaloJobs, running, searchTerm, selectedDate]);
+
     const categorizedTasks = useMemo(() => {
         if (!viewingDetailsFor) return { pending: [], success: [], failed: [], all: [] };
         const pending = []; const success = []; const failed = [];
         viewingDetailsFor.tasks.forEach(task => {
-            if (task.processedAt) {
-                if (task.resultMessage) failed.push(task); else success.push(task);
-            } else { pending.push(task); }
+            if (task.processedAt) { if (task.resultMessage) failed.push(task); else success.push(task); }
+            else { pending.push(task); }
         });
         return { pending, success, failed, all: [...pending, ...success, ...failed] };
     }, [viewingDetailsFor]);
-    const filteredTasks = useMemo(() => {
-        if (activeFilter === 'all') return categorizedTasks.all;
-        return categorizedTasks[activeFilter] || [];
-    }, [activeFilter, categorizedTasks]);
+    const filteredTasks = useMemo(() => categorizedTasks[activeFilter] || [], [activeFilter, categorizedTasks]);
+
     useEffect(() => {
         const result = cancelState.message || cancelState.error;
         if (result) {
@@ -117,14 +162,17 @@ export default function RunningActions({ user }) {
             if (cancelState.success) {
                 setJobToCancel(null);
                 setIsPopupOpen(false);
-                router.refresh();
+                setViewingDetailsFor(null);
             }
         }
-    }, [cancelState, router]);
-    if (actions.length === 0) return null;
-    const firstJob = actions[0];
-    const totalActions = actions.length;
-    const { total, completed } = firstJob.statistics;
+    }, [cancelState]);
+    if (!running || running.length === 0) return null;
+    const handleOpenPopup = () => {
+        setDisplayMode('current');
+        setSearchTerm('');
+        setSelectedDate('');
+        setIsPopupOpen(true);
+    };
     const handleShowDetails = (job) => { setActiveFilter('all'); setViewingDetailsFor(job); };
     const handleCloseDetails = () => setViewingDetailsFor(null);
     const handleOpenCancelConfirm = (job) => setJobToCancel(job);
@@ -132,21 +180,37 @@ export default function RunningActions({ user }) {
     const handleCloseNoti = () => setNotification(prev => ({ ...prev, open: false }));
     return (
         <>
-            <button className={styles.compactButton} onClick={() => setIsPopupOpen(true)}>
-                <h5>{getActionTypeName(firstJob.actionType)}: {firstJob.jobName}</h5><div className={styles.separator}></div><h6>{completed}/{total}</h6><div className={styles.separator}></div><h6>Chi tiết +{totalActions}</h6>
+            <button className='btn_s' onClick={handleOpenPopup}>
+                <h5>Hiện tại: {currentZaloJobs.length}</h5>
+                <div className={styles.separator}></div>
+                <h5>Tổng: {running.length}</h5>
             </button>
             <FlexiblePopup
                 open={isPopupOpen}
                 onClose={() => setIsPopupOpen(false)}
-                title={`Hành động đang chạy (${totalActions})`}
-                width={'500px'}
-                renderItemList={() => (<div className={styles.popupList}>{actions.map(job => (<ActionDetailItem key={job._id} job={job} onShowDetails={handleShowDetails} onCancel={handleOpenCancelConfirm} />))}</div>)}
+                title={`Hành động đang chạy`}
+                width={'600px'}
+                renderItemList={() => (
+                    <div>
+                        <div className={styles.popupControls}>
+                            <ModeToggleSwitch mode={displayMode} onModeChange={setDisplayMode} />
+                            <input type="text" placeholder="Tìm theo tên lịch, tên zalo..." value={searchTerm} style={{ flex: 1 }} onChange={(e) => setSearchTerm(e.target.value)} className={`input ${styles.searchInput}`} />
+                        </div>
+                        <div className={`${styles.popupList} scroll`}>
+                            {jobsToDisplay.length > 0 ? jobsToDisplay.map(job => (
+                                <ActionDetailItem key={job._id} job={job} onShowDetails={handleShowDetails} onCancel={handleOpenCancelConfirm} />
+                            )) : (
+                                <div className={styles.noJobsText}><h6>Không có hành động nào phù hợp.</h6></div>
+                            )}
+                        </div>
+                    </div>
+                )}
                 secondaryOpen={!!viewingDetailsFor}
                 onCloseSecondary={handleCloseDetails}
-                secondaryTitle={`Danh sách (${viewingDetailsFor?.tasks?.length || 0})`}
+                secondaryTitle={`Chi tiết danh sách (${viewingDetailsFor?.tasks?.length || 0})`}
                 dataSecondary={viewingDetailsFor}
                 width2={'550px'}
-                renderSecondaryList={(job) => (
+                renderSecondaryList={() => (
                     <div className={`${styles.popupList} scroll`}>
                         <div className={styles.filterControls}>
                             <button className={activeFilter === 'all' ? styles.activeFilter : ''} onClick={() => setActiveFilter('all')}><h6>Tất cả ({categorizedTasks.all.length})</h6></button>

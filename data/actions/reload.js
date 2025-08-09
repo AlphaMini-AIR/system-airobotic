@@ -57,3 +57,7 @@ export async function reloadZalo() {
 export async function reloadLabel() {
     revalidateTag('labels')
 }
+
+export async function reloadRunningSchedules() {
+    revalidateTag('running-schedules')
+}

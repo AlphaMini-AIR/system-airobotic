@@ -1,25 +1,8 @@
 import { Schema, model, models } from "mongoose";
 
 const TaskSchema = new Schema({
-    person: {
-        type: {
-            name: String,
-            phone: String,
-            uid: String,
-        },
-        required: true,
-    },
-    processingId: {
-        type: String,
-        default: null,
-        index: true,
-    },
-    processedAt: {
-        type: Date,
-    },
-    resultMessage: {
-        type: String,
-    },
+    person: { type: { name: String, phone: String, uid: String }, required: true },
+    history: { type: Schema.Types.ObjectId, ref: "logmes" },
     scheduledFor: { type: Date, required: true },
 });
 
@@ -56,9 +39,6 @@ const ScheduledJobSchema = new Schema(
             total: { type: Number, default: 0 },
             completed: { type: Number, default: 0 },
             failed: { type: Number, default: 0 },
-        },
-        estimatedCompletionTime: {
-            type: Date,
         },
         createdBy: {
             type: Schema.Types.ObjectId,

@@ -3,6 +3,7 @@
     flex-direction: column;
     gap: 8px;
     margin: 0 auto;
+    height: 100%;
 }
 
 /* Header trang */
@@ -49,7 +50,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow: hidden;
 }
 
 .filterHeader {

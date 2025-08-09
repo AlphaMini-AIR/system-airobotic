@@ -24,6 +24,12 @@ const FormSchema = new Schema(
                 createAt: { type: Date, default: Date.now }
             }], default: []
         },
+        zaloavt: { type: String, trim: true },
+        zaloname: { type: String, trim: true },
+        roles: {
+            type: [{ type: Schema.Types.ObjectId, ref: 'user', required: true }],
+            default: []
+        },
         status: { type: Number, default: 0 }, // 0: chưa có kết quả, 1: nhập học, 2: Không quan tâm, 3: Tạm thời không quan tâm
     },
     { timestamps: false, versionKey: false }

@@ -81,7 +81,8 @@ label {
     font-weight: 400;
 }
 
-h6 {
+h6,
+blockquote {
     font-size: var(--font-size-xxs);
     margin: 0;
     color: var(--text-secondary);

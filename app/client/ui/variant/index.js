@@ -7,7 +7,7 @@ import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import CenterPopup from '@/components/(features)/(popup)/popup_center';
 import Noti from '@/components/(features)/(noti)/noti';
 import Loading from '@/components/(ui)/(loading)/loading';
-import { Svg_Add, Svg_Label } from '@/components/(icon)/svg';
+import { Svg_Add, Svg_Variant } from '@/components/(icon)/svg';
 import styles from './index.module.css';
 import Title from '@/components/(features)/(popup)/title';
 import { formatDate } from '@/function';
@@ -83,7 +83,7 @@ export default function SettingVariant({ data }) {
     return (
         <>
             <button className='btn_s' onClick={() => setIsListOpen(true)}>
-                <Svg_Label w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                <Svg_Variant w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
                 <h5 className='text_w_400'>Biến thể</h5>
             </button>
             <FlexiblePopup open={isListOpen} onClose={() => setIsListOpen(false)} title="Cài đặt Biến thể" width={'600px'}
