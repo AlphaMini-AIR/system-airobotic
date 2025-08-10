@@ -10,6 +10,10 @@ import { getUserAll, getUserOne, getUserReport } from '@/data/database/user'
 import { getLabelAll } from '../database/label'
 import { getFormAll } from '../database/form'
 import { getZaloAll, getZaloOne } from '../database/zalo'
+import Logs from '@/models/log'
+import '@/models/zalo'
+import '@/models/student'
+import connectDB from '@/config/connectDB'
 
 export async function student_data(_id) {
     let data = _id ? await getStudentOne(_id) : await getStudentAll()
@@ -64,4 +68,24 @@ export async function label_data() {
 
 export async function form_data() {
     return await getFormAll()
+}
+
+export async function history_data(id, type) {
+    if (!id || !type) {
+        return { success: false, error: "Thiếu ID hoặc loại đối tượng." };
+    }
+
+    try {
+        await connectDB();
+        const filter = {};
+        if (type === 'student') {
+            filter.student = id;
+        } else { filter.customer = id; }
+        const history = await Logs.find(filter).populate('zalo', 'name avt').populate('createBy', 'name').sort({ createdAt: -1 }).lean();
+        const plainHistory = JSON.parse(JSON.stringify(history));
+        return { success: true, data: plainHistory };
+    } catch (err) {
+        console.error("Error getting customer history:", err);
+        return { success: false, error: "Lỗi máy chủ khi lấy lịch sử chăm sóc." };
+    }
 }

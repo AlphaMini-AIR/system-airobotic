@@ -1,8 +1,6 @@
-import { content } from "googleapis/build/src/apis/content";
-
 const SCRIPT_URL_SEND_MESSAGE = 'https://script.google.com/macros/s/AKfycbzhEEvakm6VzGRpNNORT9jZ3A8gYya2Bd5zjuTbpAgr8ZYaHO-0LB_DKibXyEHuo3ROfw/exec';
 const SCRIPT_URL_GET_UID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__QRCU0Xi6-qu-HkUBx6fDHDRAYfpqM9d4SUq4YKVxpPnZtpJ_b6wg/exec';
-const SCRIPT_URL_ACTION = 'https://script.google.com/macros/s/AKfycbzx1a6gX1qnGFupAzroSsi6lDkLfw4QpM5lmAG8rEQIJxML90WmCB4reFFBXddoU1MB7A/exec'
+const SCRIPT_URL_ACTION = 'https://script.google.com/macros/s/AKfycbwANqU9D12b5AWufIPX7X_F1UR-Fk2QsDJ_vdbEevzjs-RiC_JXFSlg2Jsph72EQnpNxg/exec'
 
 export async function senMesByPhone({ message, uid, phone }) {
     console.log(uid, message);
@@ -46,14 +44,35 @@ export async function getZaloUid(phone) {
 }
 
 export async function actionZalo({ phone, uidPerson = '', actionType, message = '', uid }) {
+    let formattedPhone
+    if (phone) {
+        formattedPhone = phone.toString().trim();
+        if (formattedPhone.startsWith('+84')) {
+        } else if (formattedPhone.startsWith('0')) {
+            formattedPhone = `+84${formattedPhone.substring(1)}`;
+        } else {
+            formattedPhone = `+84${formattedPhone}`;
+        }
+    }
     if (!uid && !actionType) {
         return { status: false, message: 'Cần cung cấp UID hoặc actionType để thực hiện hành động.', content: '' };
     }
     try {
-        const url = `${SCRIPT_URL_ACTION}?phone=${encodeURIComponent(phone)}&uidPerson=${encodeURIComponent(uidPerson)}&actionType=${encodeURIComponent(actionType)}&message=${encodeURIComponent(message)}&uid=${encodeURIComponent(uid)}`;
-        const response = await fetch(url);
+        const response = await fetch(SCRIPT_URL_ACTION, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                uid: uid,
+                phone: formattedPhone,
+                uidPerson: uidPerson,
+                actionType: actionType,
+                message: message,
+            }),
+            cache: "no-store",
+        });
         if (!response.ok) return { status: false, message: 'Lỗi trước khi thực hiện hành động (lỗi gọi appscript)', content: '' };
         const result = await response.json();
+        console.log(result);
         return result
     } catch (error) {
         return { status: false, message: `${error}`, content: '' };

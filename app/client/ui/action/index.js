@@ -8,6 +8,8 @@ import AlertPopup from '@/components/(features)/(noti)/alert';
 import Noti from '@/components/(features)/(noti)/noti';
 import Loading from '@/components/(ui)/(loading)/loading';
 import { cancelScheduleAction } from '@/app/actions/schedule.actions';
+import { revalidateData } from '@/app/actions/customer.actions';
+import { reloadRunningSchedules } from '@/data/actions/reload';
 
 // --- Sub-Components & Helpers (Không thay đổi nhiều) ---
 function formatRemainingTime(ms) {
@@ -22,6 +24,7 @@ function formatRemainingTime(ms) {
     if (result.trim() === 'Còn lại') return 'Sắp xong...';
     return result.trim();
 }
+
 const getActionTypeName = (type) => {
     switch (type) {
         case 'findUid': return 'Tìm UID';
@@ -30,10 +33,7 @@ const getActionTypeName = (type) => {
         default: return 'Hành động';
     }
 }
-const formatDateTime = (isoString) => {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-};
+
 function SubmitButton({ text = 'Thực hiện' }) {
     const { pending } = useFormStatus();
     return (
@@ -60,18 +60,20 @@ function ModeToggleSwitch({ mode, onModeChange }) {
     );
 }
 function ActionDetailItem({ job, onShowDetails, onCancel }) {
-    const [remainingTime, setRemainingTime] = useState(() => formatRemainingTime(new Date(job.estimatedCompletionTime).getTime() - Date.now()));
+    const [remainingTime, setRemainingTime] = useState(() => formatRemainingTime(new Date(job.tasks[job.tasks.length - 1].scheduledFor).getTime() - Date.now()));
     const { total, completed, failed } = job.statistics;
     const successPercent = total > 0 ? (completed / total) * 100 : 0;
     const failedPercent = total > 0 ? (failed / total) * 100 : 0;
     useEffect(() => {
-        const completionDate = new Date(job.estimatedCompletionTime);
+        const completionDate = new Date(job.tasks[job.tasks.length - 1].scheduledFor);
         const intervalId = setInterval(() => {
             const msLeft = completionDate.getTime() - new Date().getTime();
             setRemainingTime(formatRemainingTime(msLeft));
         }, 1000);
         return () => clearInterval(intervalId);
     }, [job.estimatedCompletionTime]);
+
+
     return (
         <div className={styles.detailItem}>
             <div className={styles.detailHeader}>
@@ -104,8 +106,25 @@ function TaskItem({ task }) {
     );
 }
 
-// --- Component Chính (Đã cập nhật) ---
 export default function RunningActions({ user, running = [] }) {
+    console.log(running);
+
+    useEffect(() => {
+        let intervalId = null;
+        if (running.length > 0) {
+            intervalId = setInterval(() => {
+                revalidateData();
+                reloadRunningSchedules();
+            }, 10000);
+        }
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+
+    }, [running]);
+
     const router = useRouter();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [viewingDetailsFor, setViewingDetailsFor] = useState(null);

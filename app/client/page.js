@@ -11,9 +11,8 @@ function PageSkeleton() {
 }
 
 export default async function Page({ searchParams }) {
-    const plainSearchParams = await { ...searchParams };
     const [initialResult, userAuth, sources, label, zalo, users, variant, running] = await Promise.all([
-        getCombinedData(plainSearchParams),
+        getCombinedData(await searchParams),
         checkAuthToken().then(auth => user_data({ _id: auth.id })),
         form_data(),
         label_data(),
@@ -24,8 +23,7 @@ export default async function Page({ searchParams }) {
     ]);
 
     const reversedLabel = [...label].reverse();
-    console.log(running);
-    
+
     return (
         <Suspense fallback={<PageSkeleton />}>
             <CustomerView

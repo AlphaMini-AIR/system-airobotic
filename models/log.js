@@ -2,21 +2,23 @@ import { Schema, model, models } from 'mongoose'
 
 const RoomSchema = new Schema(
     {
-        name: { type: String, required: true, trim: true },
-        
+        status: { type: Boolean, default: false },
+        message: { type: String, trim: true },
+        data: {
+            type: Schema.Types.Mixed, default: {}
+        }
     },
     { _id: false, versionKey: false }
 )
 
 const logs = new Schema(
     {
-        message: { type: String, trim: true },
-        status: { type: { RoomSchema }, default: {} },
+        status: { type: RoomSchema },
         type: { type: String, required: true, enum: ["sendMessage", "addFriend", "findUid"] },
         createdAt: { type: Date, default: Date.now },
         createBy: { type: Schema.Types.ObjectId, ref: 'user', required: true },
-        customer: { type: Schema.Types.ObjectId, ref: 'customer', required: true },
-        student: { type: Schema.Types.ObjectId, ref: 'student', required: true },
+        customer: { type: Schema.Types.ObjectId, ref: 'customer' },
+        student: { type: Schema.Types.ObjectId, ref: 'student' },
         zalo: { type: Schema.Types.ObjectId, ref: 'zaloaccount', required: true },
         schedule: { type: Schema.Types.ObjectId, ref: 'scheduledjob', default: null },
     },

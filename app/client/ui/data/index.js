@@ -25,26 +25,77 @@ function SubmitButton({ text = 'Thực hiện' }) {
     );
 }
 
-// AreaForm được đơn giản hóa, không cần chứa LoadingOverlay nữa
+// Component chọn trường hiển thị
+const fieldOptions = [
+    { id: 1, label: 'Họ và Tên' },
+    { id: 2, label: 'Tên phụ huynh' },
+    { id: 3, label: 'Số điện thoại' },
+    { id: 4, label: 'Email' },
+    { id: 5, label: 'Khu vực' },
+    { id: 6, label: 'Ngày sinh' },
+];
+
+function FieldSelector({ selectedFields, setSelectedFields }) {
+    const handleToggleField = (fieldId) => {
+        setSelectedFields(prev =>
+            prev.includes(fieldId) ? prev.filter(id => id !== fieldId) : [...prev, fieldId]
+        );
+    };
+
+    return (
+        <div className={styles.inputGroup}>
+            <label>Các trường hiển thị trên form</label>
+            <div className={styles.fieldSelector}>
+                {fieldOptions.map(field => (
+                    <button
+                        key={field.id}
+                        type="button"
+                        className={`${styles.fieldButton} ${selectedFields.includes(field.id) ? styles.selected : ''}`}
+                        onClick={() => handleToggleField(field.id)}
+                    >
+                        {field.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+
+// AreaForm được cập nhật để chứa logic chọn trường
 function AreaForm({ formAction, formState, initialData = null, submitText }) {
-    const [name, setName] = useState(initialData?.name || '');
-    const [describe, setDescribe] = useState(initialData?.describe || '');
+    const [name, setName] = useState('');
+    const [describe, setDescribe] = useState('');
+    const defaultFields = [1, 2, 3, 4, 5, 6];
+    const [selectedFields, setSelectedFields] = useState(defaultFields);
 
     useEffect(() => {
         if (formState.status === true && !initialData) {
             setName('');
             setDescribe('');
+            setSelectedFields(defaultFields);
         }
     }, [formState, initialData]);
 
     useEffect(() => {
         setName(initialData?.name || '');
         setDescribe(initialData?.describe || '');
+        setSelectedFields(
+            initialData?.formInput && initialData.formInput.length > 0
+                ? initialData.formInput
+                : defaultFields
+        );
     }, [initialData]);
 
     return (
         <form action={formAction} className={styles.createForm}>
             {initialData?._id && <input type="hidden" name="id" value={initialData._id} />}
+
+            {/* Thêm các input ẩn để gửi dữ liệu mảng formInput */}
+            {selectedFields.map(fieldId => (
+                <input type="hidden" name="formInput" key={fieldId} value={fieldId} />
+            ))}
+
             <div className={styles.inputGroup}>
                 <label htmlFor="name">Tên nguồn</label>
                 <input
@@ -71,6 +122,10 @@ function AreaForm({ formAction, formState, initialData = null, submitText }) {
                     onChange={(e) => setDescribe(e.target.value)}
                 />
             </div>
+
+            {/* Component chọn trường được tích hợp */}
+            <FieldSelector selectedFields={selectedFields} setSelectedFields={setSelectedFields} />
+
             <SubmitButton text={submitText} />
         </form>
     );
@@ -87,7 +142,6 @@ export default function SettingData({ data }) {
     const [copyStatus, setCopyStatus] = useState('idle');
     const [notification, setNotification] = useState({ open: false, status: true, mes: '' });
 
-    // Thay đổi 1: Lấy trạng thái pending từ mỗi action
     const [createState, createAction, isCreatePending] = useActionState(createAreaAction, { message: null, status: null });
     const [updateState, updateAction, isUpdatePending] = useActionState(updateAreaAction, { message: null, status: null });
     const [deleteState, deleteAction, isDeletePending] = useActionState(deleteAreaAction, { message: null, status: null });
@@ -191,7 +245,7 @@ export default function SettingData({ data }) {
                                         <div style={{ display: 'flex', gap: 16 }}>
                                             <h6>Ngày tạo: {formatDate(new Date(item.createdAt)) || 'Không rõ'}</h6>
                                             <h6>Được tạo bởi: {item.createdBy?.name || 'Không rõ'}</h6>
-                                            <h6>Số khách hàng: 0</h6>
+                                            <h6>Số khách hàng: {item.customerCount || 0}</h6>
                                         </div>
                                         <h5 className="text_w_400">{item.describe}</h5>
                                     </div>
@@ -270,7 +324,6 @@ export default function SettingData({ data }) {
                 }
                 actions={
                     <form action={deleteAction}>
-                        {/* LoadingOverlay đã được xóa khỏi đây */}
                         <input type="hidden" name="id" value={itemToDelete?._id || ''} />
                         <div style={{ display: 'flex', gap: 8 }}>
                             <button type="button" style={{ whiteSpace: 'nowrap' }} onClick={handleCloseDeleteConfirm} className='btn_s'>
@@ -282,7 +335,6 @@ export default function SettingData({ data }) {
                 }
             />
 
-            {/* Thay đổi 2: Đặt một loading overlay duy nhất ở cấp cao nhất */}
             {(isCreatePending || isUpdatePending || isDeletePending || isSyncPending) && (
                 <div className='loadingOverlay'>
                     <Loading content={<h5>Đang xử lý...</h5>} />
@@ -294,7 +346,7 @@ export default function SettingData({ data }) {
                 onClose={handleCloseNoti}
                 status={notification.status}
                 mes={notification.mes}
-                button={<button onClick={handleCloseNoti} className="btn" style={{width:'100%'}}>Tắt thông báo</button>}
+                button={<button onClick={handleCloseNoti} className="btn" style={{ width: '100%' }}>Tắt thông báo</button>}
             />
         </>
     );

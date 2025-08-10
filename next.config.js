@@ -19,6 +19,12 @@ module.exports = {
                 port: '',
                 pathname: '/**',
             },
+            {
+                protocol: 'https',
+                hostname: 's240-ava-talk.zadn.vn',
+                port: '',
+                pathname: '/**',
+            },
         ],
     },
     output: 'standalone',

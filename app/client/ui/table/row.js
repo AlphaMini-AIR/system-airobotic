@@ -11,7 +11,59 @@ import Title from '@/components/(features)/(popup)/title';
 import Noti from '@/components/(features)/(noti)/noti';
 import Loading from '@/components/(ui)/(loading)/loading';
 import Image from 'next/image';
-import { Svg_Send, Svg_Pen, Svg_Check, Svg_Out, Svg_History, Svg_Chat, Svg_Chat_1 } from '@/components/(icon)/svg';
+import { Svg_Send, Svg_Pen, Svg_Check, Svg_Out, Svg_History, Svg_Chat_1 } from '@/components/(icon)/svg';
+import { history_data } from '@/data/actions/get';
+
+function HistoryLogItem({ log }) {
+    const getActionTypeName = (type) => {
+        switch (type) {
+            case 'findUid': return 'Tìm UID';
+            case 'sendMessage': return 'Gửi Tin Nhắn';
+            case 'addFriend': return 'Kết Bạn';
+            default: return 'Hành động';
+        }
+    };
+
+    const statusSuccess = log.status?.status === true;
+    console.log(log.status);
+
+    return (
+        <div className={styles.noteItem} style={{ padding: '12px 16px', alignItems: 'flex-start' }}>
+            <Image
+                src={log.zalo?.avt || 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'}
+                alt={log.zalo?.name || 'Zalo'}
+                width={40} height={40}
+                style={{ objectFit: 'cover', borderRadius: 50 }}
+            />
+            <div className={styles.noteContent}>
+                <h5 style={{ lineHeight: 1.3 }}>
+                    {getActionTypeName(log.type)} -  Zalo thực hiện: {log.zalo?.name || 'Không rõ'}
+                </h5>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <h6>Người thực hiện: {log.createBy?.name || 'Hệ thống'}</h6>
+                    <h6>Thời gian: {new Date(log.createdAt).toLocaleString('vi-VN')}</h6>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        backgroundColor: statusSuccess ? 'var(--green)' : 'var(--red)'
+                    }}></span>
+                    <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
+                        {log.status?.data.error_message == 'Successful.' ? 'Thực hiện hành động thành công!' : log.status?.data.error_message}
+                    </h5>
+                </div>
+                {log.type != 'findUid' &&
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                        <h6 className='text_w_400'>
+                            Nội dung gửi :
+                            <i>{log.status.message}</i>
+                        </h6>
+                    </div>
+                }
+            </div>
+        </div>
+    );
+}
 
 function MiniSubmitButton({ text, pending }) {
     return <button type="submit" disabled={pending} className='btn_s'>
@@ -66,6 +118,8 @@ function CustomerUpdateForm({ formAction, initialData, onClose, isAnyActionPendi
 }
 
 export default function CustomerRow({ customer, index, isSelected, onSelect, visibleColumns, user, viewMode }) {
+
+
     const router = useRouter();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [notification, setNotification] = useState({ open: false, status: true, mes: '' });
@@ -77,6 +131,10 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
     const [comment, setComment] = useState('');
     const [totudent, setToStudent] = useState(false);
     const noteFormRef = useRef(null);
+    const [historyData, setHistoryData] = useState(null);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [historyError, setHistoryError] = useState('');
+
     const isAnyActionPending = isInfoPending || isNotePending || isStatusPending || isConversionPending;
     const handleClosePopup = () => setIsPopupOpen(false);
     useEffect(() => {
@@ -131,6 +189,31 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
             default: return 'Chưa chăm sóc';
         }
     };
+    const [isHistoryPopupOpen, setIsHistoryPopupOpen] = useState(false);
+    const handleShowHistory = async () => {
+        if (isAnyActionPending) return;
+
+        setIsHistoryPopupOpen(true);
+        setIsLoadingHistory(true);
+        setHistoryError('');
+        const result = await history_data(
+            customer._id,
+            customer.type ? 'student' : 'customer'
+        );
+        if (result.success) {
+            setHistoryData(result.data);
+        } else {
+            setHistoryError(result.error);
+        }
+        setIsLoadingHistory(false);
+    };
+
+    const handleCloseHistory = () => {
+        setIsHistoryPopupOpen(false);
+        setHistoryData(null);
+        setHistoryError('');
+    };
+
     return (
         <>
             <div className={`${styles.row} ${isAnyActionPending ? styles.disabledRow : ''} ${viewMode === 'manage' ? '' : styles.manageRow}`} onClick={handleOpenPopup}>
@@ -179,6 +262,31 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                 onClose={handleClosePopup}
                 title={`Chi tiết: ${customer.name}`}
                 width={'500px'}
+                secondaryOpen={isHistoryPopupOpen}
+                onCloseSecondary={handleCloseHistory}
+                secondaryTitle={`Lịch sử hành động`}
+                providedDataSecondary={customer.care}
+                width2={'550px'}
+                renderSecondaryList={() => (
+                    <div className={`${styles.historywrap} scroll`}>
+                        {isLoadingHistory && <Loading content="Đang tải lịch sử..." />}
+                        {historyError && <p style={{ color: 'red', textAlign: 'center', padding: '16px' }}>{historyError}</p>}
+
+                        {!isLoadingHistory && !historyError && (
+                            historyData && historyData.length > 0 ? (
+                                historyData.map((log) => (
+                                    <HistoryLogItem key={log._id} log={log} />
+                                ))
+                            ) : (
+                                <div className='flex_center' style={{ height: 30 }}>
+                                    <h5 className='text_w_400' style={{ fontStyle: 'italic' }}>
+                                        Không có lịch sử Zalo nào
+                                    </h5>
+                                </div>
+                            )
+                        )}
+                    </div>
+                )}
                 renderItemList={() => (
                     <div className={styles.popupContainer}>
                         <div style={{ borderBottom: 'thin solid var(--border-color)', padding: 16 }}>
@@ -235,7 +343,13 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                                         <h6 className='text_w_400'>Chăm sóc lại sau</h6>
                                     </button>
                                 </form>
-
+                                <button className={styles.actionItem} onClick={handleShowHistory} disabled={isAnyActionPending}>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <Svg_History w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                        <h5 className='text_w_500'>Lịch sử chăm sóc</h5>
+                                    </div>
+                                    <h6 className='text_w_400'>Lịch sử gửi tin nhắn zalo</h6>
+                                </button>
                             </div>
                         </div>
                         <div className={styles.wrapDetail} >
@@ -250,6 +364,25 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                                 <div className={styles.formGroup}><h5>Nguồn dữ liệu: </h5><h5>{customer.source}</h5></div>
                             </div>
                         </div>
+                        <div className={styles.wrapDetail} >
+                            <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Thông tin zalo</h4>
+                            <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
+                                {customer.uid.length > 0 ?
+                                    customer.zaloname &&
+                                    <>
+                                        <div style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 50, backgroundImage: `url(${customer.zaloavt || 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'})` }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                            <h5 >{customer.zaloname || 'Chưa rõ'}</h5>
+                                            <h6>{customer.phone}</h6>
+                                        </div>
+                                    </> :
+                                    customer.uid.length === 0 ?
+                                        <h6 style={{ fontStyle: 'italic' }}>Chưa tìm kiếm uid</h6> :
+                                        <h6 style={{ fontStyle: 'italic' }}>Không tìm thấy tài khoản zalo</h6>
+                                }
+                            </div>
+                        </div>
+
                         {customer.type === false && (
                             <>
                                 <div style={{ borderBottom: 'thin solid var(--border-color)', padding: 16 }}>

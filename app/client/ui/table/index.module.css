@@ -368,7 +368,7 @@
 
 .noteItem {
     display: flex;
-    align-items: start;
+    align-items: flex-start;
     gap: 8px;
     padding: 8px 0;
 }
@@ -378,6 +378,10 @@
     max-height: 300px;
     overflow-y: auto;
     padding: 16px 0;
+}
+
+.historywrap {
+    height: 100%;
 }
 
 .noteContent {

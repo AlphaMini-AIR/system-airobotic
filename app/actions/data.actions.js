@@ -17,6 +17,8 @@ export async function createAreaAction(_previousState, formData) {
     if (!user.role.includes('Admin') && !user.role.includes('Sale')) {
         return { message: 'Bạn không có quyền thực hiện chức năng này', status: false };
     }
+    const formInputValues = formData.getAll('formInput');
+    const formInput = formInputValues.map(Number);
     const describe = formData.get('describe');
     if (!name) return { message: 'Tên form là bắt buộc.', status: false };
     if (name.length > 50) return { message: 'Tên form phải ít hơn 50 kí tự', status: false };
@@ -31,6 +33,7 @@ export async function createAreaAction(_previousState, formData) {
             name: processedName,
             describe: describe?.toString().trim(),
             createdBy: user.id,
+            formInput: formInput,
         });
         await newArea.save();
         reloadForm();
@@ -45,6 +48,8 @@ export async function updateAreaAction(_previousState, formData) {
     const id = formData.get('id');
     const name = formData.get('name');
     const describe = formData.get('describe');
+    const formInputValues = formData.getAll('formInput');
+    const formInput = formInputValues.map(Number);
     const user = await checkAuthToken();
     if (!user || !user.id) return { message: 'Bạn cần đăng nhập để thực hiện hành động này.', status: false };
     if (!user.role.includes('Admin') && !user.role.includes('Sale')) {
@@ -73,6 +78,7 @@ export async function updateAreaAction(_previousState, formData) {
             {
                 name: processedName,
                 describe: describe?.toString().trim(),
+                formInput: formInput,
             },
             { new: true }
         );

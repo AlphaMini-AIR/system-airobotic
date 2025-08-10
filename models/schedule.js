@@ -1,8 +1,15 @@
 import { Schema, model, models } from "mongoose";
 
 const TaskSchema = new Schema({
-    person: { type: { name: String, phone: String, uid: String }, required: true },
+    person: {
+        name: { type: String, required: true },
+        phone: { type: String },
+        uid: { type: Array, default: [] },
+        type: { type: Boolean },
+        _id: { type: String }
+    },
     history: { type: Schema.Types.ObjectId, ref: "logmes" },
+    status: { type: Boolean, default: false },
     scheduledFor: { type: Date, required: true },
 });
 

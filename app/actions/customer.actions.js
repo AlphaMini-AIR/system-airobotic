@@ -136,7 +136,7 @@ export async function getCombinedData(params) {
             const phoneNumbers = paginatedData.map(p => p.phone).filter(Boolean);
             if (phoneNumbers.length > 0) {
                 const scheduledTasksRaw = await ScheduledJob.aggregate([
-                    { $match: { $expr: { $lt: ["$statistics.completed", "$statistics.total"] } } },
+                    { $match: { $expr: { $lt: [{ $add: ["$statistics.completed", "$statistics.failed"] }, "$statistics.total"] } } },
                     { $unwind: "$tasks" },
                     { $match: { 'tasks.processedAt': { $exists: false }, 'tasks.person.phone': { $in: phoneNumbers } } },
                     { $sort: { 'tasks.scheduledFor': 1 } },
@@ -156,13 +156,6 @@ export async function getCombinedData(params) {
             if (currentParams.campaignStatus) {
                 paginatedData = paginatedData.filter(p => currentParams.campaignStatus === 'true' ? p.statusaction !== null : p.statusaction === null);
             }
-
-            // --- XÓA ĐOẠN LỌC SAI Ở ĐÂY ---
-            // Đoạn code này đã được xóa vì việc lọc đã được thực hiện ở truy vấn database
-            // if (currentParams.user && mongoose.Types.ObjectId.isValid(currentParams.user)) {
-            //     paginatedData = paginatedData.filter(p => p.statusaction?.createdBy?._id.toString() === currentParams.user);
-            // }
-            // ------------------------------------
 
             const plainData = JSON.parse(JSON.stringify(paginatedData));
             return {

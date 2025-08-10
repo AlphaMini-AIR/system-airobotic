@@ -6,7 +6,8 @@ const AreaSchema = new Schema(
         name: { type: String, required: true, trim: true },
         describe: { type: String, trim: true },
         createdAt: { type: Date, default: Date.now },
-        createdBy: { type: Schema.Types.ObjectId, ref: 'user', required: true }
+        createdBy: { type: Schema.Types.ObjectId, ref: 'user', required: true },
+        formInput: { type: [Number], default: [] }
     },
     { timestamps: false, versionKey: false }
 )

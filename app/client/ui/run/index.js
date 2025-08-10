@@ -150,7 +150,7 @@ function ActionForm({ onSubmitAction, selectedCustomers, onClose, currentType, l
     const isScheduleAction = useMemo(() => ['findUid', 'sendMessage'].includes(actionType), [actionType]);
     const isAssignAction = useMemo(() => actionType === 'assignRole', [actionType]); // THAY ĐỔI: check action mới
     const selectedActionName = useMemo(() => actionOptions.find(opt => opt.value === actionType)?.name, [actionType, actionOptions]);
-    const customersArray = useMemo(() => Array.from(selectedCustomers.values()).map(c => ({ _id: c._id, name: c.name, phone: c.phone })), [selectedCustomers]);
+    const customersArray = useMemo(() => Array.from(selectedCustomers.values()).map(c => ({ _id: c._id, name: c.name, phone: c.phone, uid: c.uid })), [selectedCustomers]);
 
     // formatDuration không đổi
     function formatDuration(ms) {

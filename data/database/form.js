@@ -5,8 +5,29 @@ import { cacheData } from '@/lib/cache'
 async function dataForm() {
     try {
         await connectDB()
-        const form = await Form.find().sort({ createdAt: -1 }).populate({ path: 'createdBy', select: 'name' })
-        return JSON.parse(JSON.stringify(form))
+        const aggregationPipeline = [
+            { $sort: { createdAt: -1 } },
+            {
+                $lookup: {
+                    from: 'customers',
+                    localField: '_id',
+                    foreignField: 'source',
+                    as: 'customers'
+                }
+            },
+            {
+                $addFields: {
+                    customerCount: { $size: '$customers' },
+                    customerTimes: {
+                        $map: { input: '$customers', as: 'customer', in: '$$customer.createAt' }
+                    }
+                }
+            },
+            { $project: { customers: 0 } }
+        ]
+        const forms = await Form.aggregate(aggregationPipeline)
+        await Form.populate(forms, { path: 'createdBy', select: 'name' })
+        return JSON.parse(JSON.stringify(forms))
     } catch (error) {
         console.error('Lỗi trong dataForm:', error)
         throw new Error('Không thể lấy dữ liệu form.')

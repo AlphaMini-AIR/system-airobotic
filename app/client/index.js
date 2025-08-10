@@ -1,6 +1,6 @@
 'use client';
 import styles from './index.module.css';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import CustomerTable from './ui/table';
 import FilterControls from "./ui/filter";
 import SettingLabel from "./ui/label";
@@ -10,14 +10,15 @@ import BulkActions from './ui/run';
 import RunningActions from './ui/action';
 import SettingVariant from './ui/variant';
 import SettingZaloRoles from './ui/zalos';
-import { reloadRunningSchedules } from '@/data/actions/reload';
+import ActionHistory from './ui/hisotry';
+
 function TableSkeleton() {
     return <div style={{ height: '500px', background: '#f8f9fa', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Đang tải dữ liệu...</div>;
 }
 export default function CustomerView({ running, initialResult, user, sources, labelData, formData, zaloData, users, variant }) {
     const [selectedCustomers, setSelectedCustomers] = useState(new Map());
-    const [viewMode, setViewMode] = useState('manage'); 
-    
+    const [viewMode, setViewMode] = useState('manage');
+
     const handleActionComplete = () => {
         setSelectedCustomers(new Map());
     };
@@ -25,7 +26,21 @@ export default function CustomerView({ running, initialResult, user, sources, la
         setViewMode(prev => prev === 'manage' ? 'view' : 'manage');
     };
 
-    
+    // Chia lịch thành 2 trường hợp là đang chạy và đã hoàn thành
+    const { runningSchedules, historySchedules } = useMemo(() => {
+        return running.reduce((acc, schedule) => {
+            const stats = schedule.statistics;
+            if ((stats.completed + stats.failed) < stats.total) {
+                acc.runningSchedules.push(schedule);
+            } else {
+                acc.historySchedules.push(schedule);
+            }
+            return acc;
+        }, { runningSchedules: [], historySchedules: [] });
+
+    }, [running]);
+    console.log(formData);
+
     return (
         <div className={styles.container}>
             {viewMode === 'manage' && (
@@ -34,7 +49,7 @@ export default function CustomerView({ running, initialResult, user, sources, la
                         <div className={styles.filterHeader}>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <SettingZalo user={user[0]} zalo={zaloData} />
-                                <RunningActions user={user} zalo={zaloData} running={running} />
+                                <RunningActions user={user} running={runningSchedules} />
                             </div>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <BulkActions
@@ -44,6 +59,7 @@ export default function CustomerView({ running, initialResult, user, sources, la
                                     variants={variant}
                                     users={users.filter(u => u.role[0] === 'Sale' || u.role[0] === 'Admin')}
                                 />
+                                <ActionHistory history={historySchedules} />
                                 <SettingZaloRoles data={zaloData} allUsers={users.filter(u => u.role[0] === 'Sale' || u.role[0] === 'Admin')} />
                                 <SettingVariant data={variant} />
                                 <SettingLabel data={labelData} />
