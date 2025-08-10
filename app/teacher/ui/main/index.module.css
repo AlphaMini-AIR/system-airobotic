@@ -6,7 +6,6 @@
     background: #ffffff;
     border-radius: 5px;
     border: thin solid var(--border-color);
-    margin-top: 16px;
 }
 
 .list_menu {
@@ -26,6 +25,24 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.addTeacherForm {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.addTeacherForm>div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+}
+
+.formActions {
+    display: flex;
+    flex-direction: row !important;
 }
 
 .roleItem:hover {

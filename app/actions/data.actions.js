@@ -166,13 +166,15 @@ export async function syncCustomersFromSheetAction(_previousState, _formData) {
 
             const newCustomerData = {};
             headers.forEach((key, index) => {
-                console.log(key);
                 if (!key || row[index] === null || row[index] === undefined) return;
+                let src = DEFAULT_SOURCE_ID
+                if (key === 'source' && row[index].toString().trim().length == 24) {
+                    src = row[index].toString().trim()
+                }
                 newCustomerData[key] = key === 'bd' && !isNaN(new Date(row[index]).getTime()) ? new Date(row[index]) : row[index];
+                newCustomerData['source'] = key === 'source' ? src : DEFAULT_SOURCE_ID
             });
-
             if (newCustomerData.name && newCustomerData.phone) {
-                newCustomerData.source = DEFAULT_SOURCE_ID;
                 customersToInsert.push(newCustomerData);
                 existingPhones.add(phone);
             }

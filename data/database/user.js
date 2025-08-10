@@ -20,14 +20,17 @@ async function dataUser(_id) {
                             select: 'name _id phone avt',
                         },
                         {
-                            path: 'createdBy',  
+                            path: 'createdBy',
                             select: 'name _id phone avt',
                         },
                     ],
                 }
             }).lean();
         } else {
-            data = await User.find(query, { uid: { $exists: true, $ne: null } }, { uid: 0 }).lean().exec();
+            data = await User.find({
+                ...query,
+                uid: { $exists: true, $ne: null }
+            }, { uid: 0 }).lean().exec();
         }
         return JSON.parse(JSON.stringify(data))
     } catch (error) {
@@ -90,7 +93,7 @@ async function dataUserreport() {
 
 export async function getUserAll() {
     try {
-        const cachedFunction = cacheData(() => dataUser(), ['user'])
+        const cachedFunction = cacheData(() => dataUser(), ['users'])
         return await cachedFunction()
     } catch (error) {
         console.error('Lỗi trong UserAll:', error)

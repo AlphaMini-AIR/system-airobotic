@@ -32,21 +32,21 @@ export function Li_l({ data, dataArea, ReLoadData }) {
                             />
                         </div>
                         <div>
-                            <p className="text_4_m">{data.ID}</p>
-                            <p className="text_4_m">{data.Name}</p>
+                            <h5 className="text_4_m">{data.ID}</h5>
+                            <h5 className="text_4_m">{data.Name}</h5>
                         </div>
                     </div>
                     <div style={{ flex: 1, gap: 6 }} className="flex_col">
-                        <p className="text_5_500">Khu vực:</p>
-                        <p className="text_4_m">{data.Area ? data.Area.name : '-'}</p>
+                        <h5 className="text_5_500">Khu vực:</h5>
+                        <h5 className="text_4_m">{data.Area ? data.Area.name : '-'}</h5>
                     </div>
                     <div style={{ flex: 1, gap: 6 }} className="flex_col">
-                        <p className="text_5_500">Liên hệ:</p>
-                        <p className="text_4_m">{data.Phone ? data.Phone : '-'}</p>
+                        <h5 className="text_5_500">Liên hệ:</h5>
+                        <h5 className="text_4_m">{data.Phone ? data.Phone : '-'}</h5>
                     </div>
                     <div style={{ flex: 1, gap: 6 }} className="flex_col">
-                        <p className="text_5_500">Nợ học phí:</p>
-                        <p className="text_4_m">-</p>
+                        <h5 className="text_5_500">Nợ học phí:</h5>
+                        <h5 className="text_4_m">-</h5>
                     </div>
 
                 </Link>

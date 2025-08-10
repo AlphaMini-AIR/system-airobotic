@@ -6,7 +6,7 @@
     gap: 4px;
     padding: 16px;
     border-radius: 5px;
-    box-shadow: var(--boxshaw2);
+    border: thin solid var(--border-color);
     text-decoration: none;
     cursor: pointer;
 }
@@ -19,7 +19,7 @@
 .name {
     margin-top: 0.25rem;
     font-size: 1rem;
-    color: #333;
+    color: var(--text-primary);
 }
 
 /* Media Gallery (Popup 1) */
@@ -50,7 +50,7 @@
     padding: 48px;
     text-align: center;
     color: #64748b;
-    background-color: #f8fafc;
+    background-color: var(--bg-primary);
     border-radius: 8px;
     border: thin solid var(--border-color);
 }
@@ -156,9 +156,9 @@
 
 .dropzone {
     padding: 32px;
-    border: 2px dashed #cbd5e1;
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
-    background-color: #f8fafc;
+    background-color: var(--bg-primary);
     text-align: center;
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;

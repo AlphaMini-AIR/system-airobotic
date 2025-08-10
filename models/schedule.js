@@ -22,7 +22,7 @@ const ScheduledJobSchema = new Schema(
         },
         actionType: {
             type: String,
-            enum: ["sendMessage", "addFriend", "findUid"],
+            enum: ["sendMessage", "addFriend", "findUid", "checkFriend"],
             required: true,
         },
         zaloAccount: {

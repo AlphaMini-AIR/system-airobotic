@@ -106,24 +106,24 @@ export default function CourseItem({ data = {} }) {
                     </span>
                 </div>
                 <div className={styles.infoRow} style={{ display: 'block' }}>
-                    <span className={styles.label}>Giáo viên giảng dạy: <span className={styles.value}>
+                    <span className={styles.label}>Giáo viên giảng dạy: </span>
+                    <span className={styles.value}>
                         {uniqueTeachers.length > 0 ? uniqueTeachers.map(teacher => teacher.name).join(', ') : 'Chưa có giáo viên'}
-                    </span></span>
-
+                    </span>
                 </div>
                 <div className={styles.infoRow} style={{ display: 'block' }}>
-                    <p className={styles.label}>Giáo viên trợ giảng: <span className={styles.value}>
+                    <h5 className={styles.label}>Giáo viên trợ giảng: <span className={styles.value}>
                         {uniqueTeachingAs.length > 0 ? uniqueTeachingAs.map(ta => ta.name).join(', ') : 'Chưa có giáo viên'}
-                    </span></p>
+                    </span></h5>
 
                 </div>
             </div>
             <div>
                 <div className={styles.infoRow} style={{ marginBottom: 8, marginTop: 'auto' }}>
-                    <span className={styles.label}>Tiến độ học:</span>
-                    <span className={styles.value}>
+                    <h5 className={styles.label}>Tiến độ học:</h5>
+                    <h5 className={styles.value}>
                         {pastLessonsCount}/{data.Detail.length} Buổi
-                    </span>
+                    </h5>
                 </div>
 
                 <div className={styles.progressBar} >

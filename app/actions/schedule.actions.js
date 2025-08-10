@@ -121,8 +121,6 @@ export async function createScheduleAction(prevState, formData) {
         await connectToDatabase();
 
         const { jobName, actionType, actionsPerHour, messageTemplate, selectedCustomersJSON } = Object.fromEntries(formData);
-
-        // **QUAN TRỌNG**: Dữ liệu `tasksToSchedule` giờ sẽ chứa các object có cả `uid`
         const tasksToSchedule = JSON.parse(selectedCustomersJSON);
 
         if (!tasksToSchedule || tasksToSchedule.length === 0) throw new Error("Không có khách hàng nào được chọn.");
@@ -135,92 +133,97 @@ export async function createScheduleAction(prevState, formData) {
         const account = await ZaloAccount.findById(zaloAccountId);
         if (!account) throw new Error("Không tìm thấy tài khoản Zalo.");
 
+        // --- THÊM MỚI: LỌC KHÁCH HÀNG KHÔNG HỢP LỆ ---
+        let validTasks = tasksToSchedule;
+        let removedCount = 0;
+
+        // Chỉ lọc nếu hành động không phải là 'findUid'
+        if (actionType !== 'findUid') {
+            const originalCount = validTasks.length;
+            validTasks = validTasks.filter(task =>
+                task.uid && Array.isArray(task.uid) && task.uid.some(
+                    u => u.zalo?.toString() === zaloAccountId.toString() && u.uid
+                )
+            );
+            removedCount = originalCount - validTasks.length;
+
+            if (validTasks.length === 0) {
+                return { success: true, message: `Tất cả ${originalCount} người đã bị loại bỏ do không có UID hợp lệ cho tài khoản Zalo này.` };
+            }
+        }
+        // Từ đây, tất cả logic sẽ sử dụng `validTasks` thay vì `tasksToSchedule`
+
         let finalActionsPerHour = Math.min(Number(actionsPerHour) || 30, 30);
 
-        // Logic "nối đuôi" cho 'findUid' vẫn giữ nguyên, nó hoạt động tốt.
         if (actionType === "findUid") {
             const existingJob = await ScheduledJob.findOne({
                 zaloAccount: zaloAccountId,
                 actionType: 'findUid',
-                $expr: { $lt: ["$statistics.completed", "$statistics.total"] }
+                $expr: { $lt: [{ $add: ["$statistics.completed", "$statistics.failed"] }, "$statistics.total"] }
             }).sort({ createdAt: -1 });
 
             if (existingJob) {
                 const existingPhones = new Set(existingJob.tasks.map(task => task.person.phone));
-                const uniqueTasksToSchedule = tasksToSchedule.filter(task => !existingPhones.has(task.phone));
-                const duplicateCount = tasksToSchedule.length - uniqueTasksToSchedule.length;
+                const uniqueTasksToSchedule = validTasks.filter(task => !existingPhones.has(task.phone));
+                const duplicateCount = validTasks.length - uniqueTasksToSchedule.length;
 
                 if (uniqueTasksToSchedule.length === 0) {
-                    return { success: true, message: `Tất cả ${tasksToSchedule.length} người trong danh sách mới đã tồn tại trong lịch chạy. Không có gì để thêm.` };
+                    return { success: true, message: `Tất cả ${validTasks.length} người trong danh sách mới đã tồn tại trong lịch chạy. Không có gì để thêm.` };
                 }
 
-                // Hàm schedulePersonsSmart sẽ tạo task với cấu trúc { person: { name, phone, uid, ... }, scheduledFor: ... }
                 const { scheduledTasks, estimatedCompletion, finalCounters } = schedulePersonsSmart(uniqueTasksToSchedule, account, finalActionsPerHour, actionType, existingJob.estimatedCompletionTime);
-                console.log(scheduledTasks);
 
                 await ScheduledJob.updateOne({ _id: existingJob._id }, {
                     $push: { tasks: { $each: scheduledTasks } },
                     $inc: { 'statistics.total': uniqueTasksToSchedule.length },
                     $set: { estimatedCompletionTime: estimatedCompletion }
                 });
-
                 await ZaloAccount.updateOne({ _id: zaloAccountId }, { $set: finalCounters });
 
                 let message = `Đã có lịch tìm UID đang chạy. Đã thêm ${uniqueTasksToSchedule.length} người mới vào cuối lịch trình.`;
-                if (duplicateCount > 0) {
-                    message += ` Đã bỏ qua ${duplicateCount} người do bị trùng.`;
-                }
+                if (duplicateCount > 0) message += ` Đã bỏ qua ${duplicateCount} người do bị trùng.`;
+                if (removedCount > 0) message += ` Đã loại bỏ ${removedCount} người do thiếu UID.`; // Thông báo thêm
                 return { success: true, message: message };
             }
         }
 
-        // Lên lịch cho một công việc hoàn toàn mới
-        const { scheduledTasks, estimatedCompletion, finalCounters } = schedulePersonsSmart(tasksToSchedule, account, finalActionsPerHour, actionType);
-
-        // Cập nhật bộ đếm cho tài khoản Zalo
+        const { scheduledTasks, estimatedCompletion, finalCounters } = schedulePersonsSmart(validTasks, account, finalActionsPerHour, actionType);
         await ZaloAccount.updateOne({ _id: zaloAccountId }, { $set: finalCounters });
 
-        // **THAY ĐỔI CHÍNH**: Tạo bản ghi `ScheduledJob` với cấu trúc khớp Schema
         const newJob = await ScheduledJob.create({
             jobName: jobName || `Lịch trình ngày ${new Date().toLocaleDateString("vi-VN")}`,
             actionType,
             zaloAccount: zaloAccountId,
-
-            // Dữ liệu `tasks` đã có cấu trúc đúng từ hàm `schedulePersonsSmart`
             tasks: scheduledTasks,
-
-            // Cấu trúc `config` đúng với Schema
             config: {
                 actionsPerHour: finalActionsPerHour,
-                // Chỉ lưu messageTemplate nếu action là sendMessage
-                messageTemplate: actionType === 'sendMessage' ? messageTemplate : null
+                // --- SỬA LỖI: Cho phép `addFriend` cũng lưu `messageTemplate` ---
+                messageTemplate: ['sendMessage', 'addFriend'].includes(actionType) ? messageTemplate : null
             },
-
-            // Cấu trúc `statistics` đúng với Schema
             statistics: {
-                total: tasksToSchedule.length,
+                total: validTasks.length, // Dùng số lượng task hợp lệ
                 completed: 0,
                 failed: 0
             },
-
             createdBy: user.id,
-            // Thêm trường estimatedCompletionTime để tiện theo dõi, dù Schema không bắt buộc
             estimatedCompletionTime: estimatedCompletion,
         });
 
-        // Liên kết job mới với tài khoản Zalo
         await ZaloAccount.findByIdAndUpdate(zaloAccountId, { $push: { action: newJob._id } });
 
         const duration = estimatedCompletion.getTime() - new Date().getTime();
         const hours = Math.floor(duration / 3600000);
         const minutes = Math.floor((duration % 3600000) / 60000);
-        const message = `Đã tạo lịch trình "${newJob.jobName}" thành công! Ước tính hoàn thành trong ${hours} giờ ${minutes} phút.`;
+        let message = `Đã tạo lịch trình "${newJob.jobName}" cho ${validTasks.length} người. Ước tính hoàn thành trong ${hours} giờ ${minutes} phút.`;
+        if (removedCount > 0) {
+            message += ` Đã tự động loại bỏ ${removedCount} người do không có UID hợp lệ.`;
+        }
 
         revalidateData();
         reloadRunningSchedules();
         return { success: true, message: message };
     } catch (err) {
-        console.error("Error creating schedule:", err); // Log lỗi để debug
+        console.error("Error creating schedule:", err);
         return { success: false, error: err.message || "Lỗi không xác định từ máy chủ." };
     }
 }

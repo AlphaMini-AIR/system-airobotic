@@ -14,6 +14,8 @@ const FormSchema = new Schema(
             type: [{
                 zalo: { type: Schema.Types.ObjectId, ref: 'user' },
                 uid: { type: String },
+                isFriend: { type: Number, default: 0 }, // 0: chưa , 1: đã là bạn bè
+                isReques: { type: Number, default: 0 } // 0: chưa , 1: đã gửi lời mời
             }]
         },
         createAt: { type: Date, default: Date.now },
@@ -31,6 +33,7 @@ const FormSchema = new Schema(
             default: []
         },
         status: { type: Number, default: 0 }, // 0: chưa có kết quả, 1: nhập học, 2: Không quan tâm, 3: Tạm thời không quan tâm
+
     },
     { timestamps: false, versionKey: false }
 )

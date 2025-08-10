@@ -228,8 +228,8 @@ export default function SettingData({ data }) {
                             </button>
                             <form action={syncAction}>
                                 <button type="submit" className='btn_s_b' disabled={isCreatePending || isUpdatePending || isDeletePending || isSyncPending}>
-                                    <Svg_Download w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                    <h5 className='text_w_400'>Nhận data từ ggsheet</h5>
+                                    <Svg_Download w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'white'} />
+                                    <h5 className='text_w_400' style={{ color: 'white' }}>Nhận data từ ggsheet</h5>
                                 </button>
                             </form>
                         </div>

@@ -19,7 +19,7 @@ function SubmitButton({ text = 'Xác nhận', disabled = false }) {
     const { pending } = useFormStatus();
     return (
         <button type="submit" disabled={pending || disabled} className='btn_s_b'>
-            {pending ? 'Đang xử lý...' : text}
+            <h5>{text}</h5>
         </button>
     );
 }
@@ -137,7 +137,9 @@ function ActionForm({ onSubmitAction, selectedCustomers, onClose, currentType, l
         const baseActions = [
             { value: 'findUid', name: 'Tìm kiếm UID' },
             { value: 'sendMessage', name: 'Gửi tin nhắn Zalo' },
-            { value: 'assignRole', name: 'Gán người phụ trách' } // THAY ĐỔI: Thêm action mới
+            { value: 'assignRole', name: 'Gán người phụ trách' },
+            { value: 'checkFriend', name: 'Kiểm tra bạn bè' },
+            { value: 'addFriend', name: 'Gửi kết bạn' },
         ];
         const customerActions = [
             { value: 4, name: 'Chuyển trạng thái: Đang chăm sóc' },
@@ -147,7 +149,7 @@ function ActionForm({ onSubmitAction, selectedCustomers, onClose, currentType, l
         return !currentType ? [...baseActions, ...customerActions] : baseActions;
     }, [currentType]);
 
-    const isScheduleAction = useMemo(() => ['findUid', 'sendMessage'].includes(actionType), [actionType]);
+    const isScheduleAction = useMemo(() => ['findUid', 'sendMessage', 'checkFriend', 'addFriend'].includes(actionType), [actionType]);
     const isAssignAction = useMemo(() => actionType === 'assignRole', [actionType]); // THAY ĐỔI: check action mới
     const selectedActionName = useMemo(() => actionOptions.find(opt => opt.value === actionType)?.name, [actionType, actionOptions]);
     const customersArray = useMemo(() => Array.from(selectedCustomers.values()).map(c => ({ _id: c._id, name: c.name, phone: c.phone, uid: c.uid })), [selectedCustomers]);
@@ -232,7 +234,7 @@ function ActionForm({ onSubmitAction, selectedCustomers, onClose, currentType, l
             {isScheduleAction && (
                 <>
                     <div className={styles.inputGroup}><label>Tên lịch trình</label><input name="jobName" className='input' placeholder={`Ví dụ: Gửi tin tháng ${new Date().getMonth() + 1}`} required /></div>
-                    {actionType === 'sendMessage' && (
+                    {['sendMessage', 'addFriend'].includes(actionType) && (
                         <>
                             <div className={styles.inputGroup}><label>Chọn chiến dịch (Tùy chọn)</label><Menu isOpen={isLabelMenuOpen} onOpenChange={setIsLabelMenuOpen} customButton={<div className='input text_6_400'>{selectedLabelTitle}</div>} menuItems={<div className={`${styles.menulist} scroll`}>{labels.map(l => <p key={l._id} className='text_6_400' onClick={() => handleSelectLabel(l)}>{l.title}</p>)}</div>} menuPosition="bottom" /></div>
                             <div className={styles.inputGroup}><label>Nội dung tin nhắn</label><MessageEditor value={messageContent} onChange={setMessageContent} variants={variants} /></div>
@@ -247,7 +249,7 @@ function ActionForm({ onSubmitAction, selectedCustomers, onClose, currentType, l
                 </>
             )}
             <div className={styles.formActions}>
-                <button type="button" className='btn_s' onClick={onClose}>Hủy</button>
+                <button type="button" className='btn_s' onClick={onClose}><h5>Hủy</h5></button>
                 <SubmitButton disabled={isSubmitDisabled} />
             </div>
         </form>
@@ -334,7 +336,7 @@ export default function BulkActions({ selectedCustomers, onActionComplete, label
     const handleFormSubmit = (formData) => {
         const actionType = formData.get('actionType');
         startTransition(() => {
-            if (['findUid', 'sendMessage'].includes(actionType)) {
+            if (['findUid', 'sendMessage', 'checkFriend', 'addFriend'].includes(actionType)) {
                 scheduleAction(formData);
             } else if (actionType === 'assignRole') {
                 // THAY ĐỔI: Gọi action mới
@@ -385,7 +387,7 @@ export default function BulkActions({ selectedCustomers, onActionComplete, label
                 actions={
                     <div style={{ display: 'flex', gap: 8 }}>
                         <button type="button" onClick={() => setIsCancelConfirmOpen(false)} className='btn_s'><h5>Tiếp tục chạy</h5></button>
-                        <button type="button" onClick={handleStopProcess} className='btn'><h5>Xác nhận Dừng</h5></button>
+                        <button type="button" onClick={handleStopProcess} className='btn_s_b'><h5>Xác nhận Dừng</h5></button>
                     </div>
                 }
             />

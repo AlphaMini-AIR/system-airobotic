@@ -112,7 +112,7 @@ function TableControls({ total, limit, page, onDeselectAll, createURL, selectedC
         </div>
     );
 }
-export default function CustomerTable({ data = [], total = 0, user, selectedCustomers, setSelectedCustomers, viewMode, onToggleViewMode }) {
+export default function CustomerTable({ zalo, data = [], total = 0, user, selectedCustomers, setSelectedCustomers, viewMode, onToggleViewMode }) {
     const [visibleColumns, setVisibleColumns] = useState(INITIAL_VISIBLE_COLUMNS);
     const [isPending, startTransition] = useTransition();
     const searchParams = useSearchParams();
@@ -167,7 +167,7 @@ export default function CustomerTable({ data = [], total = 0, user, selectedCust
                     <CustomerTableHeader onSelectPage={handleSelectPage} areAllSelected={areAllSelectedOnPage} visibleColumns={visibleColumns} viewMode={viewMode} />
                     <div className='scroll'>
                         {data.map((customer, index) => (
-                            <CustomerRow viewMode={viewMode} user={user} key={customer._id} customer={customer} index={(page - 1) * limit + index + 1} isSelected={selectedCustomers.has(customer.phone)} onSelect={handleSelect} visibleColumns={visibleColumns} />
+                            <CustomerRow zalo={zalo} viewMode={viewMode} user={user} key={customer._id} customer={customer} index={(page - 1) * limit + index + 1} isSelected={selectedCustomers.has(customer.phone)} onSelect={handleSelect} visibleColumns={visibleColumns} />
                         ))}
                         {data.length === 0 && (
                             <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

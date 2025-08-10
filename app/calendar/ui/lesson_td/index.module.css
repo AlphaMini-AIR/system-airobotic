@@ -53,6 +53,10 @@
     margin-right: 16px;
 }
 
+.calendarCourse:hover .h5 {
+    color: white !important;
+}
+
 .Chipgreen {
     color: #fff !important;
     border: thin solid var(--green);

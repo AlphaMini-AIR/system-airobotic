@@ -33,7 +33,7 @@ export async function getCombinedData(params) {
                 if (currentParams.uidStatus === 'true') {
                     filterConditions.push({ uid: { $exists: true, $ne: null, $ne: '', $ne: 'Không có UID' } });
                 } else if (currentParams.uidStatus === 'not_searched') {
-                    filterConditions.push({ $or: [{ uid: null }, { uid: { $exists: false } }, { uid: '' }] });
+                    filterConditions.push({ $or: [{ uid: { $exists: false } }, { uid: [] }] });
                 } else if (currentParams.uidStatus === 'not_found') {
                     filterConditions.push({ uid: 'Không có UID' });
                 }
@@ -65,26 +65,45 @@ export async function getCombinedData(params) {
                 if (currentParams.careStatus) {
                     filterConditions.push({ status: parseInt(currentParams.careStatus, 10) });
                 }
-                if (currentParams.uidStatus === 'true') {
-                    filterConditions.push({ 'uid.uid': { $exists: true, $ne: 'Không có UID' } });
-                } else if (currentParams.uidStatus === 'not_searched') {
-                    filterConditions.push({ $or: [{ uid: { $exists: false } }, { uid: null }, { uid: [] }] });
+                const zaloAccountFilter = mongoose.Types.ObjectId.isValid(currentParams.zaloAccount)
+                    ? new mongoose.Types.ObjectId(currentParams.zaloAccount)
+                    : null;
+
+                // Áp dụng logic lọc mới cho uidStatus
+                if (currentParams.uidStatus === 'not_searched') {
+                    if (zaloAccountFilter) {
+                        filterConditions.push({
+                            $nor: [
+                                { uid: { $elemMatch: { zalo: zaloAccountFilter } } },
+                                { uid: null }
+                            ]
+                        });
+                    }
+                    else {
+                        // "Chưa tìm" chung: uid là mảng rỗng hoặc không tồn tại.
+                        // Logic này cũng đã loại bỏ trường hợp uid: null.
+                        filterConditions.push({ $or: [{ uid: { $exists: false } }, { uid: [] }] });
+                    }
                 } else if (currentParams.uidStatus === 'not_found') {
-                    filterConditions.push({ 'uid.uid': 'Không có UID' });
-                }
-                if (currentParams.zaloAccount && mongoose.Types.ObjectId.isValid(currentParams.zaloAccount)) {
-                    filterConditions.push({ uid: { $elemMatch: { zalo: new mongoose.Types.ObjectId(currentParams.zaloAccount) } } });
+                    // "Không tìm thấy": chỉ những người có trường uid bị set thành null. Không phụ thuộc Zalo.
+                    filterConditions.push({ uid: null });
+                } else if (currentParams.uidStatus === 'true') {
+                    if (zaloAccountFilter) {
+                        filterConditions.push({
+                            uid: { $elemMatch: { zalo: zaloAccountFilter, uid: { $exists: true, $ne: null } } }
+                        });
+                    } else {
+                        filterConditions.push({
+                            'uid.uid': { $exists: true, $ne: null }
+                        });
+                    }
                 }
                 if (currentParams.label && mongoose.Types.ObjectId.isValid(currentParams.label)) {
                     filterConditions.push({ labels: new mongoose.Types.ObjectId(currentParams.label) });
                 }
-                // --- THÊM LOGIC LỌC TẠI ĐÂY ---
-                // Lọc những khách hàng có user ID trong mảng 'roles'
                 if (currentParams.user && mongoose.Types.ObjectId.isValid(currentParams.user)) {
                     filterConditions.push({ roles: new mongoose.Types.ObjectId(currentParams.user) });
                 }
-                // ------------------------------------
-
                 const matchStage = filterConditions.length > 0 ? { $match: { $and: filterConditions } } : { $match: {} };
                 pipeline = [
                     matchStage,
@@ -127,12 +146,12 @@ export async function getCombinedData(params) {
                         });
                         // Thay thế mảng `roles` từ ID thành object user đầy đủ
                         if (customer.roles) {
-                             customer.roles = customer.roles.map(roleId => userMap.get(roleId.toString())).filter(Boolean);
+                            customer.roles = customer.roles.map(roleId => userMap.get(roleId.toString())).filter(Boolean);
                         }
                     });
                 }
             }
-            
+
             const phoneNumbers = paginatedData.map(p => p.phone).filter(Boolean);
             if (phoneNumbers.length > 0) {
                 const scheduledTasksRaw = await ScheduledJob.aggregate([

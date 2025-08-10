@@ -39,8 +39,6 @@ export default function CustomerView({ running, initialResult, user, sources, la
         }, { runningSchedules: [], historySchedules: [] });
 
     }, [running]);
-    console.log(formData);
-
     return (
         <div className={styles.container}>
             {viewMode === 'manage' && (
@@ -79,6 +77,7 @@ export default function CustomerView({ running, initialResult, user, sources, la
                     setSelectedCustomers={setSelectedCustomers}
                     viewMode={viewMode}
                     onToggleViewMode={toggleViewMode}
+                    zalo={zaloData}
                 />
             </Suspense>
         </div>

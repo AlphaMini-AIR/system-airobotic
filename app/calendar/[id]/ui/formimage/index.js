@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
-import FlexiblePopup from '@/components/(features)/(popup)/popup_right'; 
+import FlexiblePopup from '@/components/(features)/(popup)/popup_right';
 import styles from './index.module.css';
-import Loading from '@/components/(ui)/(loading)/loading'; 
-import { Re_lesson } from '@/data/course'; 
-import Noti from '@/components/(features)/(noti)/noti'; 
+import Loading from '@/components/(ui)/(loading)/loading';
+import { Re_lesson } from '@/data/course';
+import Noti from '@/components/(features)/(noti)/noti';
 import { Svg_Pen } from '@/components/(icon)/svg';
 import Link from 'next/link';
 
@@ -200,7 +200,7 @@ function MediaGallery({ session, mediaItems = [], onAdd, onMediaClick }) {
     return (
         <div className={styles.galleryContainer}>
             <div className={styles.galleryHeader}>
-                <p className='text_5'>Thư viện hình ảnh & video</p>
+                <h4>Thư viện hình ảnh & video</h4>
 
                 <div style={{ display: 'flex', gap: 8 }}>
                     <Link href={`https://drive.google.com/drive/folders/${session.Image}`} className='btn' target="_blank" rel="noopener noreferrer">
@@ -215,7 +215,7 @@ function MediaGallery({ session, mediaItems = [], onAdd, onMediaClick }) {
             {
                 mediaItems.length === 0 ? (
                     <div className={styles.emptyGallery}>
-                        <p>Chưa có hình ảnh hoặc video nào.</p>
+                        <h5 style={{ fontStyle: 'italic' }}>Chưa có hình ảnh hoặc video nào.</h5>
                     </div>
                 ) : (
                     <div className={styles.gallerywarp}>

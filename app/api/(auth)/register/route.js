@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import connectDB from '@/config/connectDB';
 import PostUser from '@/models/users';
+import { reloadUser } from '@/data/actions/reload';
 
 export async function POST(req) {
     try {
@@ -36,7 +37,7 @@ export async function POST(req) {
             email,
             uid: hash                                    
         });
-
+        reloadUser()
         return jsonRes(201, { message: 'Tạo tài khoản thành công' });
     } catch (err) {
         console.error(err);

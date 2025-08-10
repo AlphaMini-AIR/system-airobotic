@@ -21,6 +21,13 @@ export default async function Page({ searchParams }) {
         variant_data(),
         getRunningSchedulesAction()
     ]);
+    if (!userAuth[0].role.includes('Admin') && !userAuth[0].role.includes('Sale')) {
+        return (
+            <div className="flex_center" style={{ height: '100%', width: '100%' }}>
+                <h4 style={{ fontStyle: 'italic' }}>Bạn không có quyền truy cập trang này</h4>
+            </div>
+        )
+    }
 
     const reversedLabel = [...label].reverse();
 

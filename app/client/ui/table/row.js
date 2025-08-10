@@ -25,7 +25,6 @@ function HistoryLogItem({ log }) {
     };
 
     const statusSuccess = log.status?.status === true;
-    console.log(log.status);
 
     return (
         <div className={styles.noteItem} style={{ padding: '12px 16px', alignItems: 'flex-start' }}>
@@ -48,11 +47,18 @@ function HistoryLogItem({ log }) {
                         width: 8, height: 8, borderRadius: '50%',
                         backgroundColor: statusSuccess ? 'var(--green)' : 'var(--red)'
                     }}></span>
-                    <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
-                        {log.status?.data.error_message == 'Successful.' ? 'Thực hiện hành động thành công!' : log.status?.data.error_message}
-                    </h5>
+
+                    {log.type == 'checkFriend' ?
+                        <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
+                            {log.status?.data.error_message == 1 ? 'Đã là bạn bè' : 'Chưa là bạn bè'}
+                        </h5> :
+                        <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
+                            {log.status?.data.error_message == 'Successful.' ? 'Thực hiện hành động thành công!' : log.status?.data.error_message}
+                        </h5>
+                    }
+
                 </div>
-                {log.type != 'findUid' &&
+                {log.type != 'findUid' && log.type != 'checkFriend' &&
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                         <h6 className='text_w_400'>
                             Nội dung gửi :
@@ -117,7 +123,7 @@ function CustomerUpdateForm({ formAction, initialData, onClose, isAnyActionPendi
     );
 }
 
-export default function CustomerRow({ customer, index, isSelected, onSelect, visibleColumns, user, viewMode }) {
+export default function CustomerRow({ customer, index, isSelected, onSelect, visibleColumns, user, viewMode, zalo }) {
 
 
     const router = useRouter();
@@ -292,57 +298,59 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                         <div style={{ borderBottom: 'thin solid var(--border-color)', padding: 16 }}>
                             <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Hành động</h4>
                             <div className={styles.actionsGrid}>
-                                <form action={updateStatusAction} className={styles.actionItem}>
-                                    <input type="hidden" name="customerId" value={customer._id} />
-                                    <input type="hidden" name="status" value="4" />
-                                    <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
-                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                            <Svg_Chat_1 w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                            <h5 className='text_w_500'>Đang chăm sóc</h5>
-                                        </div>
-                                        <h6 className='text_w_400'>Đang tiến hành chăm sóc</h6>
-                                    </button>
-                                </form>
-                                <button className={styles.actionItem} onClick={() => setIsUpdatePopupOpen(true)} disabled={isAnyActionPending}>
-                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                        <Svg_Pen w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                        <h5 className='text_w_500'>Cập nhật thông tin</h5>
-                                    </div>
-                                    <h6 className='text_w_400'>Chỉnh sửa thông tin khách hàng</h6>
-                                </button>
-
-                                <form action={updateStatusAction} className={styles.actionItem}>
-                                    <input type="hidden" name="customerId" value={customer._id} />
-                                    <input type="hidden" name="status" value="2" />
-                                    <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
-                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                            <Svg_Out w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                            <h5 className='text_w_500'>Không quan tâm</h5>
-                                        </div>
-                                        <h6 className='text_w_400'>Kết thúc chăm sóc</h6>
-                                    </button>
-                                </form>
-                                <form action={convertToStudentActionFn} className={styles.actionItem}>
-                                    <input type="hidden" name="customerId" value={customer._id} />
-                                    <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
-                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                            <Svg_Check w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                            <h5 className='text_w_500'>Chuyển thành học sinh</h5>
-                                        </div>
-                                        <h6 className='text_w_400'>Xác nhận chăm sóc thành công</h6>
-                                    </button>
-                                </form>
-                                <form action={updateStatusAction} className={styles.actionItem}>
-                                    <input type="hidden" name="customerId" value={customer._id} />
-                                    <input type="hidden" name="status" value="3" />
-                                    <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
-                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                            <Svg_History w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
-                                            <h5 className='text_w_500'>Tạm thời</h5>
-                                        </div>
-                                        <h6 className='text_w_400'>Chăm sóc lại sau</h6>
-                                    </button>
-                                </form>
+                                {customer.type === false && (
+                                    <>
+                                        <form action={updateStatusAction} className={styles.actionItem}>
+                                            <input type="hidden" name="customerId" value={customer._id} />
+                                            <input type="hidden" name="status" value="4" />
+                                            <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <Svg_Chat_1 w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                                    <h5 className='text_w_500'>Đang chăm sóc</h5>
+                                                </div>
+                                                <h6 className='text_w_400'>Đang tiến hành chăm sóc</h6>
+                                            </button>
+                                        </form>
+                                        <button className={styles.actionItem} onClick={() => setIsUpdatePopupOpen(true)} disabled={isAnyActionPending}>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                <Svg_Pen w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                                <h5 className='text_w_500'>Cập nhật thông tin</h5>
+                                            </div>
+                                            <h6 className='text_w_400'>Chỉnh sửa thông tin khách hàng</h6>
+                                        </button>
+                                        <form action={updateStatusAction} className={styles.actionItem}>
+                                            <input type="hidden" name="customerId" value={customer._id} />
+                                            <input type="hidden" name="status" value="2" />
+                                            <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <Svg_Out w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                                    <h5 className='text_w_500'>Không quan tâm</h5>
+                                                </div>
+                                                <h6 className='text_w_400'>Kết thúc chăm sóc</h6>
+                                            </button>
+                                        </form>
+                                        <form action={convertToStudentActionFn} className={styles.actionItem}>
+                                            <input type="hidden" name="customerId" value={customer._id} />
+                                            <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <Svg_Check w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                                    <h5 className='text_w_500'>Chuyển thành học sinh</h5>
+                                                </div>
+                                                <h6 className='text_w_400'>Xác nhận chăm sóc thành công</h6>
+                                            </button>
+                                        </form>
+                                        <form action={updateStatusAction} className={styles.actionItem}>
+                                            <input type="hidden" name="customerId" value={customer._id} />
+                                            <input type="hidden" name="status" value="3" />
+                                            <button type="submit" disabled={isAnyActionPending} className={styles.actionItemButton}>
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    <Svg_History w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
+                                                    <h5 className='text_w_500'>Tạm thời</h5>
+                                                </div>
+                                                <h6 className='text_w_400'>Chăm sóc lại sau</h6>
+                                            </button>
+                                        </form>
+                                    </>)}
                                 <button className={styles.actionItem} onClick={handleShowHistory} disabled={isAnyActionPending}>
                                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                         <Svg_History w={'var(--font-size-sm)'} h={'var(--font-size-sm)'} c={'var(--text-primary)'} />
@@ -352,39 +360,57 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                                 </button>
                             </div>
                         </div>
-                        <div className={styles.wrapDetail} >
-                            <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Chi tiết khách hàng</h4>
-                            <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                <div className={styles.formGroup}><h5>Tên:</h5> <h5>{customer.name}</h5></div>
-                                <div className={styles.formGroup}><h5>Ngày sinh: </h5><h5>{customer.bd ? new Date(customer.bd).toLocaleDateString('vi-VN') : 'Thiếu thông tin'}</h5></div>
-                                <div className={styles.formGroup}><h5>Tên phụ huynh:</h5> <h5>{customer.nameparent || 'Thiếu thông tin'}</h5></div>
-                                <div className={styles.formGroup}><h5>Số điện thoại: </h5><h5>{customer.phone}</h5></div>
-                                <div className={styles.formGroup}><h5>Email: </h5><h5>{customer.email || 'Thiếu thông tin'}</h5></div>
-                                <div className={styles.formGroup}><h5>Kết quả chăm sóc: </h5><h5>{getStatusText(customer.status)}</h5></div>
-                                <div className={styles.formGroup}><h5>Nguồn dữ liệu: </h5><h5>{customer.source}</h5></div>
-                            </div>
-                        </div>
-                        <div className={styles.wrapDetail} >
-                            <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Thông tin zalo</h4>
-                            <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
-                                {customer.uid.length > 0 ?
-                                    customer.zaloname &&
-                                    <>
-                                        <div style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 50, backgroundImage: `url(${customer.zaloavt || 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'})` }} />
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                            <h5 >{customer.zaloname || 'Chưa rõ'}</h5>
-                                            <h6>{customer.phone}</h6>
-                                        </div>
-                                    </> :
-                                    customer.uid.length === 0 ?
-                                        <h6 style={{ fontStyle: 'italic' }}>Chưa tìm kiếm uid</h6> :
-                                        <h6 style={{ fontStyle: 'italic' }}>Không tìm thấy tài khoản zalo</h6>
-                                }
-                            </div>
-                        </div>
-
                         {customer.type === false && (
                             <>
+                                <div className={styles.wrapDetail} >
+                                    <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Chi tiết khách hàng</h4>
+                                    <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                        <div className={styles.formGroup}><h5>Tên:</h5> <h5>{customer.name}</h5></div>
+                                        <div className={styles.formGroup}><h5>Ngày sinh: </h5><h5>{customer.bd ? new Date(customer.bd).toLocaleDateString('vi-VN') : 'Thiếu thông tin'}</h5></div>
+                                        <div className={styles.formGroup}><h5>Tên phụ huynh:</h5> <h5>{customer.nameparent || 'Thiếu thông tin'}</h5></div>
+                                        <div className={styles.formGroup}><h5>Số điện thoại: </h5><h5>{customer.phone}</h5></div>
+                                        <div className={styles.formGroup}><h5>Email: </h5><h5>{customer.email || 'Thiếu thông tin'}</h5></div>
+                                        <div className={styles.formGroup}><h5>Kết quả chăm sóc: </h5><h5>{getStatusText(customer.status)}</h5></div>
+                                        <div className={styles.formGroup}><h5>Nguồn dữ liệu: </h5><h5>{customer.source}</h5></div>
+                                    </div>
+                                </div>
+                                <div className={styles.wrapDetail} >
+                                    <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Thông tin zalo</h4>
+                                    <div style={{ display: 'flex', gap: 8, paddingTop: 8, flexDirection: 'column' }}>
+                                        {customer.uid == null ? (
+                                            <h5>Không tìm được zalo</h5>
+                                        ) : <>
+                                            {customer.uid.length > 0 ?
+                                                customer.zaloname &&
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <div style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 50, backgroundImage: `url(${customer.zaloavt || 'https://lh3.googleusercontent.com/d/1iq7y8VE0OyFIiHmpnV_ueunNsTeHK1bG'})` }} />
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                                        <h5 >{customer.zaloname || 'Chưa rõ'}</h5>
+                                                        <h6>{customer.phone}</h6>
+                                                    </div>
+                                                </div> :
+                                                customer.uid.length === 0 ?
+                                                    <h6 style={{ fontStyle: 'italic' }}>Chưa tìm kiếm uid</h6> :
+                                                    <h6 style={{ fontStyle: 'italic' }}>Không tìm thấy tài khoản zalo</h6>
+                                            }
+                                            <h4 style={{ padding: '16px 0 8px 0', borderBottom: 'thin dashed var(--border-color)' }}>Zalo chăm sóc</h4>
+                                            {customer.uid.map((r, index) => {
+                                                let ac = zalo.filter(t => t._id == r.zalo)
+                                                if (ac.length) ac = ac[0]
+                                                if (!ac) return
+                                                return (
+                                                    <div>
+                                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                            <h5>{ac.name} </h5> <h6>{ac.phone}</h6>
+                                                        </div>
+                                                        <h6>Trạng thái kết bạn: {r.isReques ? 'Đang chờ xác nhận' : 'Chưa gửi kết bạn'} ({r.isFriend ? 'Bạn bè' : 'Không phải bạn bè'})</h6>
+                                                    </div>
+                                                )
+                                            })}
+                                        </>}
+
+                                    </div>
+                                </div>
                                 <div style={{ borderBottom: 'thin solid var(--border-color)', padding: 16 }}>
                                     <h4 style={{ paddingBottom: 8, borderBottom: 'thin dashed var(--border-color)' }}>Ghi chú chăm sóc</h4>
                                     <div className={`${styles.notesList} scroll`}>
@@ -413,9 +439,10 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                             </>
                         )}
                     </div >
-                )}
+                )
+                }
             />
-            <CenterPopup open={isUpdatePopupOpen} onClose={() => !isAnyActionPending && setIsUpdatePopupOpen(false)} size="md">
+            < CenterPopup open={isUpdatePopupOpen} onClose={() => !isAnyActionPending && setIsUpdatePopupOpen(false)} size="md" >
                 <Title content="Chỉnh sửa thông tin khách hàng" click={() => !isAnyActionPending && setIsUpdatePopupOpen(false)} />
                 <div className={styles.mainform}>
                     <CustomerUpdateForm
@@ -425,7 +452,7 @@ export default function CustomerRow({ customer, index, isSelected, onSelect, vis
                         isAnyActionPending={isAnyActionPending}
                     />
                 </div>
-            </CenterPopup>
+            </CenterPopup >
             <Noti open={notification.open} onClose={handleCloseNoti} status={notification.status} mes={notification.mes} />
         </>
     );

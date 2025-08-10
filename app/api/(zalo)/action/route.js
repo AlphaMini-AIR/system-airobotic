@@ -7,8 +7,6 @@ import Variant from "@/models/variant";
 import Logs from "@/models/log";
 import dbConnect from "@/config/connectDB";
 import { actionZalo } from '@/function/drive/appscript';
-import { revalidateData } from '@/app/actions/customer.actions';
-import { reloadRunningSchedules } from '@/data/actions/reload';
 
 async function formatMessage(template, targetDoc, zaloAccountDoc) {
     if (!template) return "";
@@ -52,7 +50,7 @@ async function processSingleTask(taskDetail) {
         if (isStudent) {
             uidPerson = targetDoc.Uid || null;
         } else {
-            if (actionType === 'addFriend' || actionType === 'sendMessage') {
+            if (actionType === 'addFriend' || actionType === 'sendMessage' || actionType === 'checkFriend') {
                 const uidEntry = targetDoc.uid?.find(u => u.zalo?.toString() === zaloAccount._id.toString());
                 if (!uidEntry || !uidEntry.uid) {
                     errorMessageForLog = "Không tìm thấy UID của khách hàng tương ứng với tài khoản Zalo thực hiện.";
@@ -92,35 +90,78 @@ async function processSingleTask(taskDetail) {
             schedule: job._id,
         };
         const newLog = await Logs.create(logPayload);
+        console.log({
+            phone: targetDoc.phone,
+            uidPerson: uidPerson,
+            actionType: actionType,
+            message: finalMessage,
+            uid: zaloAccount.uid,
+        });
+
+        console.log(apiResponse, 1);
 
         const errorCode = apiResponse.content?.error_code;
         if (actionType === 'findUid') {
-            const updateData = {};
-            let uidToPush = null;
-
             if (errorCode === 0) {
-                updateData.zaloavt = apiResponse.content.data.avatar;
-                updateData.zaloname = apiResponse.content.data.zalo_name;
-                uidToPush = { zalo: zaloAccount._id, uid: apiResponse.content.data.uid };
-            } else if ([216, 212, 219].includes(errorCode)) {
-                uidToPush = { zalo: zaloAccount._id, uid: null };
-            }
+                const updateData = {
+                    zaloavt: apiResponse.content.data.avatar,
+                    zaloname: apiResponse.content.data.zalo_name,
+                };
+                await TargetModel.findByIdAndUpdate(targetId, { $set: updateData });
 
-            if (Object.keys(updateData).length > 0) {
-                await TargetModel.findByIdAndUpdate(targetId, updateData);
+                const newUidValue = apiResponse.content.data.uid;
+                const updateResult = await TargetModel.updateOne(
+                    { _id: targetId, 'uid.zalo': zaloAccount._id },
+                    { $set: { 'uid.$.uid': newUidValue } }
+                );
+                if (updateResult.matchedCount === 0) {
+                    await TargetModel.findByIdAndUpdate(
+                        targetId,
+                        { $push: { uid: { zalo: zaloAccount._id, uid: newUidValue } } }
+                    );
+                }
             }
-            if (uidToPush) {
-                await TargetModel.findByIdAndUpdate(targetId, { $push: { uid: uidToPush } });
+            else if ([216, 212, 219].includes(errorCode)) {
+                await TargetModel.findByIdAndUpdate(targetId, { $set: { uid: null } });
             }
         }
-
+        if (actionType === 'checkFriend') {
+            const friendStatus = Number(apiResponse.content?.error_message);
+            if (!isNaN(friendStatus)) {
+                await TargetModel.updateOne(
+                    { _id: targetId },
+                    { $set: { "uid.$[elem].isFriend": friendStatus } },
+                    { arrayFilters: [{ "elem.zalo": zaloAccount._id }] }
+                );
+            }
+        }
+        if (actionType === 'addFriend' && apiResponse.status === true) {
+            await TargetModel.updateOne(
+                { _id: targetId },
+                { $set: { "uid.$[elem].isReques": 1 } },
+                { arrayFilters: [{ "elem.zalo": zaloAccount._id }] }
+            );
+        }
         await ScheduledJob.updateOne(
             { _id: job._id, 'tasks._id': task._id },
             { $set: { 'tasks.$.history': newLog._id } }
         );
 
         const statsUpdateField = apiResponse.status ? 'statistics.completed' : 'statistics.failed';
-        await ScheduledJob.findByIdAndUpdate(job._id, { $inc: { [statsUpdateField]: 1 } });
+        const updatedJob = await ScheduledJob.findByIdAndUpdate(
+            job._id,
+            { $inc: { [statsUpdateField]: 1 } },
+            { new: true } 
+        ).lean();
+        if (updatedJob) {
+            const { completed, failed, total } = updatedJob.statistics;
+            if ((completed + failed) >= total) {
+                await ZaloAccount.findByIdAndUpdate(
+                    job.zaloAccount, 
+                    { $pull: { action: job._id } } 
+                );
+            }
+        }
     } catch (error) {
         console.error(`[Scheduler] Error processing task ${task._id} from job ${job._id}:`, error);
         await ScheduledJob.findByIdAndUpdate(job._id, { $inc: { 'statistics.failed': 1 } });

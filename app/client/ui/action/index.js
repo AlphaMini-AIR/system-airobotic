@@ -94,14 +94,37 @@ function ActionDetailItem({ job, onShowDetails, onCancel }) {
 }
 function TaskItem({ task }) {
     const getStatus = () => {
-        if (task.processedAt) { return task.resultMessage ? { key: 'failed', text: 'Thất bại' } : { key: 'success', text: 'Thành công' }; }
-        return { key: 'pending', text: 'Đang chờ' };
+        if (task.status === false) {
+            return { key: 'pending', text: 'Đang chờ' };
+        }
+        // Nếu status là true, kiểm tra history
+        if (task.history?.status?.status === true) {
+            return { key: 'success', text: 'Thành công' };
+        }
+        // Mặc định là thất bại nếu status là true nhưng không có history thành công
+        return { key: 'failed', text: 'Thất bại' };
     };
+
     const status = getStatus();
+    // Lấy thông báo lỗi từ history
+    const errorMessage = task.history?.status?.message;
+
     return (
         <div className={styles.taskItem}>
-            <div className={styles.taskInfo}><h5>{task.person.name}</h5><h6>{task.person.phone}</h6>{status.key === 'failed' && <h6 className={styles.errorMessage}>Lỗi: {task.resultMessage}</h6>}</div>
-            <div className={styles.taskStatusContainer}><div className={`${styles.statusIndicator} ${styles[status.key]}`}></div><h6>{status.text}</h6><h6>{new Date(task.scheduledFor).toLocaleTimeString('vi-VN')}</h6></div>
+            <div className={styles.taskInfo}>
+                <h5>{task.person.name}</h5>
+                <h6>{task.person.phone}</h6>
+                {status.key === 'failed' && (
+                    <h6 className={styles.errorMessage}>
+                        Lỗi: {errorMessage || 'Không có chi tiết lỗi'}
+                    </h6>
+                )}
+            </div>
+            <div className={styles.taskStatusContainer}>
+                <div className={`${styles.statusIndicator} ${styles[status.key]}`}></div>
+                <h6>{status.text}</h6>
+                <h6>{new Date(task.scheduledFor).toLocaleTimeString('vi-VN')}</h6>
+            </div>
         </div>
     );
 }
@@ -165,11 +188,25 @@ export default function RunningActions({ user, running = [] }) {
 
     const categorizedTasks = useMemo(() => {
         if (!viewingDetailsFor) return { pending: [], success: [], failed: [], all: [] };
-        const pending = []; const success = []; const failed = [];
+
+        const pending = [];
+        const success = [];
+        const failed = [];
+
         viewingDetailsFor.tasks.forEach(task => {
-            if (task.processedAt) { if (task.resultMessage) failed.push(task); else success.push(task); }
-            else { pending.push(task); }
+            // Logic 1: Nếu status là false, task đang chờ xử lý
+            if (task.status === false) {
+                pending.push(task);
+            } else { // Logic 2: Nếu status là true, task đã được xử lý
+                // Logic 2a: Kiểm tra history.status.status để xem thành công hay thất bại
+                if (task.history?.status?.status === true) {
+                    success.push(task);
+                } else {
+                    failed.push(task);
+                }
+            }
         });
+
         return { pending, success, failed, all: [...pending, ...success, ...failed] };
     }, [viewingDetailsFor]);
     const filteredTasks = useMemo(() => categorizedTasks[activeFilter] || [], [activeFilter, categorizedTasks]);
@@ -197,6 +234,8 @@ export default function RunningActions({ user, running = [] }) {
     const handleOpenCancelConfirm = (job) => setJobToCancel(job);
     const handleCloseCancelConfirm = () => setJobToCancel(null);
     const handleCloseNoti = () => setNotification(prev => ({ ...prev, open: false }));
+    console.log(running);
+
     return (
         <>
             <button className='btn_s' onClick={handleOpenPopup}>

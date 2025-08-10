@@ -3,7 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background-color: #fff;
+    background-color: var(--bg-primary);
     color: #3b4056;
     border-bottom: 1px solid #e5e6e8;
     height: 36px;
@@ -87,10 +87,10 @@
     gap: 2px;
     width: 100%;
     padding: 12px;
-    background-color: white;
-    color: #3b4056;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
     border: none;
-    border-bottom: 1px solid #e5e6e8;
+    border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 }
 

@@ -1,9 +1,9 @@
 .hoverShadow {
     display: flex;
     gap: 2px;
-    background-color: white;
+    background-color: var(--bg-primary);
     color: #3b4056;
-    border-bottom: 1px solid #e5e6e8;
+    border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 }
 
@@ -51,8 +51,6 @@
 .chip {
     padding: 4px 8px;
     border-radius: 16px;
-    font-size: 0.875rem;
-    /* roughly text_4_m */
     color: white;
     margin: 0;
 }

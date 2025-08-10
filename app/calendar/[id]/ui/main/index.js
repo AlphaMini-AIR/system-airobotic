@@ -159,16 +159,16 @@ export default function Main({ data }) {
                 <header className={styles.header}>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                         <p className="text_3" style={{ color: '#fff' }}>{course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}</p>
-                        <Link href={`/course/${course._id}`} className='btn' style={{ background: 'white', margin: '0' }}>
+                        <Link href={`/course/${course._id}`} className='btn_s' >
                             <Svg_Detail w={16} h={16} c={'var(--main_d)'} />
-                            <p className='text_6_400'>Chi tiết khóa học</p>
+                            <h5>Chi tiết khóa học</h5>
                         </Link>
                     </div>
                     <div className={styles.statsContainer}>
-                        <div className={`${styles.statBox} ${styles.present}`}>Có mặt: {cm}</div>
-                        <div className={`${styles.statBox} ${styles.absent}`}>Vắng mặt: {vk + (isTrialCourse ? vc : 0)}</div>
+                        <h5 className={`${styles.statBox} ${styles.present}`}>Có mặt: {cm}</h5>
+                        <h5 className={`${styles.statBox} ${styles.absent}`}>Vắng mặt: {vk + (isTrialCourse ? vc : 0)}</h5>
                         {!isTrialCourse && (
-                            <div className={`${styles.statBox} ${styles.excused}`}>Vắng có phép: {vc}</div>
+                            <h5 className={`${styles.statBox} ${styles.excused}`}>Vắng có phép: {vc}</h5>
                         )}
                     </div>
                 </header>
@@ -184,9 +184,9 @@ export default function Main({ data }) {
                         <p className="text_4" style={{ marginBottom: 16 }}>Thông tin buổi học</p>
                         <section className={styles.infoSection}>
                             <div className={styles.infoHeader}>
-                                <div>Thời gian: <span className={styles.infoValue}>{session.Time}</span></div>
-                                <div>Giáo viên: <span className={styles.infoValue}>{session.Teacher.name}</span></div>
-                                <div>Trợ giảng: <span className={styles.infoValue}>{session.TeachingAs?.name || '–'}</span></div>
+                                <h5>Thời gian: <span className={styles.infoValue}>{session.Time}</span></h5>
+                                <h5>Giáo viên: <span className={styles.infoValue}>{session.Teacher.name}</span></h5>
+                                <h5>Trợ giảng: <span className={styles.infoValue}>{session.TeachingAs?.name || '–'}</span></h5>
                             </div>
                             <div className={styles.divider} />
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -214,7 +214,7 @@ export default function Main({ data }) {
                                     </div>
                                     {roll.map(stu => {
                                         if (stu.Checkin == '-1') return null;
-                                        
+
                                         const currentCheckinValue = cur(stu);
                                         let displayValue = currentCheckinValue;
                                         if (isTrialCourse) {
@@ -222,7 +222,7 @@ export default function Main({ data }) {
                                         }
 
                                         return (
-                                            <div key={stu.ID} className={styles.row} style={{ borderBottom: '1px solid #e9ecef', background: '#fff' }}>
+                                            <div key={stu.ID} className={styles.row} style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-primary)' }}>
                                                 <div className="text_6_400" style={{ flex: 1, padding: '12px 8px', fontWeight: 500 }}>{stu.ID}</div>
                                                 <div className="text_6_400" style={{ flex: 3, padding: '0 8px', fontWeight: 500, display: 'flex', gap: 8, alignItems: 'center' }}>
                                                     <Image onClick={() => handleImageClick(stu.Avt)} style={{ objectFit: 'cover', borderRadius: 5, cursor: 'pointer' }} src={stu.Avt} alt={stu.Name} width={35} height={35} />
@@ -232,7 +232,7 @@ export default function Main({ data }) {
                                                     {attendanceOptions.map(v => (
                                                         <label key={v} style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '16px 0', cursor: 'pointer' }}>
                                                             <input type="radio" name={`att_${stu.ID}`} value={v}
-                                                                checked={displayValue == v} 
+                                                                checked={displayValue == v}
                                                                 onChange={() => changeAtt(stu.ID, v)}
                                                                 style={{ transform: 'scale(1.1)', cursor: 'pointer' }} />
                                                         </label>

@@ -16,14 +16,14 @@ export default function Nav() {
         style={{ gap: 8 }}
       >
         <Svg_List w={16} h={16} c={'var(--main_d)'} />
-        Danh sách
+        <h5>Danh sách</h5>
       </Link>
       <Link href={'/student/overview'}
         className={`${air.button} text_4_m flex_center ${isOverviewActive ? `${air.active}` : ''}`}
         style={{ gap: 8 }}
       >
         <Svg_Chart w={16} h={16} c={'var(--main_d)'} />
-        Biểu đồ
+        <h5>Biểu đồ</h5>
       </Link>
 
     </div>

@@ -43,7 +43,7 @@ async function generateSummaryComment(comments) {
 
 // Xác nhận hoàn thành khóa học
 export async function PATCH(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     if (!id) return NextResponse.json({ status: 1, mes: 'Thiếu ID của khóa học.' }, { status: 400 });
 
     try {
@@ -70,6 +70,10 @@ export async function PATCH(request, { params }) {
 
                 for (const student of students) {
                     await reloadStudent(student._id);
+                    if (!student.Profile || typeof student.Profile !== 'object' || student.Profile === null) {
+                        student.Profile = { Present: [] };
+                    }
+
                     const studentInCourseData = updatedCourse.Student.find(s => s.ID === student.ID);
                     const allComments = studentInCourseData?.Learn.flatMap(l => l.Cmt || []).filter(cmt => cmt && cmt.trim() !== '');
                     const summaryComment = await generateSummaryComment(allComments);
@@ -82,30 +86,29 @@ export async function PATCH(request, { params }) {
                         Video: '',
                         Img: ''
                     };
-
-                    // **BẮT ĐẦU SỬA LỖI**
-                    // 1. Lấy mảng Present hiện tại và lọc bỏ mục của khóa học này (nếu có)
+                    console.log(newPresentation,1);
+                    
                     const currentPresentations = student.Profile?.Present || [];
                     const otherPresentations = currentPresentations.filter(p => p.bookId !== updatedCourse.Book.ID);
-
-                    // 2. Tạo mảng Present mới bằng cách thêm mục đã cập nhật vào
                     const newPresentArray = [...otherPresentations, newPresentation];
-                    // **KẾT THÚC SỬA LỖI**
+                    const newProfileObject = {
+                        ...student.Profile, 
+                        Present: newPresentArray 
+                    };
 
                     const hasOtherActiveCourses = student.Course.some(c => c.course.toString() !== updatedCourse._id.toString() && c.status === 0);
                     const newStatusForStudent = {
                         status: hasOtherActiveCourses ? 2 : 1, act: hasOtherActiveCourses ? 'học' : 'chờ',
                         date: new Date(), note: `Hoàn thành khóa học ${updatedCourse.ID}`
                     };
-
+                    
                     bulkOperations.push({
                         updateOne: {
                             filter: { _id: student._id },
                             update: {
-                                // **SỬA LỖI: Dùng $set cho toàn bộ mảng Present**
                                 $set: {
                                     'Course.$[c].status': 2,
-                                    'Profile.Present': newPresentArray
+                                    'Profile': newProfileObject
                                 },
                                 $push: { Status: newStatusForStudent }
                             },
@@ -121,7 +124,7 @@ export async function PATCH(request, { params }) {
         }
 
         reloadCourse(id);
-        
+
         return NextResponse.json({ status: 2, mes: 'Cập nhật thành công.' }, { status: 200 });
     } catch (error) {
         console.error('[COURSE_UPDATE_ERROR]', error);
