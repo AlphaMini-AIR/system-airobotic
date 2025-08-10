@@ -11,8 +11,9 @@ function PageSkeleton() {
 }
 
 export default async function Page({ searchParams }) {
+    let c = await searchParams
     const [initialResult, userAuth, sources, label, zalo, users, variant, running] = await Promise.all([
-        getCombinedData(await searchParams),
+        getCombinedData(c),
         checkAuthToken().then(auth => user_data({ _id: auth.id })),
         form_data(),
         label_data(),
@@ -28,7 +29,6 @@ export default async function Page({ searchParams }) {
             </div>
         )
     }
-
     const reversedLabel = [...label].reverse();
 
     return (
@@ -43,6 +43,7 @@ export default async function Page({ searchParams }) {
                 users={users}
                 variant={variant}
                 running={running.data}
+                c={c}
             />
         </Suspense>
     );

@@ -15,7 +15,7 @@ import ActionHistory from './ui/hisotry';
 function TableSkeleton() {
     return <div style={{ height: '500px', background: '#f8f9fa', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Đang tải dữ liệu...</div>;
 }
-export default function CustomerView({ running, initialResult, user, sources, labelData, formData, zaloData, users, variant }) {
+export default function CustomerView({ c, running, initialResult, user, sources, labelData, formData, zaloData, users, variant }) {
     const [selectedCustomers, setSelectedCustomers] = useState(new Map());
     const [viewMode, setViewMode] = useState('manage');
 
@@ -50,13 +50,15 @@ export default function CustomerView({ running, initialResult, user, sources, la
                                 <RunningActions user={user} running={runningSchedules} />
                             </div>
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <BulkActions
-                                    selectedCustomers={selectedCustomers}
-                                    onActionComplete={handleActionComplete}
-                                    labels={labelData}
-                                    variants={variant}
-                                    users={users.filter(u => u.role[0] === 'Sale' || u.role[0] === 'Admin')}
-                                />
+                                {!c.type && (
+                                    <BulkActions
+                                        selectedCustomers={selectedCustomers}
+                                        onActionComplete={handleActionComplete}
+                                        labels={labelData}
+                                        variants={variant}
+                                        users={users.filter(u => u.role[0] === 'Sale' || u.role[0] === 'Admin')}
+                                    />
+                                )}
                                 <ActionHistory history={historySchedules} />
                                 <SettingZaloRoles data={zaloData} allUsers={users.filter(u => u.role[0] === 'Sale' || u.role[0] === 'Admin')} />
                                 <SettingVariant data={variant} />
