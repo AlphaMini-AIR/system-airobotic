@@ -158,7 +158,7 @@ export default function Main({ data }) {
             <div className={styles.root}>
                 <header className={styles.header}>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <p className="text_3" style={{ color: '#fff' }}>{course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}</p>
+                        <p className="text_3" style={{ color: 'var(--text-primary)' }}>{course.ID ?? '-'} – Chủ đề: {session.Topic.Name ?? '-'}</p>
                         <Link href={`/course/${course._id}`} className='btn_s' >
                             <Svg_Detail w={16} h={16} c={'var(--main_d)'} />
                             <h5>Chi tiết khóa học</h5>
@@ -184,9 +184,9 @@ export default function Main({ data }) {
                         <p className="text_4" style={{ marginBottom: 16 }}>Thông tin buổi học</p>
                         <section className={styles.infoSection}>
                             <div className={styles.infoHeader}>
-                                <h5>Thời gian: <span className={styles.infoValue}>{session.Time}</span></h5>
-                                <h5>Giáo viên: <span className={styles.infoValue}>{session.Teacher.name}</span></h5>
-                                <h5>Trợ giảng: <span className={styles.infoValue}>{session.TeachingAs?.name || '–'}</span></h5>
+                                <h5 style={{ color: 'white' }}>Thời gian: <span className={styles.infoValue}>{session.Time}</span></h5>
+                                <h5 style={{ color: 'white' }}>Giáo viên: <span className={styles.infoValue}>{session.Teacher.name}</span></h5>
+                                <h5 style={{ color: 'white' }}>Trợ giảng: <span className={styles.infoValue}>{session.TeachingAs?.name || '–'}</span></h5>
                             </div>
                             <div className={styles.divider} />
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
