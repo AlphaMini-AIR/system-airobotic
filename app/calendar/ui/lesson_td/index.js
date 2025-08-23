@@ -3,8 +3,10 @@
 import React from 'react';
 import styles from './index.module.css';
 import Link from 'next/link';
+import { truncateString } from '@/function';
 
 const CalendarCourse = ({ data = {} }) => {
+    if (data.type === "Báo nghỉ") return null;
     let statusLesson = [1, 1, 1];
     let num = 0
     data.students.forEach(element => {
@@ -52,7 +54,7 @@ const CalendarCourse = ({ data = {} }) => {
                         {data.room.name}
                     </h5>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}><h5 className={styles.h5}>Chủ đề: {data.topic.Name} {data.type == "trial" && '- Học thử'}</h5> </div>
+                <div style={{ display: 'flex', gap: 8 }}><h5 className={styles.h5} style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>Chủ đề: {truncateString(data.topic.Name, 30, 5)} {data.type == "trial" && '- Học thử'}</h5> </div>
                 <div style={{ display: 'flex', gap: 8 }}><h5 className={styles.h5}>Giáo viên: {data.teacher.name}</h5> </div>
                 <div style={{ display: 'flex', gap: 8 }}><h5 className={styles.h5}>Trợ giảng: {data.teachingAs?.name ? data.teachingAs.name : '-'}</h5> </div>
             </div>

@@ -1,50 +1,132 @@
-// File: app/api/students/ensure-status/route.js (hoặc file API của bạn)
-
+// app/api/verify-student-courses/route.js
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/config/connectDB';
-import Student from '@/models/student';
+import PostStudent from '@/models/student'; // điều chỉnh đường dẫn nếu khác
+import PostCourse from '@/models/course';   // điều chỉnh đường dẫn nếu khác
 
-export async function POST(request) {
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(req) {
+    await connectDB();
+
+    let body = {};
+    try { body = await req.json(); } catch (_) { }
+
     try {
-        await connectDB();
+        // 1) Lấy danh sách học sinh cần xử lý
+        const students = body && body._id
+            ? await PostStudent.findById(body._id).select('_id ID Course').lean()
+            : await PostStudent.find({}).select('_id ID Course').lean();
 
-        // --- THAY ĐỔI CỐT LÕI: Bộ lọc giờ đây tìm học sinh chưa có khóa học ---
-        // 1. Định nghĩa bộ lọc (filter) để tìm những học sinh:
-        //    - KHÔNG có trường 'Course' ($exists: false)
-        //    - HOẶC có trường 'Course' là một mảng rỗng ($size: 0)
-        const filter = {
-            $or: [
-                { Course: { $exists: false } },
-                { Course: { $size: 0 } }
-            ]
-        };
+        if (!students || (Array.isArray(students) && students.length === 0)) {
+            return NextResponse.json({ ok: true, processed: 0, updated: 0, results: [] }, { status: 200 });
+        }
 
-        // 2. Định nghĩa nội dung cập nhật.
-        //    $set sẽ XÓA Status cũ và THAY THẾ bằng mảng mới này.
-        const defaultStatus = {
-            status: 0,
-            date: new Date("2024-09-28T00:00:00.000Z"),
-            note: 'Báo nghỉ',
-        };
+        const list = Array.isArray(students) ? students : [students];
 
-        const updateDoc = {
-            $set: { Status: [defaultStatus] }
-        };
+        const results = [];
+        let updatedCount = 0;
 
-        // 3. Thực thi updateMany để cập nhật tất cả học sinh khớp với bộ lọc
-        const result = await Student.updateMany(filter, updateDoc);
+        // 2) Duyệt từng học sinh
+        for (const s of list) {
+            const studentID = s?.ID;
+            if (!studentID) {
+                results.push({
+                    studentMongoId: String(s._id),
+                    studentID: '',
+                    matchedCourses: 0,
+                    existingCourses: s.Course?.length ?? 0,
+                    added: 0,
+                    statusChanged: 0,
+                    updated: false,
+                    skippedReason: 'Missing student.ID',
+                });
+                continue;
+            }
 
-        return NextResponse.json({
-            message: "Hoàn tất quá trình cập nhật trạng thái cho các học sinh chưa có khóa học.",
-            matchedCount: result.matchedCount, // Số học sinh khớp điều kiện (chưa có khóa học)
-            updatedCount: result.modifiedCount, // Số học sinh đã được cập nhật trạng thái
-        }, { status: 200 });
+            // 3) Tìm các course có Student[].ID == student.ID
+            const courses = await PostCourse.find(
+                { 'Student.ID': studentID },
+                { _id: 1, Status: 1 }
+            ).lean();
 
-    } catch (error) {
-        console.error("Lỗi khi rà soát trạng thái học sinh:", error);
-        return NextResponse.json({
-            message: "Lỗi máy chủ nội bộ khi thực hiện rà soát.",
-            error: error.message
-        }, { status: 500 });
+            // Map courseId -> status mong muốn (2 nếu course.Status=true, ngược lại 0)
+            const desiredStatusByCourseId = new Map();
+            for (const c of courses) {
+                desiredStatusByCourseId.set(String(c._id), c.Status ? 2 : 0);
+            }
+
+            // Map courseId -> entry hiện có trong student.Course
+            const existingByCourseId = new Map();
+            for (const entry of s.Course || []) {
+                if (entry && entry.course) {
+                    existingByCourseId.set(String(entry.course), entry);
+                }
+            }
+
+            const newCourseArray = [];
+            let added = 0;
+            let statusChanged = 0;
+
+            // 4) Giữ lại entry đang có (và chỉnh status nếu cần)
+            for (const [courseId, entry] of existingByCourseId.entries()) {
+                const desired = desiredStatusByCourseId.get(courseId);
+                if (typeof desired === 'number' && entry.status !== desired) {
+                    entry.status = desired;
+                    statusChanged++;
+                }
+
+                newCourseArray.push({
+                    course: entry.course, // giữ nguyên ObjectId
+                    tuition: entry.tuition ?? null,
+                    status: typeof entry.status === 'number' ? entry.status : 0,
+                });
+            }
+
+            // 5) Thêm những course còn thiếu
+            for (const [courseId, desired] of desiredStatusByCourseId.entries()) {
+                if (!existingByCourseId.has(courseId)) {
+                    newCourseArray.push({
+                        course: new mongoose.Types.ObjectId(courseId),
+                        tuition: null,
+                        status: desired,
+                    });
+                    added++;
+                }
+            }
+
+            const changed = added > 0 || statusChanged > 0;
+            if (changed) {
+                // Chỉ cập nhật field Course
+                await PostStudent.updateOne(
+                    { _id: s._id },
+                    { $set: { Course: newCourseArray } }
+                );
+                updatedCount++;
+            }
+
+            results.push({
+                studentMongoId: String(s._id),
+                studentID,
+                matchedCourses: courses.length,
+                existingCourses: s.Course?.length ?? 0,
+                added,
+                statusChanged,
+                updated: changed,
+            });
+        }
+
+        return NextResponse.json(
+            { ok: true, processed: list.length, updated: updatedCount, results },
+            { status: 200 }
+        );
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json(
+            { ok: false, error: err?.message ?? 'Unknown error' },
+            { status: 500 }
+        );
     }
 }

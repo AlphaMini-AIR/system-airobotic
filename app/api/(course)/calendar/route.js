@@ -79,7 +79,7 @@ export async function GET(req) {
           _id: '$Detail._id',
           courseId: '$ID',
           courseName: '$Name',
-          type: { $literal: 'official' },
+          type: '$Detail.Type',
           date: '$Detail.Day',
           day: { $dayOfMonth: '$Detail.Day' },
           month: { $month: '$Detail.Day' },
@@ -99,7 +99,8 @@ export async function GET(req) {
         }
       }
     ])
-
+    console.log(officialAgg);
+    
     const trialAgg = TrialCourse.aggregate([
       { $unwind: '$sessions' },
       { $match: { 'sessions.day': { $gte: start, $lt: end } } },

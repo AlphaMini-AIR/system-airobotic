@@ -13,7 +13,6 @@ function parseTimeToMinutes(timeStr) {
 const pad = (str) => String(str).padStart(2, '0');
 
 export default function Calendar({ data = [], month, year }) {
-    // 1. Tự xác định ngày giờ hiện tại để tăng tính chính xác
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -22,16 +21,12 @@ export default function Calendar({ data = [], month, year }) {
 
     const isCurrentMonth = month === currentMonth && year === currentYear;
     const todayKey = isCurrentMonth ? `${pad(currentDay)}/${pad(month)}/${year}` : null;
-
-    // 2. Sửa lỗi nhóm dữ liệu: Nhóm theo key 'dd/MM/yyyy' thay vì chỉ theo ngày
     const groupedByDay = useMemo(() => {
         const grouped = data.reduce((acc, item) => {
             const dayKey = `${pad(item.day)}/${pad(item.month)}/${item.year}`;
             (acc[dayKey] ??= []).push(item);
             return acc;
         }, {});
-
-        // Đảm bảo "hôm nay" luôn hiển thị dù không có lịch học
         if (isCurrentMonth && todayKey && !grouped[todayKey]) {
             grouped[todayKey] = [];
         }
@@ -84,8 +79,6 @@ export default function Calendar({ data = [], month, year }) {
 
                         {lessons.length > 0 ? (
                             lessons.map(item => {
-                                console.log(item);
-                                
                                 const [d, m, y] = dayKey.split('/').map(Number);
                                 const lessonDate = new Date(y, m - 1, d);
                                 const isFuture = lessonDate >= todayDateObj;
@@ -98,6 +91,7 @@ export default function Calendar({ data = [], month, year }) {
                                         room={item.room}
                                         id={item._id}
                                         type={isFuture}
+                                        d={item?.type || ''}
                                     />
 
                                 );

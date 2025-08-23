@@ -14,6 +14,7 @@ export default async function Page(props) {
   const viewYear = parseInt(yearParam, 10) || currentYear;
 
   const viewPromise = await Data_calendar(viewMonth, viewYear);
+  
   const todayPromise = viewMonth === currentMonth && viewYear === currentYear
     ? viewPromise
     : await Data_calendar(currentMonth, currentYear);

@@ -8,7 +8,7 @@ import styles from './index.module.css';
 import Title from '@/components/(features)/(popup)/title';
 import BoxFile from '@/components/(ui)/(box)/file';
 
-export default function Lesson_m({ time, topic, courseID, room, id, type }) {
+export default function Lesson_m({ time, topic, courseID, room, id, type, d }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [detail, setDetail] = useState(null);
@@ -52,8 +52,9 @@ export default function Lesson_m({ time, topic, courseID, room, id, type }) {
                     <div className={styles.dot} />
                     <h5>Chủ đề:  {topic?.Name || 'Không có chủ đề'} - Lớp: {courseID}</h5>
                 </div>
-                <div className={styles.room}>
-                    <h6 className={`${styles.chip}`} style={{ background: `${room.color}` }}>{room.area}</h6>
+                <div className={styles.room} style={{ gap: 8, display: 'flex' }}>
+                    {d && <h6 className={`${styles.chip}`} style={{ background: `var(--red)`, whiteSpace: 'nowrap' }}>{d}</h6>}
+                    <h6 className={`${styles.chip}`} style={{ background: `${room.color}`, whiteSpace: 'nowrap' }}>{room.area}</h6>
                 </div>
             </div>
 
