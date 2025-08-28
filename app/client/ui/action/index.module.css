@@ -203,12 +203,10 @@
 
 .success {
     background-color: var(--green);
-    height: 100%;
+    height: 8px;
 }
 
 .failed {
     background-color: var(--red);
-    height: 100%;
-    position: absolute;
-    /* Để nằm chồng lên thanh success */
+    height: 8px;
 }
