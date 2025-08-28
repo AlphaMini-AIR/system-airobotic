@@ -25,6 +25,11 @@ function HistoryLogItem({ log }) {
     };
 
     const statusSuccess = log.status?.status === true;
+    const escapeHtml = s => s.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+    const message = (log.status?.message ?? '').replace(/\r\n?/g, '\n');
+    console.log(message);
 
     return (
         <div className={styles.noteItem} style={{ padding: '12px 16px', alignItems: 'flex-start' }}>
@@ -50,20 +55,20 @@ function HistoryLogItem({ log }) {
 
                     {log.type == 'checkFriend' ?
                         <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
-                            {log.status?.data.error_message == 1 ? 'Đã là bạn bè' : 'Chưa là bạn bè'}
+                            {log.status?.data?.error_message == 1 ? 'Đã là bạn bè' : 'Chưa là bạn bè'}
                         </h5> :
                         <h5 className='text_w_400' style={{ fontStyle: 'italic', color: statusSuccess ? 'var(--green)' : 'var(--red)' }}>
-                            {log.status?.data.error_message == 'Successful.' ? 'Thực hiện hành động thành công!' : log.status?.data.error_message}
+                            {log.status?.data?.error_message == 'Successful.' ? 'Thực hiện hành động thành công!' : 'Lỗi'}
                         </h5>
                     }
 
                 </div>
                 {log.type != 'findUid' && log.type != 'checkFriend' &&
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                         <h6 className='text_w_400'>
                             Nội dung gửi :
-                            <i>{log.status.message}</i>
                         </h6>
+                        <h6 style={{ whiteSpace: 'pre-line' }}>{message}</h6>
                     </div>
                 }
             </div>

@@ -25,6 +25,8 @@ async function formatMessage(template, targetDoc, zaloAccountDoc) {
             message = message.replace(placeholder, randomPhrase);
         }
     }
+    console.log(message);
+
     return message;
 }
 
@@ -90,16 +92,6 @@ async function processSingleTask(taskDetail) {
             schedule: job._id,
         };
         const newLog = await Logs.create(logPayload);
-        console.log({
-            phone: targetDoc.phone,
-            uidPerson: uidPerson,
-            actionType: actionType,
-            message: finalMessage,
-            uid: zaloAccount.uid,
-        });
-
-        console.log(apiResponse, 1);
-
         const errorCode = apiResponse.content?.error_code;
         if (actionType === 'findUid') {
             if (errorCode === 0) {

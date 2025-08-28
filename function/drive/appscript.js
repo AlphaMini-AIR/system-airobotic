@@ -1,10 +1,8 @@
 const SCRIPT_URL_SEND_MESSAGE = 'https://script.google.com/macros/s/AKfycbzhEEvakm6VzGRpNNORT9jZ3A8gYya2Bd5zjuTbpAgr8ZYaHO-0LB_DKibXyEHuo3ROfw/exec';
 const SCRIPT_URL_GET_UID = 'https://script.google.com/macros/s/AKfycbxMMwrvLEuqhsyK__QRCU0Xi6-qu-HkUBx6fDHDRAYfpqM9d4SUq4YKVxpPnZtpJ_b6wg/exec';
-const SCRIPT_URL_ACTION = 'https://script.google.com/macros/s/AKfycbwfSFbn5_9TZOwH6JuiykWvgg9s72z1ZeYYJmkYGtH1g_fBVuOuXwAWbophErbsvRANGA/exec'
+const SCRIPT_URL_ACTION = 'https://script.google.com/macros/s/AKfycbxfb6DbE4P5pi-nOEbKO-DQM0MpNWZECfcEQ6oQ-9nb1bLEqcYVZfI4NY5ZiE2IS6wgwA/exec'
 
 export async function senMesByPhone({ message, uid, phone }) {
-    console.log(uid, message);
-
     const url = new URL(SCRIPT_URL_SEND_MESSAGE);
     url.searchParams.set('mes', message);
     if (uid) {
@@ -66,15 +64,28 @@ export async function actionZalo({ phone, uidPerson = '', actionType, message = 
                 phone: formattedPhone,
                 uidPerson: uidPerson,
                 actionType: actionType,
-                message: message,
+                message: ml(message),
             }),
             cache: "no-store",
         });
         if (!response.ok) return { status: false, message: 'Lỗi trước khi thực hiện hành động (lỗi gọi appscript)', content: '' };
         const result = await response.json();
-        console.log(result);
+        console.log(result,'123');
         return result
     } catch (error) {
         return { status: false, message: `${error}`, content: '' };
     }
 }
+
+const ml = (strings, ...values) => {
+  let s;
+  if (Array.isArray(strings)) {                 // gọi dạng tag: ml`...`
+    s = strings.reduce((out, str, i) => out + str + (values[i] ?? ''), '');
+  } else {                                      // gọi dạng hàm: ml(mes)
+    s = String(strings);
+  }
+  return s
+    .replace(/\r\n?/g, '\n')  // chuẩn hoá xuống dòng về \n
+    .replace(/^\n/, '')
+    .replace(/\n$/, '');
+};
