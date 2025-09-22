@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import authenticate from '@/utils/authenticate';
 import { reloadCourse } from '@/data/actions/reload';
 
-const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4HNPYOKq-XIMpKMqn6qflHHJGQMSSHw6z00-5wuZe5Xtn2OrfGXEztuPj1ynKxj-stw/exec';
+const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhq2HUS3Jhhh0XF9PPr_ldJ1redmb1JAN5hZjaeYzvb_AyJiVifEXsW-MdKqpBfEeZww/exec';
 
 export async function POST(request) {
     try {

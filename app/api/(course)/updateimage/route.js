@@ -46,9 +46,11 @@ export async function POST(request) {
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
+            supportsAllDrives: true
         });
 
         const uploadedId = response.data.id;
+        
         if (!uploadedId) {
             throw new Error("Không thể lấy ID file từ Google Drive sau khi tải lên.");
         }
@@ -69,7 +71,7 @@ export async function POST(request) {
             );
 
             if (updateResult.matchedCount === 0) {
-                await drive.files.delete({ fileId: uploadedId });
+                await drive.files.delete({ fileId: uploadedId, supportsAllDrives: true });
                 throw new Error(`Không tìm thấy buổi học nào có Image ID (folderId) là '${folderId}'.`);
             }
         }
@@ -165,6 +167,7 @@ export async function PUT(request) {
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
+            supportsAllDrives: true
         });
 
         const newImageId = uploadResponse.data.id;
@@ -187,14 +190,14 @@ export async function PUT(request) {
             );
 
             if (updateResult.modifiedCount === 0) {
-                await drive.files.delete({ fileId: newImageId });
+                await drive.files.delete({ fileId: newImageId, supportsAllDrives: true });
                 throw new Error("Không thể cập nhật ID ảnh mới vào cơ sở dữ liệu.");
             }
         }
 
         // --- 4. Xóa file cũ khỏi Google Drive ---
         try {
-            await drive.files.delete({ fileId: oldImageId });
+            await drive.files.delete({ fileId: oldImageId, supportsAllDrives: true });
         } catch (deleteError) {
             console.warn(`Không thể xóa file cũ ${oldImageId} khỏi Drive:`, deleteError.message);
         }
@@ -241,7 +244,7 @@ export async function DELETE(request) {
         }
 
         try {
-            await drive.files.delete({ fileId: id });
+            await drive.files.delete({ fileId: id, supportsAllDrives: true });
         } catch (driveError) {
             console.warn(`Đã xóa file ${id} khỏi DB, nhưng không thể xóa khỏi Drive:`, driveError.message);
         }

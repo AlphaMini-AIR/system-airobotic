@@ -23,7 +23,7 @@ export async function POST(request) {
         const formData = await request.formData();
         const avtFile = formData.get('Avt');
         let avt;
-        if (avtFile?.size > 0) { avt = await uploadImageToDrive(avtFile, '1t949fB9rVSQyaZHnCboWDtuLNBjceTl-'); }
+        if (avtFile?.size > 0) { avt = await uploadImageToDrive(avtFile, '1h8n0ueMwKumXlYkCDKffgNCyKYRIUJQy'); }
         const lastStudent = await PostStudent.findOne({ ID: /^AI\d{4}$/ }).sort({ ID: -1 }).select('ID').lean();
         const nextIdNumber = lastStudent ? parseInt(lastStudent.ID.slice(2), 10) + 1 : 1;
         const newStudent = new PostStudent({

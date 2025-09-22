@@ -27,8 +27,6 @@ const roomName = async rid =>
 
 const buildStudents = (raw, mapById, lessonId) =>
     raw.map(st => {
-        console.log(st);
-
         const info = mapById.get(st.studentId || st.ID) || {}
         const a = st.attendance || st
         return {
@@ -48,7 +46,7 @@ const buildStudents = (raw, mapById, lessonId) =>
     })
 
 export async function GET(_req, { params }) {
-    const { id } = params
+    const { id } = await params
     if (!isId(id))
         return NextResponse.json({ success: false, message: 'ID không hợp lệ' }, { status: 400 })
 

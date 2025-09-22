@@ -31,7 +31,7 @@ export async function POST(request) {
         if (existingBook) {
             return jsonRes(409, { status: false, mes: `ID '${normalizedID}' đã tồn tại.` });
         }
-        const FOLDER_ID = '1GofTISCOas5dgzSfD5q54TXsrY28RYp8';
+        const FOLDER_ID = '1h8n0ueMwKumXlYkCDKffgNCyKYRIUJQy';
         if (ImageFile && ImageFile.size > 0) {
             coverImageId = await uploadImageToDrive(ImageFile, FOLDER_ID);
             if (!coverImageId) return jsonRes(500, { status: false, mes: 'Tải ảnh bìa lên thất bại.' });
@@ -81,7 +81,7 @@ export async function PUT(request) {
         }
         const oldCoverImageId = bookToUpdate.Image;
         const oldBadgeImageId = bookToUpdate.Badge;
-        const FOLDER_ID = '1GofTISCOas5dgzSfD5q54TXsrY28RYp8';
+        const FOLDER_ID = '1h8n0ueMwKumXlYkCDKffgNCyKYRIUJQy';
         if (ImageFile && ImageFile.size > 0) {
             newCoverImageId = await uploadImageToDrive(ImageFile, FOLDER_ID);
             if (!newCoverImageId) return jsonRes(500, { status: false, mes: 'Tải ảnh bìa mới lên thất bại.' });

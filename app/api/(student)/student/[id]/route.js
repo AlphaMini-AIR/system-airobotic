@@ -47,7 +47,7 @@ export async function PUT(request, { params }) {
 
         const avtFile = formData.get('Avt');
         if (avtFile && typeof avtFile !== 'string' && avtFile.size > 0) {
-            newUploadedFileId = await uploadImageToDrive(avtFile, '1t949fB9rVSQyaZHnCboWDtuLNBjceTl-');
+            newUploadedFileId = await uploadImageToDrive(avtFile, '1h8n0ueMwKumXlYkCDKffgNCyKYRIUJQy');
             if (newUploadedFileId) {
                 updateData.Avt = newUploadedFileId;
             } else {

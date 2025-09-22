@@ -53,6 +53,7 @@ export async function POST(request) {
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
+            supportsAllDrives: true
         });
 
         const uploadedId = response.data.id;
@@ -74,7 +75,7 @@ export async function POST(request) {
         );
 
         if (updateResult.matchedCount === 0) {
-            await drive.files.delete({ fileId: uploadedId });
+            await drive.files.delete({ fileId: uploadedId, supportsAllDrives: true });
             throw new Error(`Không tìm thấy buổi học nào có Image ID (folderId) là '${folderId}' để thêm ảnh.`);
         }
 
@@ -186,6 +187,7 @@ export async function PUT(request) {
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
+            supportsAllDrives: true
         });
 
         const newUploadedId = uploadResponse.data.id;
@@ -244,12 +246,12 @@ export async function PUT(request) {
         const modifiedCount = results.reduce((acc, res) => acc + res.modifiedCount, 0);
 
         if (modifiedCount === 0) {
-            await drive.files.delete({ fileId: newUploadedId });
+            await drive.files.delete({ fileId: newUploadedId, supportsAllDrives: true });
             throw new Error("Không tìm thấy ảnh cũ hoặc không thể cập nhật ảnh mới vào cơ sở dữ liệu.");
         }
 
         try {
-            await drive.files.delete({ fileId: oldImageId });
+            await drive.files.delete({ fileId: oldImageId, supportsAllDrives: true });
         } catch (deleteError) {
             console.warn(`Không thể xóa file cũ ${oldImageId} khỏi Drive:`, deleteError.message);
         }
@@ -339,7 +341,7 @@ export async function DELETE(request) {
         }
 
         try {
-            await drive.files.delete({ fileId: id });
+            await drive.files.delete({ fileId: id, supportsAllDrives: true });
         } catch (driveError) {
             console.warn(`Không thể xóa file ${id} khỏi DB, nhưng không thể xóa khỏi Drive:`, driveError.message);
         }

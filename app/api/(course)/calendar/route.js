@@ -99,8 +99,6 @@ export async function GET(req) {
         }
       }
     ])
-    console.log(officialAgg);
-    
     const trialAgg = TrialCourse.aggregate([
       { $unwind: '$sessions' },
       { $match: { 'sessions.day': { $gte: start, $lt: end } } },

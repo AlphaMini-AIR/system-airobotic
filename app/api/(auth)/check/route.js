@@ -34,8 +34,6 @@ export async function POST(request) {
       }
     );
   } catch (error) {
-    console.log(error.message);
-
     return NextResponse.json(
       { status: 1, mes: `Lỗi: ${error.message}`, data: [] },
       {
